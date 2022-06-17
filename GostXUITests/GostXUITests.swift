@@ -2,7 +2,7 @@
 //  GostXUITests.swift
 //  GostXUITests
 //
-//  Created by 刘科彬 on 2022/6/16.
+//  Created by KB on 2022/6/16.
 //
 
 import XCTest
