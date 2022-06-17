@@ -84,7 +84,7 @@ class MacExtrasConfigurator: NSObject {
             mainMenu.addItem(.separator())
             
             let configMenuItem = NSMenuItem()
-            configMenuItem.title = "Perferences"
+            configMenuItem.title = "Preferences..."
             configMenuItem.keyEquivalent = ","
             configMenuItem.keyEquivalentModifierMask = .command
             configMenuItem.target = self
@@ -109,7 +109,6 @@ class MacExtrasConfigurator: NSObject {
     
     @objc private func onConfigClick(_ sender: Any?) {
         delegate.settings()
-//        NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
     }
     
     @objc private func onQuitClick(_ sender: Any?) {
