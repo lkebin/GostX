@@ -2,7 +2,7 @@
 //  GostXUITestsLaunchTests.swift
 //  GostXUITests
 //
-//  Created by  on 2022/6/16.
+//  Created by KB on 2022/6/16.
 //
 
 import XCTest

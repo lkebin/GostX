@@ -8,12 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		B532A66A285B528900159BAC /* GostXApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B532A669285B528900159BAC /* GostXApp.swift */; };
-		B532A66C285B528900159BAC /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B532A66B285B528900159BAC /* ContentView.swift */; };
 		B532A66E285B528D00159BAC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B532A66D285B528D00159BAC /* Assets.xcassets */; };
 		B532A671285B528D00159BAC /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B532A670285B528D00159BAC /* Preview Assets.xcassets */; };
 		B532A67C285B528D00159BAC /* GostXTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B532A67B285B528D00159BAC /* GostXTests.swift */; };
 		B532A686285B528D00159BAC /* GostXUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B532A685285B528D00159BAC /* GostXUITests.swift */; };
 		B532A688285B528D00159BAC /* GostXUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B532A687285B528D00159BAC /* GostXUITestsLaunchTests.swift */; };
+		B5B0E074285B62B80035A6F2 /* MacExtrasConfigurator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B0E073285B62B80035A6F2 /* MacExtrasConfigurator.swift */; };
+		B5B0E076285C2B180035A6F2 /* DaemonProcess.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B0E075285C2B170035A6F2 /* DaemonProcess.swift */; };
+		B5B0E07A285C63080035A6F2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B0E079285C63080035A6F2 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,7 +38,6 @@
 /* Begin PBXFileReference section */
 		B532A666285B528900159BAC /* GostX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GostX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B532A669285B528900159BAC /* GostXApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GostXApp.swift; sourceTree = "<group>"; };
-		B532A66B285B528900159BAC /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		B532A66D285B528D00159BAC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B532A670285B528D00159BAC /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		B532A672285B528D00159BAC /* GostX.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GostX.entitlements; sourceTree = "<group>"; };
@@ -45,6 +46,10 @@
 		B532A681285B528D00159BAC /* GostXUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GostXUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B532A685285B528D00159BAC /* GostXUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GostXUITests.swift; sourceTree = "<group>"; };
 		B532A687285B528D00159BAC /* GostXUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GostXUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		B5B0E073285B62B80035A6F2 /* MacExtrasConfigurator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacExtrasConfigurator.swift; sourceTree = "<group>"; };
+		B5B0E075285C2B170035A6F2 /* DaemonProcess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DaemonProcess.swift; sourceTree = "<group>"; };
+		B5B0E077285C30E20035A6F2 /* gost-resource.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "gost-resource.sh"; sourceTree = "<group>"; };
+		B5B0E079285C63080035A6F2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,10 +101,13 @@
 			isa = PBXGroup;
 			children = (
 				B532A669285B528900159BAC /* GostXApp.swift */,
-				B532A66B285B528900159BAC /* ContentView.swift */,
 				B532A66D285B528D00159BAC /* Assets.xcassets */,
 				B532A672285B528D00159BAC /* GostX.entitlements */,
 				B532A66F285B528D00159BAC /* Preview Content */,
+				B5B0E073285B62B80035A6F2 /* MacExtrasConfigurator.swift */,
+				B5B0E075285C2B170035A6F2 /* DaemonProcess.swift */,
+				B5B0E077285C30E20035A6F2 /* gost-resource.sh */,
+				B5B0E079285C63080035A6F2 /* SettingsView.swift */,
 			);
 			path = GostX;
 			sourceTree = "<group>";
@@ -139,6 +147,7 @@
 				B532A662285B528900159BAC /* Sources */,
 				B532A663285B528900159BAC /* Frameworks */,
 				B532A664285B528900159BAC /* Resources */,
+				B5B0E078285C328C0035A6F2 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -254,12 +263,34 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		B5B0E078285C328C0035A6F2 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n${SOURCE_ROOT}/GostX/gost-resource.sh\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		B532A662285B528900159BAC /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B532A66C285B528900159BAC /* ContentView.swift in Sources */,
+				B5B0E07A285C63080035A6F2 /* SettingsView.swift in Sources */,
+				B5B0E074285B62B80035A6F2 /* MacExtrasConfigurator.swift in Sources */,
+				B5B0E076285C2B180035A6F2 /* DaemonProcess.swift in Sources */,
 				B532A66A285B528900159BAC /* GostXApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -424,6 +455,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GostX/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -451,6 +484,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GostX/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
