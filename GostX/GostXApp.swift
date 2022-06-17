@@ -21,7 +21,8 @@ struct GostXApp: App {
         }
         WindowGroup{
             SettingsView()
-        }.handlesExternalEvents(matching: ["settings"])
+        }
+        .handlesExternalEvents(matching: ["settings"])
     }
 }
 
