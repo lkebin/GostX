@@ -1,11 +1,3 @@
-//
-//  DaemonProcess.swift
-//  syncthing
-//
-//  Created by Jakob Borg on 2018-07-29.
-//  Copyright © 2018 The syncthing-macos Authors. All rights reserved.
-//
-
 import Foundation
 
 let RestartInterval = 10.0 // seconds
@@ -17,7 +9,7 @@ let MaxKeepLogLines = 200
 
 @objc public class DaemonProcess: NSObject {
     private var path: String
-    private var arguments: [String]
+    private var arguments: [String]?
     private weak var delegate: DaemonProcessDelegate?
     private var process: Process?
     private var log = [String]()
@@ -27,19 +19,26 @@ let MaxKeepLogLines = 200
     @objc init(path: String, arguments: String, delegate: DaemonProcessDelegate) {
         self.path = path
         self.delegate = delegate
-        if !arguments.isEmpty {
-            self.arguments = arguments.components(separatedBy: " ")
+        
+        super.init()
+        
+        self.arguments = parseArguments(arguments)
+    }
+    
+    private func parseArguments(_ v: String) -> [String] {
+        if !v.isEmpty {
+            var sep: CharacterSet = CharacterSet.whitespaces
+            sep = sep.union(CharacterSet.newlines)
+            return v.components(separatedBy: sep).filter { e in
+                return !e.isEmpty
+            }
         } else {
-            self.arguments = []
+            return []
         }
     }
     
     @objc func setArguments(_ v: String) {
-        if !v.isEmpty {
-            self.arguments = v.components(separatedBy: " ")
-        } else {
-            self.arguments = []
-        }
+        self.arguments = parseArguments(v)
     }
 
     @objc func launch() {
@@ -62,15 +61,19 @@ let MaxKeepLogLines = 200
     }
 
     private func launchSync() {
+        if ((process?.isRunning) != nil) { // If process is created, terminate it before launch
+            shouldTerminate = true
+            return
+        }
+        
         NSLog("Launching gost daemon")
         shouldTerminate = false
 
-        var environment = ProcessInfo.processInfo.environment
-
         let p = Process()
-        p.environment = environment
         p.arguments = []
-        p.arguments?.append(contentsOf: self.arguments)
+        if self.arguments != nil {
+            p.arguments?.append(contentsOf: self.arguments!)
+        }
         p.launchPath = path
         p.standardInput = Pipe() // isolate daemon from our stdin
         p.standardOutput = pipeIntoLineBuffer()

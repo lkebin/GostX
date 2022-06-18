@@ -2,7 +2,7 @@
 //  SettingsView.swift
 //  GostX
 //
-//  Created by KB on 2022/6/17.
+//  Created by 刘科彬 on 2022/6/17.
 //
 
 import SwiftUI
@@ -20,14 +20,13 @@ struct SettingsView: View {
                 .tag(Tabs.general)
         }
         .padding(20)
-        .frame(width: 375, height: 150)
     }
 }
 
 struct GeneralSettingsView: View {
     @AppStorage(defaultsArgumentsKey)
     private var arguments = "-L socks5://:1080"
-
+    
     var body: some View {
         Form {
             TextEditor(text: $arguments)
@@ -35,6 +34,7 @@ struct GeneralSettingsView: View {
                 .cornerRadius(20.0)
                 .shadow(radius: 1.0)
                 .font(Font.system(size: 12).monospaced())
+                .frame(minWidth: 350, minHeight: 200, alignment: .leading)
         }
         .padding(5)
     }

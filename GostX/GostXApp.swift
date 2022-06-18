@@ -2,7 +2,7 @@
 //  GostXApp.swift
 //  GostX
 //
-//  Created by KB on 2022/6/16.
+//  Created by 刘科彬 on 2022/6/16.
 //
 
 import SwiftUI
@@ -11,18 +11,15 @@ let defaultsArgumentsKey = "arguments"
 
 @main
 struct GostXApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self)
-    private var appDelete
+    @Environment(\.scenePhase) private var scenePhase
+    
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelete
     
     var body: some Scene {
         WindowGroup {
             EmptyView()
                 .frame(width: .zero)
         }
-        WindowGroup{
-            SettingsView()
-        }
-        .handlesExternalEvents(matching: ["settings"])
     }
 }
 
@@ -32,8 +29,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, DaemonProcessDelegate {
     
     public var process: DaemonProcess?
     
-    @Environment(\.openURL)
-    private var openURL
+    private var window: NSWindow?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         menu = MacExtrasConfigurator(delegate: self)
@@ -77,7 +73,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, DaemonProcessDelegate {
     }
     
     func settings() {
-        openURL(URL(string: "gostx://settings")!)
+        if window == nil {
+            window = NSWindow()
+            window?.isReleasedWhenClosed = false
+            window?.toolbarStyle = .unifiedCompact
+            window?.contentView = NSHostingView(rootView: SettingsView())
+            window?.center()
+            window?.styleMask.insert(.closable)
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        window?.makeKeyAndOrderFront(self)
     }
     
     func quit() {

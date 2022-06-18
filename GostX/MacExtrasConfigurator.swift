@@ -2,7 +2,7 @@
 //  MacextrasConfigurator.swift
 //  GostX
 //
-//  Created by KB on 2022/6/16.
+//  Created by 刘科彬 on 2022/6/16.
 //
 
 import Foundation
@@ -13,26 +13,12 @@ let on = "🟢 On"
 let off = "🔴 Off"
 
 class MacExtrasConfigurator: NSObject {
-    
+    private var delegate: AppDelegate
     private var statusBar: NSStatusBar
     public var statusBarItem: NSStatusItem
-    private var mainView: NSView
-    private var delegate: AppDelegate
-    
     public var statusMenuItem: NSMenuItem
     public var statusActionOnItem: NSMenuItem
     public var statusActionOffItem: NSMenuItem
-    
-    private struct MenuView: View {
-        var body: some View {
-            HStack {
-                Text("Hello from SwiftUI View")
-                Spacer()
-            }
-            .background(Color.blue)
-            .padding()
-        }
-    }
     
     // MARK: - Lifecycle
     
@@ -40,8 +26,7 @@ class MacExtrasConfigurator: NSObject {
         self.delegate = delegate
         self.statusBar = NSStatusBar.system
         self.statusBarItem = statusBar.statusItem(withLength: NSStatusItem.squareLength)
-        self.mainView = NSHostingView(rootView: MenuView())
-        self.mainView.frame = NSRect(x: 0, y: 0, width: 300, height: 250)
+        
         self.statusMenuItem = NSMenuItem()
         self.statusActionOnItem = NSMenuItem()
         self.statusActionOffItem = NSMenuItem()
@@ -67,7 +52,7 @@ class MacExtrasConfigurator: NSObject {
             
             let statusSubMenu = NSMenu()
             statusSubMenu.autoenablesItems = false
-
+            
             statusActionOnItem.title = "Start"
             statusActionOnItem.target = self
             statusActionOnItem.isEnabled = false
