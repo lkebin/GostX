@@ -12,7 +12,6 @@ let MaxKeepLogLines = 200
     private var arguments: [String]?
     private weak var delegate: DaemonProcessDelegate?
     private var process: Process?
-    private var log = [String]()
     private var queue = DispatchQueue(label: "DaemonProcess")
     private var shouldTerminate = false
 
@@ -66,7 +65,7 @@ let MaxKeepLogLines = 200
             return
         }
         
-        NSLog("Launching gost daemon")
+        logger.log("Launching gost daemon")
         shouldTerminate = false
 
         let p = Process()
@@ -90,7 +89,7 @@ let MaxKeepLogLines = 200
     }
 
     private func didTerminate(_ p: Process) {
-        NSLog("Gost daemon terminated (exit code %d)", p.terminationStatus)
+        logger.log("Gost daemon terminated (exit code \(p.terminationStatus)")
         process = nil
 
         DispatchQueue.main.async {
@@ -115,7 +114,7 @@ let MaxKeepLogLines = 200
             // Anything else is an error condition of some kind. Delay
             // the startup to not get caught in a tight loop.
             delay = RestartInterval
-            NSLog("Delaying daemon startup by %.1f s", delay)
+            logger.log("Delaying daemon startup by \(delay, privacy: .public) s")
         }
         queue.asyncAfter(deadline: DispatchTime.now() + delay) {
             self.launchSync()
@@ -138,13 +137,7 @@ let MaxKeepLogLines = 200
                 return
             }
 
-            print(str, terminator: "")
-            self.queue.async {
-                self.log.append(contentsOf: str.components(separatedBy: "\n"))
-                if self.log.count > MaxKeepLogLines {
-                    self.log.removeFirst(self.log.count - MaxKeepLogLines)
-                }
-            }
+            logger.log("\(str, privacy: .public)")
         }
         return p
     }
