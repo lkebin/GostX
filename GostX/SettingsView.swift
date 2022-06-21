@@ -29,12 +29,21 @@ struct GeneralSettingsView: View {
     
     var body: some View {
         Form {
-            TextEditor(text: $arguments)
-                .padding(5)
-                .cornerRadius(20.0)
-                .shadow(radius: 1.0)
-                .font(Font.system(size: 12).monospaced())
-                .frame(minWidth: 350, minHeight: 200, alignment: .leading)
+            if #available(macOS 12.0, *) {
+                TextEditor(text: $arguments)
+                    .padding(5)
+                    .cornerRadius(20.0)
+                    .shadow(radius: 1.0)
+                    .font(Font.system(size: 12).monospaced())
+                    .frame(minWidth: 350, minHeight: 200, alignment: .leading)
+            } else {
+                TextEditor(text: $arguments)
+                    .padding(5)
+                    .cornerRadius(20.0)
+                    .shadow(radius: 1.0)
+                    .font(Font.system(size: 12))
+                    .frame(minWidth: 350, minHeight: 200, alignment: .leading)
+            }
         }
         .padding(5)
     }

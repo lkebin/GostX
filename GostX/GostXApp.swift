@@ -6,8 +6,10 @@
 //
 
 import SwiftUI
-
+import os
+    
 let defaultsArgumentsKey = "arguments"
+let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "runtime")
 
 @main
 struct GostXApp: App {
@@ -32,6 +34,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, DaemonProcessDelegate {
     private var window: NSWindow?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        
         menu = MacExtrasConfigurator(delegate: self)
         process = DaemonProcess.init(path: self.executable, arguments: "", delegate: self)
         start()

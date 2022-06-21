@@ -107,4 +107,5 @@ class MacExtrasConfigurator: NSObject {
     @objc private func onStartClick(_ sender: Any?) {
         delegate.start()
     }
+    
 }

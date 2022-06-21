@@ -1,1 +1,5 @@
-GostX.xcodeproj/xcuserdata/*
+xcuserdata/
+
+build/*
+
+*.swp
