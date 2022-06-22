@@ -1,0 +1,5 @@
+module Gost {
+    header "libgost.h"
+    link "gost"
+    export *
+}

@@ -7,7 +7,8 @@
 
 import SwiftUI
 import os
-    
+import Gost
+
 let defaultsArgumentsKey = "arguments"
 let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "runtime")
 
@@ -25,54 +26,20 @@ struct GostXApp: App {
     }
 }
 
-class AppDelegate: NSObject, NSApplicationDelegate, DaemonProcessDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate {
     private var menu: MacExtrasConfigurator?
     private var executable: String = "\(Bundle.main.resourcePath!)/gost/gost"
-    
-    public var process: DaemonProcess?
-    
+    private var logPipe: Pipe?
     private var window: NSWindow?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        
-        menu = MacExtrasConfigurator(delegate: self)
-        process = DaemonProcess.init(path: self.executable, arguments: "", delegate: self)
-        start()
-    }
-    
-    func fetchArguments() -> String? {
-        let defaults = UserDefaults.standard
-        var a = defaults.string(forKey: defaultsArgumentsKey)
-        
-        if a == nil {
-            a = "-L socks5://:1080"
-        }
-        
-        return a
-    }
-    
-    func process(_: DaemonProcess, isRunning: Bool) {
-        if isRunning {
-            menu?.statusMenuItem.title = on
-            menu?.statusActionOnItem.isEnabled = false
-            menu?.statusActionOffItem.isEnabled = true
-            menu?.statusBarItem.button?.image = NSImage(
-                systemSymbolName: "network.badge.shield.half.filled",
-                accessibilityDescription: nil
-            )
-        } else {
-            menu?.statusMenuItem.title = off
-            menu?.statusActionOnItem.isEnabled = true
-            menu?.statusActionOffItem.isEnabled = false
-            menu?.statusBarItem.button?.image = NSImage(
-                systemSymbolName: "network",
-                accessibilityDescription: nil
-            )
-        }
+        self.logPipe = pipe()
+        self.menu = MacExtrasConfigurator(delegate: self)
+        self.start()
     }
     
     func applicationWillTerminate(_ notification: Notification) {
-        stop()
+        self.stop()
     }
     
     func settings() {
@@ -93,12 +60,80 @@ class AppDelegate: NSObject, NSApplicationDelegate, DaemonProcessDelegate {
     }
     
     func stop() {
-        process?.terminate()
+        gostStop()
+        
+        menu?.statusMenuItem.title = off
+        menu?.statusActionOnItem.isEnabled = true
+        menu?.statusActionOffItem.isEnabled = false
+        menu?.statusBarItem.button?.image = NSImage(
+            systemSymbolName: "network",
+            accessibilityDescription: nil
+        )
     }
     
     func start() {
-        let a = fetchArguments()
-        process?.setArguments(a!)
-        process?.launch()
+        let args: NSString = parseArguments(fetchArguments()) as NSString
+        var fd = self.logPipe?.fileHandleForWriting.fileDescriptor
+        let fdPtr = UnsafeMutablePointer<CLong>.allocate(capacity: 1)
+        withUnsafeMutablePointer(to: &fd, { (ptr: UnsafeMutablePointer<Int32?>) in
+            fdPtr.initialize(to: CLong(ptr.pointee!))
+        })
+        
+        gostRun(
+            UnsafeMutablePointer<CChar>(mutating: args.utf8String),
+            UnsafeMutablePointer<CLong>(mutating: fdPtr)
+        )
+        
+        menu?.statusMenuItem.title = on
+        menu?.statusActionOnItem.isEnabled = false
+        menu?.statusActionOffItem.isEnabled = true
+        menu?.statusBarItem.button?.image = NSImage(
+            systemSymbolName: "network.badge.shield.half.filled",
+            accessibilityDescription: nil
+        )
+    }
+    
+    private func parseArguments(_ v: String) -> String {
+        if !v.isEmpty {
+            var sep: CharacterSet = CharacterSet.whitespaces
+            sep = sep.union(CharacterSet.newlines)
+            return v.components(separatedBy: sep).filter { e in
+                return !e.isEmpty
+            }.joined(separator: " ")
+        } else {
+            return ""
+        }
+    }
+    
+    private func fetchArguments() -> String {
+        let defaults = UserDefaults.standard
+        var a = defaults.string(forKey: defaultsArgumentsKey)
+        
+        if a == nil {
+            a = "-L socks5://:1080"
+        }
+        
+        return a!
+    }
+    
+    private func pipe() -> Pipe {
+        let p = Pipe()
+        p.fileHandleForReading.readabilityHandler = { handle in
+            let data = handle.availableData
+            if data.count == 0 {
+                // No data available means EOF; we must unregister ourselves
+                // in order to not immediately be called again.
+                handle.readabilityHandler = nil
+                return
+            }
+
+            guard let str = String(data: data, encoding: .utf8) else {
+                // Non-UTF-8 data from Syncthing should never happen.
+                return
+            }
+
+            logger.log("\(str, privacy: .public)")
+        }
+        return p
     }
 }
