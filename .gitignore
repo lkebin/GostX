@@ -3,3 +3,6 @@ xcuserdata/
 build/*
 
 *.swp
+
+go/*.h
+go/*.a
