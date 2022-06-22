@@ -8,6 +8,7 @@
 import SwiftUI
 import os
 import Gost
+import UserNotifications
 
 let defaultsArgumentsKey = "arguments"
 let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "runtime")
@@ -81,10 +82,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let isFailed = gostRun(UnsafeMutablePointer<CChar>(mutating: args.utf8String),UnsafeMutablePointer<CLong>(mutating: fdPtr))
         if (isFailed != 0) {
-            let n = NSUserNotification()
-            n.title = "GostX service run failed! Please check logs for detail"
-            n.soundName = NSUserNotificationDefaultSoundName
-            NSUserNotificationCenter.default.deliver(n)
+            let n = UNMutableNotificationContent()
+            n.title = "GostX service run failed!"
+            n.subtitle = "Please check logs for details"
+            n.sound = UNNotificationSound.default
+            let request = UNNotificationRequest(identifier: UUID().uuidString, content: n, trigger: UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false))
+            UNUserNotificationCenter.current().add(request)
             return
         }
         
