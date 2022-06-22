@@ -71,18 +71,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
     }
     
-    func start() {
+    func start() -> () {
         let args: NSString = parseArguments(fetchArguments()) as NSString
         var fd = self.logPipe?.fileHandleForWriting.fileDescriptor
         let fdPtr = UnsafeMutablePointer<CLong>.allocate(capacity: 1)
         withUnsafeMutablePointer(to: &fd, { (ptr: UnsafeMutablePointer<Int32?>) in
             fdPtr.initialize(to: CLong(ptr.pointee!))
         })
-        
-        gostRun(
-            UnsafeMutablePointer<CChar>(mutating: args.utf8String),
-            UnsafeMutablePointer<CLong>(mutating: fdPtr)
-        )
+
+        let isFailed = gostRun(UnsafeMutablePointer<CChar>(mutating: args.utf8String),UnsafeMutablePointer<CLong>(mutating: fdPtr))
+        if (isFailed != 0) {
+            let n = NSUserNotification()
+            n.title = "GostX service run failed! Please check logs for detail"
+            n.soundName = NSUserNotificationDefaultSoundName
+            NSUserNotificationCenter.default.deliver(n)
+            return
+        }
         
         menu?.statusMenuItem.title = on
         menu?.statusActionOnItem.isEnabled = false

@@ -51,7 +51,7 @@ func gostStop() {
 }
 
 //export gostRun
-func gostRun(args *C.char, fd *C.long) {
+func gostRun(args *C.char, fd *C.long) int {
 	w := os.NewFile(uintptr(int64(*fd)), "")
 	// Using swift process pipe file descriptor for logger output
 	logger = NewLogger(w)
@@ -77,30 +77,35 @@ func gostRun(args *C.char, fd *C.long) {
 
 	if printVersion {
 		logger.Logf("gost %s (%s %s/%s)\n", gost.Version, runtime.Version(), runtime.GOOS, runtime.GOARCH)
-		os.Exit(0)
+		return 0
 	}
 
 	if configureFile != "" {
 		_, err := parseBaseConfig(configureFile)
 		if err != nil {
 			logger.Log(err)
-			os.Exit(1)
+			return 1
 		}
 	}
 
 	if fs.NFlag() == 0 {
 		fs.PrintDefaults()
-		os.Exit(0)
+		return 0
 	}
 
 	if baseCfg.Debug {
 		logger.Logf("Run gost with arguments: %s\n", C.GoString(args))
 	}
 
-	serve()
+	if err := serve(); err != nil {
+		logger.Log(err)
+		return 1
+	}
+
+	return 0
 }
 
-func serve() {
+func serve() error {
 	if pprofEnabled {
 		pprofServer = &http.Server{
 			Addr: pprofAddr,
@@ -112,7 +117,6 @@ func serve() {
 
 			if err := pprofServer.ListenAndServe(); err != nil {
 				logger.Log(err)
-				os.Exit(1)
 			}
 		}()
 	}
@@ -123,8 +127,7 @@ func serve() {
 		// generate random self-signed certificate.
 		cert, err := gost.GenCertificate()
 		if err != nil {
-			logger.Log(err)
-			os.Exit(1)
+			return err
 		}
 		tlsConfig = &tls.Config{
 			Certificates: []tls.Certificate{cert},
@@ -135,10 +138,7 @@ func serve() {
 
 	gost.DefaultTLSConfig = tlsConfig
 
-	if err := start(); err != nil {
-		logger.Log(err)
-		os.Exit(1)
-	}
+	return start()
 }
 
 func start() error {
