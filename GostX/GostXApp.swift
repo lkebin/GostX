@@ -34,8 +34,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: NSWindow?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        self.logPipe = pipe()
         self.menu = MacExtrasConfigurator(delegate: self)
+        self.logPipe = pipe()
         self.start()
     }
     
@@ -62,14 +62,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func stop() {
         gostStop()
-        
-        menu?.statusMenuItem.title = off
-        menu?.statusActionOnItem.isEnabled = true
-        menu?.statusActionOffItem.isEnabled = false
-        menu?.statusBarItem.button?.image = NSImage(
-            systemSymbolName: "network",
-            accessibilityDescription: nil
-        )
+        self.menu?.toOffState()
     }
     
     func start() -> () {
@@ -82,22 +75,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let isFailed = gostRun(UnsafeMutablePointer<CChar>(mutating: args.utf8String),UnsafeMutablePointer<CLong>(mutating: fdPtr))
         if (isFailed != 0) {
+            self.menu?.toOffState()
+            
             let n = UNMutableNotificationContent()
             n.title = "GostX service run failed!"
             n.subtitle = "Please check logs for details"
             n.sound = UNNotificationSound.default
             let request = UNNotificationRequest(identifier: UUID().uuidString, content: n, trigger: UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false))
             UNUserNotificationCenter.current().add(request)
+            
             return
         }
-        
-        menu?.statusMenuItem.title = on
-        menu?.statusActionOnItem.isEnabled = false
-        menu?.statusActionOffItem.isEnabled = true
-        menu?.statusBarItem.button?.image = NSImage(
-            systemSymbolName: "network.badge.shield.half.filled",
-            accessibilityDescription: nil
-        )
+
+        self.menu?.toOnState()
     }
     
     private func parseArguments(_ v: String) -> String {

@@ -27,34 +27,19 @@ var (
 )
 
 //export gostStop
-func gostStop() {
-
-	if pprofEnabled {
-		if pprofServer != nil {
-			pprofServer.Shutdown(context.Background())
-		}
-	}
-
-	for i := range routers {
-		logger.Log("stopping ", routers[i].node.Addr)
-
-		err := routers[i].Close()
-		if err != nil {
-			logger.Log(err)
-		}
-	}
-
-	// clean resources
-	routers = nil
-	baseCfg = &baseConfig{}
-	runtime.GC()
+func gostStop() int {
+	clean()
+	return 0
 }
 
 //export gostRun
 func gostRun(args *C.char, fd *C.long) int {
-	w := os.NewFile(uintptr(int64(*fd)), "")
-	// Using swift process pipe file descriptor for logger output
-	logger = NewLogger(w)
+	var w *os.File
+	if logger == nil {
+		w = os.NewFile(uintptr(int64(*fd)), "")
+		// Using swift process pipe file descriptor for logger output
+		logger = NewLogger(w)
+	}
 
 	gost.SetLogger(logger)
 
@@ -84,7 +69,7 @@ func gostRun(args *C.char, fd *C.long) int {
 		_, err := parseBaseConfig(configureFile)
 		if err != nil {
 			logger.Log(err)
-			return 1
+			goto Fail
 		}
 	}
 
@@ -99,10 +84,35 @@ func gostRun(args *C.char, fd *C.long) int {
 
 	if err := serve(); err != nil {
 		logger.Log(err)
-		return 1
+		goto Fail
 	}
 
 	return 0
+
+Fail:
+	clean()
+	return 1
+}
+
+func clean() {
+	if pprofEnabled {
+		if pprofServer != nil {
+			pprofServer.Shutdown(context.Background())
+		}
+	}
+
+	for i := range routers {
+		logger.Log("stopping ", routers[i].node.Addr)
+
+		err := routers[i].Close()
+		if err != nil {
+			logger.Log(err)
+		}
+	}
+
+	// clean resources
+	routers = nil
+	baseCfg = &baseConfig{}
 }
 
 func serve() error {

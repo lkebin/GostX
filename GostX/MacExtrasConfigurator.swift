@@ -108,4 +108,23 @@ class MacExtrasConfigurator: NSObject {
         delegate.start()
     }
     
+    public func toOffState() {
+        self.statusMenuItem.title = off
+        self.statusActionOnItem.isEnabled = true
+        self.statusActionOffItem.isEnabled = false
+        self.statusBarItem.button?.image = NSImage(
+            systemSymbolName: "network",
+            accessibilityDescription: nil
+        )
+    }
+    
+    public func toOnState() {
+        self.statusMenuItem.title = on
+        self.statusActionOnItem.isEnabled = false
+        self.statusActionOffItem.isEnabled = true
+        self.statusBarItem.button?.image = NSImage(
+            systemSymbolName: "network.badge.shield.half.filled",
+            accessibilityDescription: nil
+        )
+    }
 }
