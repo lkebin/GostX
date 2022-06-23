@@ -60,4 +60,3 @@ require (
 )
 
 // replace github.com/ginuerzh/gost v0.0.0-20220501124933-0247b941ac31 => github.com/lkebin/gost v0.0.0-20220608034203-9ce9d34fe52d
-replace github.com/ginuerzh/gost v0.0.0-20220501124933-0247b941ac31 => ../../../src/gost
