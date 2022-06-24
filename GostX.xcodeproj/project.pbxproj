@@ -14,6 +14,7 @@
 		B532A686285B528D00159BAC /* GostXUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B532A685285B528D00159BAC /* GostXUITests.swift */; };
 		B532A688285B528D00159BAC /* GostXUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B532A687285B528D00159BAC /* GostXUITestsLaunchTests.swift */; };
 		B5AEDDB12864920800C09ED6 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5AEDDB02864920800C09ED6 /* AppDelegate.swift */; };
+		B5AEDDB32864A4AF00C09ED6 /* SystemProxyHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5AEDDB22864A4AF00C09ED6 /* SystemProxyHelper.swift */; };
 		B5AF722D28634A6500BB5F98 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B5AF722C28634A6500BB5F98 /* UserNotifications.framework */; };
 		B5B0E074285B62B80035A6F2 /* MacExtrasConfigurator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B0E073285B62B80035A6F2 /* MacExtrasConfigurator.swift */; };
 		B5B0E07A285C63080035A6F2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B0E079285C63080035A6F2 /* SettingsView.swift */; };
@@ -48,6 +49,7 @@
 		B532A685285B528D00159BAC /* GostXUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GostXUITests.swift; sourceTree = "<group>"; };
 		B532A687285B528D00159BAC /* GostXUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GostXUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		B5AEDDB02864920800C09ED6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		B5AEDDB22864A4AF00C09ED6 /* SystemProxyHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemProxyHelper.swift; sourceTree = "<group>"; };
 		B5AF722C28634A6500BB5F98 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		B5B0E073285B62B80035A6F2 /* MacExtrasConfigurator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacExtrasConfigurator.swift; sourceTree = "<group>"; };
 		B5B0E079285C63080035A6F2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -110,6 +112,7 @@
 				B5B0E073285B62B80035A6F2 /* MacExtrasConfigurator.swift */,
 				B5B0E079285C63080035A6F2 /* SettingsView.swift */,
 				B5AEDDB02864920800C09ED6 /* AppDelegate.swift */,
+				B5AEDDB22864A4AF00C09ED6 /* SystemProxyHelper.swift */,
 			);
 			path = GostX;
 			sourceTree = "<group>";
@@ -298,6 +301,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B5AEDDB32864A4AF00C09ED6 /* SystemProxyHelper.swift in Sources */,
 				B5AEDDB12864920800C09ED6 /* AppDelegate.swift in Sources */,
 				B5B0E07A285C63080035A6F2 /* SettingsView.swift in Sources */,
 				B5B0E074285B62B80035A6F2 /* MacExtrasConfigurator.swift in Sources */,
