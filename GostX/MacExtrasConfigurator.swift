@@ -19,6 +19,7 @@ class MacExtrasConfigurator: NSObject {
     public var statusMenuItem: NSMenuItem
     public var statusActionOnItem: NSMenuItem
     public var statusActionOffItem: NSMenuItem
+    private var sysProxyHelper: SystemProxyHelper
     
     // MARK: - Lifecycle
     
@@ -30,7 +31,8 @@ class MacExtrasConfigurator: NSObject {
         self.statusMenuItem = NSMenuItem()
         self.statusActionOnItem = NSMenuItem()
         self.statusActionOffItem = NSMenuItem()
-        
+        self.sysProxyHelper = SystemProxyHelper(delegate: delegate)
+
         super.init()
         
         self.createMenu()
@@ -68,6 +70,33 @@ class MacExtrasConfigurator: NSObject {
             
             mainMenu.addItem(.separator())
             
+            // System Proxy
+            let proxyGlobalMenuItem = NSMenuItem()
+            proxyGlobalMenuItem.title = "Global"
+            proxyGlobalMenuItem.keyEquivalent = "g"
+            proxyGlobalMenuItem.keyEquivalentModifierMask = .command
+            proxyGlobalMenuItem.target = self
+            proxyGlobalMenuItem.action = #selector(Self.onProxyGlobalClick(_:))
+            mainMenu.addItem(proxyGlobalMenuItem)
+            
+            let proxyManualMenuItem = NSMenuItem()
+            proxyManualMenuItem.title = "Manual"
+            proxyManualMenuItem.keyEquivalent = "m"
+            proxyManualMenuItem.keyEquivalentModifierMask = .command
+            proxyManualMenuItem.target = self
+            proxyManualMenuItem.action = #selector(Self.onProxyManualClick(_:))
+            mainMenu.addItem(proxyManualMenuItem)
+            
+            let proxyAutoMenuItem = NSMenuItem()
+            proxyAutoMenuItem.title = "☑️ Auto"
+            proxyAutoMenuItem.keyEquivalent = "a"
+            proxyAutoMenuItem.keyEquivalentModifierMask = .command
+            proxyAutoMenuItem.target = self
+            proxyAutoMenuItem.action = #selector(Self.onProxyManualClick(_:))
+            mainMenu.addItem(proxyAutoMenuItem)
+            
+            mainMenu.addItem(.separator())
+            
             let configMenuItem = NSMenuItem()
             configMenuItem.title = "Preferences..."
             configMenuItem.keyEquivalent = ","
@@ -91,6 +120,14 @@ class MacExtrasConfigurator: NSObject {
     }
     
     // MARK: - Actions
+    
+    @objc private func onProxyGlobalClick(_ sender: Any?) {
+        self.sysProxyHelper.socksProxySet(enabled: true)
+    }
+    
+    @objc private func onProxyManualClick(_ sender: Any?) {
+        self.sysProxyHelper.socksProxySet(enabled: false)
+    }
     
     @objc private func onConfigClick(_ sender: Any?) {
         delegate.settings()

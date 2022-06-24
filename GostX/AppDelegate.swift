@@ -18,6 +18,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var executable: String = "\(Bundle.main.resourcePath!)/gost/gost"
     private var logPipe: Pipe?
     private var window: NSWindow?
+    private var sysProxyHelper: SystemProxyHelper?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         self.menu = MacExtrasConfigurator(delegate: self)
