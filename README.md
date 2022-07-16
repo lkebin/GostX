@@ -2,6 +2,6 @@
 
 A GUI app of [gost](https://github.com/ginuerzh/gost) for macOS
 
-# Features
+## Features
 
 Nothing more than original gost
