@@ -19,7 +19,7 @@ struct SettingsView: View {
                 }
                 .tag(Tabs.general)
         }
-        .padding(20)
+        .padding(5)
     }
 }
 
@@ -45,6 +45,7 @@ struct GeneralSettingsView: View {
                     .frame(minWidth: 350, minHeight: 200, alignment: .leading)
             }
         }
+        
         .padding(5)
     }
 }
