@@ -37,6 +37,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             window?.contentView = NSHostingView(rootView: SettingsView())
             window?.center()
             window?.styleMask.insert(.closable)
+            window?.styleMask.insert(.resizable)
         }
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(self)
@@ -53,6 +54,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func start() -> () {
         let args: NSString = parseArguments(fetchArguments()) as NSString
+        print(args)
         var fd = self.logPipe?.fileHandleForWriting.fileDescriptor
         let fdPtr = UnsafeMutablePointer<CLong>.allocate(capacity: 1)
         withUnsafeMutablePointer(to: &fd, { (ptr: UnsafeMutablePointer<Int32?>) in
@@ -78,10 +80,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private func parseArguments(_ v: String) -> String {
         if !v.isEmpty {
-            var sep: CharacterSet = CharacterSet.whitespaces
-            sep = sep.union(CharacterSet.newlines)
-            return v.components(separatedBy: sep).filter { e in
-                return !e.isEmpty
+            return v.components(separatedBy: CharacterSet.newlines).filter { e in
+                return !e.isEmpty && !e.hasPrefix("#")
+            }.map{ e in
+                return e.trimmingCharacters(in: CharacterSet.whitespaces)
             }.joined(separator: " ")
         } else {
             return ""

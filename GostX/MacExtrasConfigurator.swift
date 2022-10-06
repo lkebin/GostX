@@ -19,6 +19,7 @@ class MacExtrasConfigurator: NSObject {
     public var statusMenuItem: NSMenuItem
     public var statusActionOnItem: NSMenuItem
     public var statusActionOffItem: NSMenuItem
+    public var statusActionRestartItem: NSMenuItem
     
     // MARK: - Lifecycle
     
@@ -30,6 +31,7 @@ class MacExtrasConfigurator: NSObject {
         self.statusMenuItem = NSMenuItem()
         self.statusActionOnItem = NSMenuItem()
         self.statusActionOffItem = NSMenuItem()
+        self.statusActionRestartItem = NSMenuItem()
         
         super.init()
         
@@ -63,6 +65,11 @@ class MacExtrasConfigurator: NSObject {
             statusActionOffItem.target = self
             statusActionOffItem.action = #selector(Self.onStopClick(_:))
             statusSubMenu.addItem(statusActionOffItem)
+            
+            statusActionRestartItem.title = "Restart"
+            statusActionRestartItem.target = self
+            statusActionRestartItem.action = #selector(Self.onRestartClick(_:))
+            statusSubMenu.addItem(statusActionRestartItem)
             
             mainMenu.setSubmenu(statusSubMenu, for: statusMenuItem)
             
@@ -108,10 +115,16 @@ class MacExtrasConfigurator: NSObject {
         delegate.start()
     }
     
+    @objc private func onRestartClick(_ sender: Any?) {
+        delegate.stop()
+        delegate.start()
+    }
+    
     public func toOffState() {
         self.statusMenuItem.title = off
         self.statusActionOnItem.isEnabled = true
         self.statusActionOffItem.isEnabled = false
+        self.statusActionRestartItem.isEnabled = false
         self.statusBarItem.button?.image = NSImage(
             systemSymbolName: "network",
             accessibilityDescription: nil
@@ -122,6 +135,7 @@ class MacExtrasConfigurator: NSObject {
         self.statusMenuItem.title = on
         self.statusActionOnItem.isEnabled = false
         self.statusActionOffItem.isEnabled = true
+        self.statusActionRestartItem.isEnabled = true
         self.statusBarItem.button?.image = NSImage(
             systemSymbolName: "network.badge.shield.half.filled",
             accessibilityDescription: nil
