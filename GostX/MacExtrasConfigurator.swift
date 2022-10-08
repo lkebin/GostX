@@ -20,6 +20,7 @@ class MacExtrasConfigurator: NSObject {
     public var statusActionOnItem: NSMenuItem
     public var statusActionOffItem: NSMenuItem
     public var statusActionRestartItem: NSMenuItem
+    public var statusListenItem: NSMenuItem
     
     // MARK: - Lifecycle
     
@@ -32,6 +33,7 @@ class MacExtrasConfigurator: NSObject {
         self.statusActionOnItem = NSMenuItem()
         self.statusActionOffItem = NSMenuItem()
         self.statusActionRestartItem = NSMenuItem()
+        self.statusListenItem = NSMenuItem()
         
         super.init()
         
@@ -72,6 +74,11 @@ class MacExtrasConfigurator: NSObject {
             statusSubMenu.addItem(statusActionRestartItem)
             
             mainMenu.setSubmenu(statusSubMenu, for: statusMenuItem)
+            
+            statusListenItem.title = "✈️"
+            statusListenItem.isEnabled = false;
+            statusListenItem.isHidden = true;
+            mainMenu.addItem(statusListenItem)
             
             mainMenu.addItem(.separator())
             
@@ -129,6 +136,15 @@ class MacExtrasConfigurator: NSObject {
             systemSymbolName: "network",
             accessibilityDescription: nil
         )
+    }
+    
+    public func updateListen(_ listen: String?) {
+        if listen == nil {
+            statusListenItem.isHidden = true
+            return
+        }
+        statusListenItem.isHidden = false
+        statusListenItem.title = "✈️ \(listen!)"
     }
     
     public func toOnState() {

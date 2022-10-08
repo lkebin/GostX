@@ -1,5 +1,6 @@
 package main
 
+// #include <stdio.h>
 import "C"
 
 import (
@@ -25,6 +26,18 @@ var (
 	pprofEnabled  = os.Getenv("PROFILING") != ""
 	pprofServer   *http.Server
 )
+
+//export gostInfo
+func gostInfo() *C.char {
+	var i string
+	for k, v := range routers {
+		if k > 0 {
+			i += ","
+		}
+		i += v.node.String()
+	}
+	return C.CString(i)
+}
 
 //export gostStop
 func gostStop() int {
