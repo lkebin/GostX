@@ -49,12 +49,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func stop() {
         gostStop()
+        self.menu?.updateListen(nil)
         self.menu?.toOffState()
     }
     
     func start() -> () {
         let args: NSString = parseArguments(fetchArguments()) as NSString
-        print(args)
         var fd = self.logPipe?.fileHandleForWriting.fileDescriptor
         let fdPtr = UnsafeMutablePointer<CLong>.allocate(capacity: 1)
         withUnsafeMutablePointer(to: &fd, { (ptr: UnsafeMutablePointer<Int32?>) in
@@ -74,7 +74,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             return
         }
-
+        
+        self.menu?.updateListen(String(cString:gostInfo()))
         self.menu?.toOnState()
     }
     
