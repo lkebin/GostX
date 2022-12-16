@@ -29,6 +29,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.stop()
     }
     
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        NSApp.setActivationPolicy(.accessory)
+        
+        return false
+    }
+    
     func quit() {
         NSApp.terminate(self)
     }

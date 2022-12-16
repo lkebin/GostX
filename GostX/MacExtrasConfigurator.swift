@@ -108,6 +108,8 @@ class MacExtrasConfigurator: NSObject {
     
     @objc private func onConfigClick(_ sender: Any?) {
         NSApp.activate(ignoringOtherApps: true)
+        NSApp.setActivationPolicy(.regular)
+        
         if #available(macOS 13.0, *) {
             NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
         } else {
