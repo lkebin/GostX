@@ -44,8 +44,12 @@ struct GeneralSettingsView: View {
                     .font(Font.system(size: 12))
                     .frame(minWidth: 350, minHeight: 200, alignment: .leading)
             }
+            
+            Text("Note: value saved automatically, line of start with # symbol is ignored.")
+                .padding(.horizontal, 5)
+                .font(Font.system(size:12))
+                .foregroundColor(.gray)
         }
-        
         .padding(5)
     }
 }

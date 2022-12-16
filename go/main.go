@@ -1,6 +1,9 @@
 package main
 
 // #include <stdio.h>
+// struct info {
+//     char* listen;
+// };
 import "C"
 
 import (
@@ -12,6 +15,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"unsafe"
 
 	_ "net/http/pprof"
 
@@ -28,15 +32,17 @@ var (
 )
 
 //export gostInfo
-func gostInfo() *C.char {
+func gostInfo() *C.struct_info {
 	var i string
+	s := (*C.struct_info)(C.malloc(C.size_t(unsafe.Sizeof(C.struct_info{}))))
 	for k, v := range routers {
 		if k > 0 {
-			i += ","
+			i += ";"
 		}
 		i += v.node.String()
 	}
-	return C.CString(i)
+	s.listen = C.CString(i)
+	return s
 }
 
 //export gostStop
