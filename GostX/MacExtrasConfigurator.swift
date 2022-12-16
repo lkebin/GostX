@@ -107,7 +107,12 @@ class MacExtrasConfigurator: NSObject {
     // MARK: - Actions
     
     @objc private func onConfigClick(_ sender: Any?) {
-        delegate.settings()
+        NSApp.activate(ignoringOtherApps: true)
+        if #available(macOS 13.0, *) {
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        } else {
+            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        }
     }
     
     @objc private func onQuitClick(_ sender: Any?) {

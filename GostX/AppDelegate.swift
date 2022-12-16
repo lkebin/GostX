@@ -29,20 +29,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.stop()
     }
     
-    func settings() {
-        if window == nil {
-            window = NSWindow()
-            window?.isReleasedWhenClosed = false
-            window?.toolbarStyle = .unifiedCompact
-            window?.contentView = NSHostingView(rootView: SettingsView())
-            window?.center()
-            window?.styleMask.insert(.closable)
-            window?.styleMask.insert(.resizable)
-        }
-        NSApp.activate(ignoringOtherApps: true)
-        window?.makeKeyAndOrderFront(self)
-    }
-    
     func quit() {
         NSApp.terminate(self)
     }
@@ -75,8 +61,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         
-        self.menu?.updateListen(String(cString:gostInfo()))
+        let i: UnsafeMutablePointer<info>? = gostInfo();
+        self.menu?.updateListen(String(cString:i!.pointee.listen))
         self.menu?.toOnState()
+        free(i)
     }
     
     private func parseArguments(_ v: String) -> String {
