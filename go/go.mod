@@ -1,13 +1,15 @@
-module gost
+module libgost
 
 go 1.18
 
 require (
+	github.com/cretz/bine v0.0.0-00010101000000-000000000000
 	github.com/ginuerzh/gost v0.0.0-20220501124933-0247b941ac31
 	github.com/go-log/log v0.2.0
 )
 
 require (
+	filippo.io/edwards25519 v1.0.0-rc.1.0.20210721174708-390f27c3be20 // indirect
 	git.torproject.org/pluggable-transports/goptlib.git v1.2.0 // indirect
 	github.com/LiamHaworth/go-tproxy v0.0.0-20190726054950-ef7efd7f24ed // indirect
 	github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da // indirect
@@ -15,8 +17,7 @@ require (
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/coreos/go-iptables v0.6.0 // indirect
 	github.com/dchest/siphash v1.2.2 // indirect
-	github.com/docker/libcontainer v2.2.1+incompatible // indirect
-	github.com/fsnotify/fsnotify v1.5.1 // indirect
+	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/go-gost/gosocks4 v0.0.1 // indirect
 	github.com/go-gost/gosocks5 v0.3.0 // indirect
 	github.com/go-gost/relay v0.1.1-0.20211123134818-8ef7fd81ffd7 // indirect
@@ -28,12 +29,12 @@ require (
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/klauspost/reedsolomon v1.9.15 // indirect
-	github.com/lucas-clemente/quic-go v0.26.0 // indirect
+	github.com/lucas-clemente/quic-go v0.28.1 // indirect
 	github.com/marten-seemann/qtls-go1-16 v0.1.5 // indirect
-	github.com/marten-seemann/qtls-go1-17 v0.1.1 // indirect
-	github.com/marten-seemann/qtls-go1-18 v0.1.1 // indirect
+	github.com/marten-seemann/qtls-go1-17 v0.1.2 // indirect
+	github.com/marten-seemann/qtls-go1-18 v0.1.2 // indirect
+	github.com/marten-seemann/qtls-go1-19 v0.1.0 // indirect
 	github.com/miekg/dns v1.1.47 // indirect
-	github.com/milosgajdos/tenus v0.0.3 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -48,15 +49,17 @@ require (
 	github.com/xtaci/kcp-go/v5 v5.6.1 // indirect
 	github.com/xtaci/smux v1.5.16 // indirect
 	github.com/xtaci/tcpraw v1.2.25 // indirect
-	gitlab.com/yawning/obfs4.git v0.0.0-20210511220700-e330d1b7024b // indirect
-	golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064 // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
-	golang.org/x/net v0.0.0-20220325170049-de3da57026de // indirect
-	golang.org/x/sys v0.0.0-20220325203850-36772127a21f // indirect
+	gitlab.com/yawning/edwards25519-extra.git v0.0.0-20211229043746-2f91fcc9fbdb // indirect
+	gitlab.com/yawning/obfs4.git v0.0.0-20220204003609-77af0cba934d // indirect
+	golang.org/x/crypto v0.0.0-20220817201139-bc19a97f63c8 // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
+	golang.org/x/net v0.0.0-20220812174116-3211cb980234 // indirect
+	golang.org/x/sys v0.0.0-20220817070843-5a390386f1f2 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/tools v0.1.10 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	golang.org/x/tools v0.1.12 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 )
 
-// replace github.com/ginuerzh/gost v0.0.0-20220501124933-0247b941ac31 => github.com/lkebin/gost v0.0.0-20220608034203-9ce9d34fe52d
+replace github.com/cretz/bine => ./bine
+
+replace github.com/ginuerzh/gost => ./gost

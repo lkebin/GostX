@@ -1,9 +1,11 @@
 package main
 
-// #include <stdio.h>
-// struct info {
-//     char* listen;
-// };
+/*
+#include <stdio.h>
+struct info {
+    char* listen;
+};
+*/
 import "C"
 
 import (
@@ -177,6 +179,7 @@ func start() error {
 	if err != nil {
 		return err
 	}
+
 	routers = append(routers, rts...)
 
 	for _, route := range baseCfg.Routes {
@@ -190,6 +193,7 @@ func start() error {
 	if len(routers) == 0 {
 		return errors.New("invalid config")
 	}
+
 	for i := range routers {
 		go routers[i].Serve()
 	}
