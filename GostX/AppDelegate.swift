@@ -47,6 +47,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func start() -> () {
         let args: NSString = parseArguments(fetchArguments()) as NSString
+        /* var fd: Int32? = 1 */ 
         var fd = self.logPipe?.fileHandleForWriting.fileDescriptor
         let fdPtr = UnsafeMutablePointer<CLong>.allocate(capacity: 1)
         withUnsafeMutablePointer(to: &fd, { (ptr: UnsafeMutablePointer<Int32?>) in
@@ -56,13 +57,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let isFailed = gostRun(UnsafeMutablePointer<CChar>(mutating: args.utf8String),UnsafeMutablePointer<CLong>(mutating: fdPtr))
         if (isFailed != 0) {
             self.menu?.toOffState()
-            
-            let n = UNMutableNotificationContent()
-            n.title = "GostX service run failed!"
-            n.subtitle = "Please check logs for details"
-            n.sound = UNNotificationSound.default
-            let request = UNNotificationRequest(identifier: UUID().uuidString, content: n, trigger: UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false))
-            UNUserNotificationCenter.current().add(request)
+            // sometimes, if pass two or more same -L option value causes gost run faild,
+            // but gost already started one service, so call stop to close that one
+            stop()
             
             return
         }

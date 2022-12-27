@@ -4,4 +4,5 @@ A GUI app of [gost](https://github.com/ginuerzh/gost) for macOS
 
 ## Features
 
-Nothing more than original gost
+- Include all features of original gost
+- [Tor](https://torproject.org)
