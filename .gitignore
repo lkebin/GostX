@@ -6,3 +6,4 @@ build/*
 
 go/*.h
 go/*.a
+go/build/

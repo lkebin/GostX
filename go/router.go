@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/ginuerzh/gost"
-	"github.com/go-log/log"
 )
 
 type stringList []string
@@ -377,10 +376,15 @@ func (r *route) GenRouters() ([]router, error) {
 				node.User = users[0]
 			}
 		}
+
+		tlsCfg := gost.DefaultTLSConfig
+
 		certFile, keyFile := node.Get("cert"), node.Get("key")
-		tlsCfg, err := tlsConfig(certFile, keyFile, node.Get("ca"))
-		if err != nil && certFile != "" && keyFile != "" {
-			return nil, err
+		if len(certFile) > 0 && len(keyFile) > 0 {
+			tlsCfg, err = tlsConfig(certFile, keyFile, node.Get("ca"))
+			if err != nil && certFile != "" && keyFile != "" {
+				return nil, err
+			}
 		}
 
 		wsOpts := &gost.WSOptions{}
@@ -549,6 +553,8 @@ func (r *route) GenRouters() ([]router, error) {
 				Backlog:   node.GetInt("backlog"),
 				QueueSize: node.GetInt("queue"),
 			})
+		case "tor":
+			ln = nil
 		default:
 			ln, err = gost.TCPListener(node.Addr)
 		}
@@ -594,6 +600,8 @@ func (r *route) GenRouters() ([]router, error) {
 			handler = gost.DNSHandler(node.Remote)
 		case "relay":
 			handler = gost.RelayHandler(node.Remote)
+		case "tor":
+			handler = gost.AutoHandler()
 		default:
 			// start from 2.5, if remote is not empty, then we assume that it is a forward tunnel.
 			if node.Remote != "" {
@@ -630,37 +638,48 @@ func (r *route) GenRouters() ([]router, error) {
 			)
 		}
 
-		handler.Init(
-			gost.AddrHandlerOption(ln.Addr().String()),
-			gost.ChainHandlerOption(chain),
-			gost.UsersHandlerOption(node.User),
-			gost.AuthenticatorHandlerOption(authenticator),
-			gost.TLSConfigHandlerOption(tlsCfg),
-			gost.WhitelistHandlerOption(whitelist),
-			gost.BlacklistHandlerOption(blacklist),
-			gost.StrategyHandlerOption(gost.NewStrategy(node.Get("strategy"))),
-			gost.MaxFailsHandlerOption(node.GetInt("max_fails")),
-			gost.FailTimeoutHandlerOption(node.GetDuration("fail_timeout")),
-			gost.BypassHandlerOption(node.Bypass),
-			gost.ResolverHandlerOption(resolver),
-			gost.HostsHandlerOption(hosts),
-			gost.RetryHandlerOption(node.GetInt("retry")), // override the global retry option.
-			gost.TimeoutHandlerOption(timeout),
-			gost.ProbeResistHandlerOption(node.Get("probe_resist")),
-			gost.KnockingHandlerOption(node.Get("knock")),
-			gost.NodeHandlerOption(node),
-			gost.IPsHandlerOption(ips),
-			gost.TCPModeHandlerOption(node.GetBool("tcp")),
-			gost.IPRoutesHandlerOption(tunRoutes...),
-		)
-
-		rt := router{
-			node:     node,
-			server:   &gost.Server{Listener: ln},
-			handler:  handler,
-			chain:    chain,
-			resolver: resolver,
-			hosts:    hosts,
+		var rt router
+		if node.Protocol == "tor" {
+			rt = router{
+				node:     node,
+				server:   &torServer{node: node, logWriter: logger.logger.Writer()},
+				handler:  handler,
+				chain:    chain,
+				resolver: resolver,
+				hosts:    hosts,
+			}
+		} else {
+			handler.Init(
+				gost.AddrHandlerOption(ln.Addr().String()),
+				gost.ChainHandlerOption(chain),
+				gost.UsersHandlerOption(node.User),
+				gost.AuthenticatorHandlerOption(authenticator),
+				gost.TLSConfigHandlerOption(tlsCfg),
+				gost.WhitelistHandlerOption(whitelist),
+				gost.BlacklistHandlerOption(blacklist),
+				gost.StrategyHandlerOption(gost.NewStrategy(node.Get("strategy"))),
+				gost.MaxFailsHandlerOption(node.GetInt("max_fails")),
+				gost.FailTimeoutHandlerOption(node.GetDuration("fail_timeout")),
+				gost.BypassHandlerOption(node.Bypass),
+				gost.ResolverHandlerOption(resolver),
+				gost.HostsHandlerOption(hosts),
+				gost.RetryHandlerOption(node.GetInt("retry")), // override the global retry option.
+				gost.TimeoutHandlerOption(timeout),
+				gost.ProbeResistHandlerOption(node.Get("probe_resist")),
+				gost.KnockingHandlerOption(node.Get("knock")),
+				gost.NodeHandlerOption(node),
+				gost.IPsHandlerOption(ips),
+				gost.TCPModeHandlerOption(node.GetBool("tcp")),
+				gost.IPRoutesHandlerOption(tunRoutes...),
+			)
+			rt = router{
+				node:     node,
+				server:   &gost.Server{Listener: ln},
+				handler:  handler,
+				chain:    chain,
+				resolver: resolver,
+				hosts:    hosts,
+			}
 		}
 		rts = append(rts, rt)
 	}
@@ -670,7 +689,7 @@ func (r *route) GenRouters() ([]router, error) {
 
 type router struct {
 	node     gost.Node
-	server   *gost.Server
+	server   GostServer
 	handler  gost.Handler
 	chain    *gost.Chain
 	resolver gost.Resolver
@@ -678,7 +697,7 @@ type router struct {
 }
 
 func (r *router) Serve() error {
-	log.Logf("%s on %s", r.node.String(), r.server.Addr())
+	logger.Logf("%s on %s", r.node.String(), r.server.Addr())
 	return r.server.Serve(r.handler)
 }
 
