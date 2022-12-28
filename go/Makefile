@@ -49,8 +49,10 @@ build/tor-static: build/tor-static/arm64 build/tor-static/amd64
 
 build/tor-static/arm64: build/go
 	rm -rf build/tor-static/arm64 && mkdir -p build/tor-static/arm64 && cp -r tor-static/ build/tor-static/arm64/
-	cd build/tor-static/arm64 \
-		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 $(GO) run build.go -verbose build-all
+	cd build/tor-static/arm64/libevent \
+		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./autogen.sh \
+		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./configure --prefix=${PWD}/dist --disable-shared --enable-static --with-pic --disable-samples --disable-libevent-regress CPPFLAGS=-I../openssl/dist/include LDFLAGS=-L../openssl/dist/lib --build=arm4-apple-macos11 
+		# && CFLAGS="-target arm64-apple-macos11" ARCH=arm64 $(GO) run build.go -verbose build-all
 
 build/tor-static/amd64: build/go
 	rm -rf build/tor-static/amd64 && mkdir -p build/tor-static/amd64 && cp -r tor-static/ build/tor-static/amd64/
