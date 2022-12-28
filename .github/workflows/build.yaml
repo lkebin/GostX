@@ -13,4 +13,5 @@ jobs:
 
       - name: Make
         run: |
+          echo 'Doing make'
           make
