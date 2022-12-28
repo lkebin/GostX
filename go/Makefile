@@ -65,7 +65,8 @@ ifeq ($(ARCH),arm64)
 	[ -f build/go.tar.gz ] || curl "https://dl.google.com/go/go1.18.darwin-arm64.tar.gz" --output build/go.tar.gz
 endif
 	cd build \
-		&& tar -zxf go.tar.gz
+		&& tar -zxf go.tar.gz \
+		&& $(GO) version
 
 build:
 	[ -d build ] || mkdir build
