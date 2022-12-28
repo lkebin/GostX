@@ -15,5 +15,5 @@ jobs:
 
       - name: Make
         run: |
-          echo 'Doing make'
+          brew install automake
           make
