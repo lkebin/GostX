@@ -50,12 +50,12 @@ build/tor-static: build/tor-static/arm64 build/tor-static/amd64
 build/tor-static/arm64: build/go
 	rm -rf build/tor-static/arm64 && mkdir -p build/tor-static/arm64 && cp -r tor-static/ build/tor-static/arm64/
 	cd build/tor-static/arm64/openssl \
-		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 perl ./Configure --prefix=${PWD}/dist --openssldir=${PWD}/dist no-shared no-dso no-zlib darwin64-arm64-cc \
+		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 perl ./Configure --prefix=$${PWD}/dist --openssldir=$${PWD}/dist no-shared no-dso no-zlib darwin64-arm64-cc \
 		&& make \
 		&& make install
 	cd build/tor-static/arm64/libevent \
 		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./autogen.sh \
-		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./configure --prefix=${PWD}/dist --disable-shared --enable-static --with-pic --disable-samples --disable-libevent-regress CPPFLAGS=-I../openssl/dist/include LDFLAGS=-L../openssl/dist/lib --host=arm64-apple-macos11 \
+		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./configure --prefix=$${PWD}/dist --disable-shared --enable-static --with-pic --disable-samples --disable-libevent-regress CPPFLAGS=-I../openssl/dist/include LDFLAGS=-L../openssl/dist/lib --host=arm64-apple-macos11 \
 		&& make \
 		&& make install
 		# && CFLAGS="-target arm64-apple-macos11" ARCH=arm64 $(GO) run build.go -verbose build-all
