@@ -18,13 +18,13 @@ jobs:
         run: |
           brew install automake
           make
-          tar -zcf GostX.app.tar.gz build/Debug/GostX.app
-          shasum -a 256 GostX.app.tar.gz > GostX.app.tar.gz.checksum
+          make debug-dmg
+          shasum -a 256 build/Debug/GostX.dmg > build/Debug/GostX.dmg.checksum
 
       - name: Archive
         uses: actions/upload-artifact@v3
         with:
           name: GostX
           path: |
-            GostX.app.tar.gz
-            GostX.app.tar.gz.checksum
+            build/Debug/GostX.dmg
+            build/Debug/GostX.dmg.checksum

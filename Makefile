@@ -15,15 +15,17 @@ debug: go/libgost.a
 release: go/libgost.a
 	xcodebuild OTHER_LDFLAGS="$(OTHER_LDFLAGS)" -project GostX.xcodeproj -target GostX -configuration Release 
 
-.PHONY: dmg
-dmg:
-	# xcodebuild will create GostX.app under build/Release folder
-	rm -rf build/Release/GostX/
-	mkdir build/Release/GostX
-	cp -r build/Release/GostX.app build/Release/GostX/
-	ln -s /Applications build/Release/GostX/Applications
-	hdiutil create build/Release/GostX.dmg -ov -volname "GostX" -fs HFS+ -srcfolder build/Release/GostX/
-	rm -rf build/Release/GostX/
+.PHONY: debug-dmg release-dmg
+debug-dmg release-dmg: TARGET = $(subst -dmg,,$@)
+debug-dmg release-dmg:
+	# xcodebuild will create GostX.app under build folder
+	t="$(TARGET)" && t="`tr '[:lower:]' '[:upper:]' <<< $${t:0:1}`$${t:1}" \
+	  && rm -rf build/$${t}/GostX/ \
+	  && mkdir build/$${t}/GostX \
+	  && cp -r build/$${t}/GostX.app build/$${t}/GostX/ \
+	  && ln -s /Applications build/$${t}/GostX/Applications \
+	  && hdiutil create build/$${t}/GostX.dmg -ov -volname "GostX" -fs HFS+ -srcfolder build/$${t}/GostX/ \
+	  && rm -rf build/$${t}/GostX/
 
 go/libgost.a:
 	cd go && $(MAKE)
