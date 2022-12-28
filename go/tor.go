@@ -26,7 +26,7 @@ func (s *torServer) Init(opts ...gost.ServerOption) {}
 func (s *torServer) Serve(h gost.Handler, opts ...gost.ServerOption) error {
 	t, err := tor.Start(nil, &tor.StartConf{
 		ProcessCreator:    embedded.NewCreator(),
-		EnableNetwork:     true,
+		EnableNetwork:     false,
 		NoAutoSocksPort:   true,
 		RetainTempDataDir: false,
 		DebugWriter:       s.logWriter,
@@ -47,7 +47,7 @@ func (s *torServer) Serve(h gost.Handler, opts ...gost.ServerOption) error {
 
 	s.tor = t
 
-	return nil
+	return t.EnableNetwork(nil, false)
 }
 
 func (s *torServer) Close() error {
