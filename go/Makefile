@@ -1,7 +1,5 @@
-GO_ARM64_ROOT := ${PWD}/build/go-arm64
-GO_AMD64_ROOT := ${PWD}/build/go-amd64
-GO_ARM64 := $(GO_ARM64_ROOT)/bin/go
-GO_AMD64 := $(GO_AMD64_ROOT)/bin/go
+GO := ${PWD}/build/go/bin/go
+ARCH := $(shell uname -m)
 
 .PHONY: all
 all: libgost_arm64.a libgost_amd64.a
@@ -10,10 +8,10 @@ all: libgost_arm64.a libgost_amd64.a
 	rm -rf libgost_arm64.* libgost_amd64.*
 
 libgost_arm64.a: build/tor-static
-	GOROOT=$(GO_ARM64_ROOT) CGO_CFLAGS="-mmacosx-version-min=11.0" GOARCH=arm64 arch -arm64 $(GO_ARM64) build --buildmode=c-archive -trimpath --ldflags="-s -w" -o libgost_arm64.a
+	CGO_CFLAGS="-mmacosx-version-min=11.0" CGO_ENABLED=1 GOARCH=arm64 $(GO) build --buildmode=c-archive -trimpath --ldflags="-s -w" -o libgost_arm64.a
 
 libgost_amd64.a: build/tor-static
-	GOROOT=$(GO_AMD64_ROOT) CGO_CFLAGS="-mmacosx-version-min=11.0" GOARCH=amd64 arch -x86_64 $(GO_AMD64) build --buildmode=c-archive -trimpath --ldflags="-s -w" -o libgost_amd64.a
+	CGO_CFLAGS="-mmacosx-version-min=11.0" CGO_ENABLED=1 GOARCH=amd64 $(GO) build --buildmode=c-archive -trimpath --ldflags="-s -w" -o libgost_amd64.a
 
 build/tor-static: build/tor-static/arm64 build/tor-static/amd64
 	# libevent
@@ -49,29 +47,25 @@ build/tor-static: build/tor-static/arm64 build/tor-static/amd64
 		 build/tor-static/arm64/tor/libtor.a \
 		 -create -output tor-static/tor/libtor.a
 
-build/tor-static/arm64: build/go-arm64
+build/tor-static/arm64: build/go
 	rm -rf build/tor-static/arm64 && mkdir -p build/tor-static/arm64 && cp -r tor-static/ build/tor-static/arm64/
 	cd build/tor-static/arm64 \
-		&& GOROOT=$(GO_ARM64_ROOT) GOARCH=arm64 arch -arm64 $(GO_ARM64) run build.go build-all
+		&& CFLAGS="-target arm64-apple-macos11" GOARCH=arm64 $(GO) run build.go build-all
 
-build/tor-static/amd64: build/go-amd64
+build/tor-static/amd64: build/go
 	rm -rf build/tor-static/amd64 && mkdir -p build/tor-static/amd64 && cp -r tor-static/ build/tor-static/amd64/
 	cd build/tor-static/amd64 \
-		&& GOROOT=$(GO_AMD64_ROOT) GOARCH=amd64 arch -x86_64 $(GO_AMD64) run build.go build-all
-
-build/go-amd64: build
-	[ -f build/go1.18.darwin-amd64.tar.gz ] || curl "https://dl.google.com/go/go1.18.darwin-amd64.tar.gz" --output build/go1.18.darwin-amd64.tar.gz
+		&& CFLAGS="-target x86_64-apple-macos11" GOARCH=amd64 $(GO) run build.go build-all
+		
+build/go: build
+ifeq ($(ARCH),x86_64)
+	[ -f build/go.tar.gz ] || curl "https://dl.google.com/go/go1.18.darwin-amd64.tar.gz" --output build/go.tar.gz
+endif
+ifeq ($(ARCH),arm64)
+	[ -f build/go.tar.gz ] || curl "https://dl.google.com/go/go1.18.darwin-arm64.tar.gz" --output build/go.tar.gz
+endif
 	cd build \
-		&& tar -zxf go1.18.darwin-amd64.tar.gz \
-		&& rm -rf go-amd64 \
-		&& mv go go-amd64
-
-build/go-arm64: build
-	[ -f build/go1.18.darwin-arm64.tar.gz ] || curl "https://dl.google.com/go/go1.18.darwin-arm64.tar.gz" --output build/go1.18.darwin-arm64.tar.gz
-	cd build \
-		&& tar -zxf go1.18.darwin-arm64.tar.gz \
-		&& rm -rf go-arm64 \
-		&& mv go go-arm64
+		&& tar -zxf go.tar.gz
 
 build:
 	[ -d build ] || mkdir build
