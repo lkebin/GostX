@@ -1,6 +1,8 @@
 GO := ${PWD}/build/go/bin/go
 ARCH := $(shell uname -m)
 CPUS := $(shell sysctl -n hw.ncpu)
+TARGET_ARM64 := arm64-apple-macos11
+TARGET_AMD64 := x86_64-apple-macos11
 
 .PHONY: all
 all: libgost_arm64.a libgost_amd64.a
@@ -50,36 +52,37 @@ build/tor-static: build/tor-static/arm64 build/tor-static/amd64
 
 build/tor-static/arm64: build/go
 	rm -rf build/tor-static/arm64 && mkdir -p build/tor-static/arm64 && cp -r tor-static/ build/tor-static/arm64/
-	cd build/tor-static/arm64/openssl \
-		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 perl ./Configure --prefix=$${PWD}/dist --openssldir=$${PWD}/dist no-shared no-dso no-zlib darwin64-arm64-cc \
-		&& make depend \
-		&& make -j$(CPUS) \
-		&& make install
-	cd build/tor-static/arm64/libevent \
-		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./autogen.sh \
-		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./configure --prefix=$${PWD}/dist --disable-shared --enable-static --with-pic --disable-samples --disable-libevent-regress CPPFLAGS=-I../openssl/dist/include LDFLAGS=-L../openssl/dist/lib --host=arm64-apple-macos11 \
-		&& make -j$(CPUS) \
-		&& make install
-	cd build/tor-static/arm64/xz \
-		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./autogen.sh \
-		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./configure --prefix=$${PWD}/dist --disable-shared --enable-static --disable-doc --disable-scripts --disable-xz --disable-xzdec --disable-lzmadec --disable-lzmainfo --disable-lzma-links --host=arm64-apple-macos11 \
-		&& make -j$(CPUS) \
-		&& make install
-	cd build/tor-static/arm64/zlib \
-		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./configure --prefix=$${PWD}/dist --static \
-		&& make -j$(CPUS) \
-		&& make install
-	cd build/tor-static/arm64/tor \
-		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./autogen.sh \
-		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./configure --prefix=$${PWD}/dist --disable-gcc-hardening --disable-system-torrc --disable-asciidoc --enable-static-libevent --with-libevent-dir=$${PWD}/../libevent/dist --enable-static-openssl --with-openssl-dir=$${PWD}/../openssl/dist --enable-static-zlib --with-zlib-dir=$${PWD}/../zlib/dist --disable-systemd --disable-lzma --disable-seccomp --disable-zstd --disable-libscrypt --host=arm64-apple-macos11 --disable-tool-name-check \
-		&& make -j$(CPUS) \
-		&& make install
-		# && CFLAGS="-target arm64-apple-macos11" ARCH=arm64 $(GO) run build.go -verbose build-all
+	cd build/tor-static/arm64 \
+		&& CFLAGS="-target $(TARGET_ARM64)" $(GO) run build.go -verbose -host=$(TARGET_ARM64) build-all
+	# cd build/tor-static/arm64/openssl \
+	# 	&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 perl ./Configure --prefix=$${PWD}/dist --openssldir=$${PWD}/dist no-shared no-dso no-zlib darwin64-arm64-cc \
+	# 	&& make depend \
+	# 	&& make -j$(CPUS) \
+	# 	&& make install
+	# cd build/tor-static/arm64/libevent \
+	# 	&& CFLAGS="-target $(TARGET_ARM64)" ARCH=arm64 ./autogen.sh \
+	# 	&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./configure --prefix=$${PWD}/dist --disable-shared --enable-static --with-pic --disable-samples --disable-libevent-regress CPPFLAGS=-I../openssl/dist/include LDFLAGS=-L../openssl/dist/lib --host=arm64-apple-macos11 \
+	# 	&& make -j$(CPUS) \
+	# 	&& make install
+	# cd build/tor-static/arm64/xz \
+	# 	&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./autogen.sh \
+	# 	&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./configure --prefix=$${PWD}/dist --disable-shared --enable-static --disable-doc --disable-scripts --disable-xz --disable-xzdec --disable-lzmadec --disable-lzmainfo --disable-lzma-links --host=arm64-apple-macos11 \
+	# 	&& make -j$(CPUS) \
+	# 	&& make install
+	# cd build/tor-static/arm64/zlib \
+	# 	&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./configure --prefix=$${PWD}/dist --static \
+	# 	&& make -j$(CPUS) \
+	# 	&& make install
+	# cd build/tor-static/arm64/tor \
+	# 	&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./autogen.sh \
+	# 	&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 ./configure --prefix=$${PWD}/dist --disable-gcc-hardening --disable-system-torrc --disable-asciidoc --enable-static-libevent --with-libevent-dir=$${PWD}/../libevent/dist --enable-static-openssl --with-openssl-dir=$${PWD}/../openssl/dist --enable-static-zlib --with-zlib-dir=$${PWD}/../zlib/dist --disable-systemd --disable-lzma --disable-seccomp --disable-zstd --disable-libscrypt --host=arm64-apple-macos11 --disable-tool-name-check \
+	# 	&& make -j$(CPUS) \
+	# 	&& make install
 
 build/tor-static/amd64: build/go
 	rm -rf build/tor-static/amd64 && mkdir -p build/tor-static/amd64 && cp -r tor-static/ build/tor-static/amd64/
 	cd build/tor-static/amd64 \
-		&& CFLAGS="-target x86_64-apple-macos11" ARCH=x86_64 $(GO) run build.go -verbose build-all
+		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -host=$(TARGET_AMD64) build-all
 		
 build/go: build
 ifeq ($(ARCH),x86_64)

@@ -8,12 +8,23 @@ jobs:
   build:
     runs-on: macos-12
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Make
+      - name: Building
         run: |
           brew install automake
           make
+          tar -zcf GostX.app.tar.gz build/Debug/GostX.app
+          shasum -a 256 GostX.app.tar.gz > GostX.app.tar.gz.checksum
+
+      - name: Archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: GostX
+          path: |
+            GostX.app.tar.gz
+            GostX.app.tar.gz.checksum
