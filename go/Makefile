@@ -50,12 +50,12 @@ build/tor-static: build/tor-static/arm64 build/tor-static/amd64
 build/tor-static/arm64: build/go
 	rm -rf build/tor-static/arm64 && mkdir -p build/tor-static/arm64 && cp -r tor-static/ build/tor-static/arm64/
 	cd build/tor-static/arm64 \
-		&& CFLAGS="-target arm64-apple-macos11" GOARCH=arm64 $(GO) run build.go build-all
+		&& CFLAGS="-target arm64-apple-macos11" ARCH=arm64 $(GO) run build.go build-all
 
 build/tor-static/amd64: build/go
 	rm -rf build/tor-static/amd64 && mkdir -p build/tor-static/amd64 && cp -r tor-static/ build/tor-static/amd64/
 	cd build/tor-static/amd64 \
-		&& CFLAGS="-target x86_64-apple-macos11" GOARCH=amd64 $(GO) run build.go build-all
+		&& CFLAGS="-target x86_64-apple-macos11" ARCH=x86_64 $(GO) run build.go build-all
 		
 build/go: build
 ifeq ($(ARCH),x86_64)
