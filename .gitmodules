@@ -1,7 +1,3 @@
-[submodule "go/bine"]
-	path = go/bine
-	url = https://github.com/lkebin/bine
-	branch = tor-047
 [submodule "go/gost"]
 	path = go/gost
 	url = https://github.com/lkebin/gost
@@ -10,3 +6,6 @@
 	path = go/tor-static
 	url = https://github.com/lkebin/tor-static
 	branch = xz-repo-to-https
+[submodule "go/bine"]
+	path = go/bine
+	url = https://github.com/cretz/bine

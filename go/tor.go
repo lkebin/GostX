@@ -5,7 +5,8 @@ import (
 	"net"
 
 	"github.com/cretz/bine/control"
-	"github.com/cretz/bine/process/embedded"
+	"github.com/cretz/bine/process"
+	tor047 "github.com/cretz/bine/process/embedded/tor-0.4.7"
 	"github.com/cretz/bine/tor"
 	"github.com/ginuerzh/gost"
 )
@@ -25,7 +26,7 @@ func (s *torServer) Init(opts ...gost.ServerOption) {}
 
 func (s *torServer) Serve(h gost.Handler, opts ...gost.ServerOption) error {
 	t, err := tor.Start(nil, &tor.StartConf{
-		ProcessCreator:    embedded.NewCreator(),
+		ProcessCreator:    NewCreator(),
 		EnableNetwork:     false,
 		NoAutoSocksPort:   true,
 		RetainTempDataDir: false,
@@ -52,4 +53,10 @@ func (s *torServer) Serve(h gost.Handler, opts ...gost.ServerOption) error {
 
 func (s *torServer) Close() error {
 	return s.tor.Close()
+}
+
+// NewCreator creates a process.Creator for statically-linked Tor embedded in
+// the binary.
+func NewCreator() process.Creator {
+	return tor047.NewCreator()
 }

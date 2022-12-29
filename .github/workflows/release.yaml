@@ -1,7 +1,7 @@
 on:
   push:
-    branches:
-      - 'main'
+    tags:
+      - '*'
 
 jobs:
   build:
@@ -16,7 +16,7 @@ jobs:
       - name: Building
         run: |
           brew install automake
-          make
+          make release
           make release-dmg
           shasum -a 256 build/Release/GostX.dmg > build/Release/GostX.dmg.checksum
 
