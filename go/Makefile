@@ -1,6 +1,4 @@
 GO := ${PWD}/build/go/bin/go
-ARCH := $(shell uname -m)
-CPUS := $(shell sysctl -n hw.ncpu)
 TARGET_ARM64 := arm64-apple-macos11
 TARGET_AMD64 := x86_64-apple-macos11
 
@@ -69,11 +67,10 @@ build/tor-static/amd64: build/go
 		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -configure-options="--host=$(TARGET_AMD64) --disable-tool-name-check" build-tor
 		
 build/go: build
-ifeq ($(ARCH),x86_64)
-	[ -f build/go.tar.gz ] || curl "https://dl.google.com/go/go1.18.darwin-amd64.tar.gz" --output build/go.tar.gz
-endif
-ifeq ($(ARCH),arm64)
+ifeq ($(shell uname -m),arm64)
 	[ -f build/go.tar.gz ] || curl "https://dl.google.com/go/go1.18.darwin-arm64.tar.gz" --output build/go.tar.gz
+else
+	[ -f build/go.tar.gz ] || curl "https://dl.google.com/go/go1.18.darwin-amd64.tar.gz" --output build/go.tar.gz
 endif
 	cd build \
 		&& tar -zxf go.tar.gz \
