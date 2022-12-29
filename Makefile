@@ -1,4 +1,4 @@
-OTHER_LDFLAGS := -L./go/tor-static/tor/ -ltor \
+OTHER_LDFLAGS := -L./go/tor-static/tor -ltor \
 				 -L./go/tor-static/zlib/dist/lib -lz \
 				 -L./go/tor-static/libevent/dist/lib -levent \
 				 -L./go/tor-static/openssl/dist/lib -lssl -lcrypto \

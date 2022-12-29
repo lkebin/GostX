@@ -1,0 +1,37 @@
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  build:
+    runs-on: macos-12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Building
+        run: |
+          brew install automake
+          make
+          make release-dmg
+          shasum -a 256 build/Release/GostX.dmg > build/Release/GostX.dmg.checksum
+
+      - name: Archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: GostX
+          path: |
+            build/Release/GostX.dmg
+            build/Release/GostX.dmg.checksum
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          files: |
+            build/Release/GostX.dmg
+            build/Release/GostX.dmg.checksum
