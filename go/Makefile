@@ -53,7 +53,7 @@ build/tor-static: build/tor-static/arm64 build/tor-static/amd64
 build/tor-static/arm64: build/go
 	rm -rf build/tor-static/arm64 && mkdir -p build/tor-static/arm64 && cp -r tor-static/ build/tor-static/arm64/
 	cd build/tor-static/arm64 \
-		&& CFLAGS="-target $(TARGET_ARM64)" $(GO) run build.go -verbose build-openssl \
+		&& CFLAGS="-target $(TARGET_ARM64)" $(GO) run build.go -verbose -configure-options="darwin64-arm64-cc" build-openssl \
 		&& CFLAGS="-target $(TARGET_ARM64)" $(GO) run build.go -verbose -configure-options="--host=$(TARGET_ARM64)" build-libevent \
 		&& CFLAGS="-target $(TARGET_ARM64)" $(GO) run build.go -verbose build-zlib \
 		&& CFLAGS="-target $(TARGET_ARM64)" $(GO) run build.go -verbose -configure-options="--host=$(TARGET_ARM64)" build-xz \
@@ -62,7 +62,7 @@ build/tor-static/arm64: build/go
 build/tor-static/amd64: build/go
 	rm -rf build/tor-static/amd64 && mkdir -p build/tor-static/amd64 && cp -r tor-static/ build/tor-static/amd64/
 	cd build/tor-static/amd64 \
-		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose build-openssl \
+		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -configure-options="darwin64-x86_64-cc" build-openssl \
 		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -configure-options="--host=$(TARGET_AMD64)" build-libevent \
 		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose build-zlib \
 		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -configure-options="--host=$(TARGET_AMD64)" build-xz \
