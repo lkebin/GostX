@@ -4,7 +4,7 @@
 	branch = tor
 [submodule "go/tor-static"]
 	path = go/tor-static
-	url = https://github.com/lkebin/tor-static
+	url = https://github.com/cretz/tor-static
 	branch = xz-repo-to-https
 [submodule "go/bine"]
 	path = go/bine
