@@ -1,6 +1,6 @@
 GO := ${PWD}/build/go/bin/go
-TARGET_ARM64 := arm64-apple-macos11
-TARGET_AMD64 := x86_64-apple-macos11
+TARGET_ARM64 := arm64-apple-macos12
+TARGET_AMD64 := x86_64-apple-macos12
 
 .PHONY: all
 all: libgost_arm64.a libgost_amd64.a
@@ -9,10 +9,10 @@ all: libgost_arm64.a libgost_amd64.a
 	rm -rf libgost_arm64.* libgost_amd64.*
 
 libgost_arm64.a: build/tor-static
-	CGO_CFLAGS="-mmacosx-version-min=11.0" CGO_ENABLED=1 GOARCH=arm64 $(GO) build --buildmode=c-archive -trimpath --ldflags="-s -w" -o libgost_arm64.a
+	CGO_CFLAGS="-mmacosx-version-min=12.0" CGO_ENABLED=1 GOARCH=arm64 $(GO) build --buildmode=c-archive -trimpath --ldflags="-s -w" -o libgost_arm64.a
 
 libgost_amd64.a: build/tor-static
-	CGO_CFLAGS="-mmacosx-version-min=11.0" CGO_ENABLED=1 GOARCH=amd64 $(GO) build --buildmode=c-archive -trimpath --ldflags="-s -w" -o libgost_amd64.a
+	CGO_CFLAGS="-mmacosx-version-min=12.0" CGO_ENABLED=1 GOARCH=amd64 $(GO) build --buildmode=c-archive -trimpath --ldflags="-s -w" -o libgost_amd64.a
 
 build/tor-static: build/tor-static/arm64 build/tor-static/amd64
 	# libevent
@@ -51,20 +51,20 @@ build/tor-static: build/tor-static/arm64 build/tor-static/amd64
 build/tor-static/arm64: build/go
 	rm -rf build/tor-static/arm64 && mkdir -p build/tor-static/arm64 && cp -r tor-static/ build/tor-static/arm64/
 	cd build/tor-static/arm64 \
-		&& CFLAGS="-target $(TARGET_ARM64)" $(GO) run build.go -verbose -configure-options="darwin64-arm64-cc" build-openssl \
-		&& CFLAGS="-target $(TARGET_ARM64)" $(GO) run build.go -verbose -configure-options="--host=$(TARGET_ARM64)" build-libevent \
-		&& CFLAGS="-target $(TARGET_ARM64)" $(GO) run build.go -verbose build-zlib \
-		&& CFLAGS="-target $(TARGET_ARM64)" $(GO) run build.go -verbose -configure-options="--host=$(TARGET_ARM64)" build-xz \
-		&& CFLAGS="-target $(TARGET_ARM64)" $(GO) run build.go -verbose -configure-options="--host=$(TARGET_ARM64) --disable-tool-name-check" build-tor
+		&& CFLAGS="-target $(TARGET_ARM64)" $(GO) run build.go -verbose -host="$(TARGET_ARM64)" build-openssl \
+		&& CFLAGS="-target $(TARGET_ARM64)" $(GO) run build.go -verbose -host="$(TARGET_ARM64)" build-libevent \
+		&& CFLAGS="-target $(TARGET_ARM64)" $(GO) run build.go -verbose -host="$(TARGET_ARM64)" build-zlib \
+		&& CFLAGS="-target $(TARGET_ARM64)" $(GO) run build.go -verbose -host="$(TARGET_ARM64)" build-xz \
+		&& CFLAGS="-target $(TARGET_ARM64)" $(GO) run build.go -verbose -host="$(TARGET_ARM64)" build-tor
 
 build/tor-static/amd64: build/go
 	rm -rf build/tor-static/amd64 && mkdir -p build/tor-static/amd64 && cp -r tor-static/ build/tor-static/amd64/
 	cd build/tor-static/amd64 \
-		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -configure-options="darwin64-x86_64-cc" build-openssl \
-		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -configure-options="--host=$(TARGET_AMD64)" build-libevent \
-		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose build-zlib \
-		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -configure-options="--host=$(TARGET_AMD64)" build-xz \
-		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -configure-options="--host=$(TARGET_AMD64) --disable-tool-name-check" build-tor
+		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -host="$(TARGET_AMD64)" build-openssl \
+		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -host="$(TARGET_AMD64)" build-libevent \
+		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -host="$(TARGET_AMD64)" build-zlib \
+		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -host="$(TARGET_AMD64)" build-xz \
+		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -host="$(TARGET_AMD64)" build-tor
 		
 build/go: build
 ifeq ($(shell uname -m),arm64)

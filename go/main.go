@@ -123,7 +123,7 @@ func clean() {
 	}
 
 	for i := range routers {
-		logger.Log("stopping ", routers[i].node.Addr)
+		logger.Logf("stopping %s://%s\n", routers[i].node.Protocol, routers[i].node.Addr)
 
 		err := routers[i].Close()
 		if err != nil {
