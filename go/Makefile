@@ -60,11 +60,11 @@ build/tor-static/arm64: build/go
 build/tor-static/amd64: build/go
 	rm -rf build/tor-static/amd64 && mkdir -p build/tor-static/amd64 && cp -r tor-static/ build/tor-static/amd64/
 	cd build/tor-static/amd64 \
-		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -host="$(TARGET_ARM64)" build-openssl \
-		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -host="$(TARGET_ARM64)" build-libevent \
-		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -host="$(TARGET_ARM64)" build-zlib \
-		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -host="$(TARGET_ARM64)" build-xz \
-		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -host="$(TARGET_ARM64)" build-tor
+		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -host="$(TARGET_AMD64)" build-openssl \
+		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -host="$(TARGET_AMD64)" build-libevent \
+		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -host="$(TARGET_AMD64)" build-zlib \
+		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -host="$(TARGET_AMD64)" build-xz \
+		&& CFLAGS="-target $(TARGET_AMD64)" $(GO) run build.go -verbose -host="$(TARGET_AMD64)" build-tor
 		
 build/go: build
 ifeq ($(shell uname -m),arm64)
