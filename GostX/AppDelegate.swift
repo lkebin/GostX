@@ -8,7 +8,6 @@
 import SwiftUI
 import os
 import Gost
-import UserNotifications
 
 let defaultsArgumentsKey = "arguments"
 let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "runtime")

@@ -9,98 +9,89 @@ import Foundation
 import AppKit
 import SwiftUI
 
-let on = "🟢 On"
-let off = "🔴 Off"
-
 class MacExtrasConfigurator: NSObject {
     private var delegate: AppDelegate
     private var statusBar: NSStatusBar
     public var statusBarItem: NSStatusItem
-    public var statusMenuItem: NSMenuItem
     public var statusActionOnItem: NSMenuItem
     public var statusActionOffItem: NSMenuItem
     public var statusActionRestartItem: NSMenuItem
     public var statusListenItem: NSMenuItem
     
-    // MARK: - Lifecycle
+    private var menu: NSMenu = NSMenu()
+    private var activeImg: NSImage? = NSImage(systemSymbolName: "network.badge.shield.half.filled", accessibilityDescription: nil)
+    private var inActiveImg: NSImage? =  NSImage(systemSymbolName: "network.badge.shield.half.filled", accessibilityDescription: nil)?.withSymbolConfiguration(NSImage.SymbolConfiguration(hierarchicalColor:  NSColor.systemGray))
     
     init(delegate: AppDelegate) {
         self.delegate = delegate
-        self.statusBar = NSStatusBar.system
-        self.statusBarItem = statusBar.statusItem(withLength: NSStatusItem.squareLength)
         
-        self.statusMenuItem = NSMenuItem()
-        self.statusActionOnItem = NSMenuItem()
-        self.statusActionOffItem = NSMenuItem()
-        self.statusActionRestartItem = NSMenuItem()
-        self.statusListenItem = NSMenuItem()
+        statusBar = NSStatusBar.system
+        statusBarItem = statusBar.statusItem(withLength: NSStatusItem.squareLength)
+        
+        statusActionOnItem = NSMenuItem()
+        statusActionOffItem = NSMenuItem()
+        statusActionRestartItem = NSMenuItem()
+        statusListenItem = NSMenuItem()
         
         super.init()
         
-        self.createMenu()
+        createMenu()
     }
     
     // MARK: - MenuConfig
     
     private func createMenu() {
         if let statusBarButton = statusBarItem.button {
-            statusBarButton.image = NSImage(
-                systemSymbolName: "network.badge.shield.half.filled",
-                accessibilityDescription: nil
-            )
+            statusBarButton.image = activeImg
             
-            let mainMenu = NSMenu()
+            menu.autoenablesItems = false
             
-            statusMenuItem.title = on
-            mainMenu.addItem(statusMenuItem)
+            // Listening
+            statusListenItem.isEnabled = false
+            menu.addItem(statusListenItem)
             
-            let statusSubMenu = NSMenu()
-            statusSubMenu.autoenablesItems = false
+            menu.addItem(.separator())
             
-            statusActionOnItem.title = "Start"
+            // Actions
+            statusActionOnItem.title = NSLocalizedString("Start", comment: "start the service")
             statusActionOnItem.target = self
             statusActionOnItem.isEnabled = false
             statusActionOnItem.action = #selector(Self.onStartClick(_:))
-            statusSubMenu.addItem(statusActionOnItem)
+            menu.addItem(statusActionOnItem)
             
-            statusActionOffItem.title = "Stop"
+            statusActionOffItem.title = NSLocalizedString("Stop", comment: "stop the service")
             statusActionOffItem.target = self
+            statusActionOffItem.isEnabled = false
             statusActionOffItem.action = #selector(Self.onStopClick(_:))
-            statusSubMenu.addItem(statusActionOffItem)
+            menu.addItem(statusActionOffItem)
             
-            statusActionRestartItem.title = "Restart"
+            statusActionRestartItem.title = NSLocalizedString("Restart", comment: "")
             statusActionRestartItem.target = self
+            statusActionRestartItem.isEnabled = false
             statusActionRestartItem.action = #selector(Self.onRestartClick(_:))
-            statusSubMenu.addItem(statusActionRestartItem)
+            menu.addItem(statusActionRestartItem)
             
-            mainMenu.setSubmenu(statusSubMenu, for: statusMenuItem)
-            
-            statusListenItem.title = "✈️"
-            statusListenItem.isEnabled = false;
-            statusListenItem.isHidden = true;
-            mainMenu.addItem(statusListenItem)
-            
-            mainMenu.addItem(.separator())
+            menu.addItem(.separator())
             
             let configMenuItem = NSMenuItem()
-            configMenuItem.title = "Preferences..."
+            configMenuItem.title = NSLocalizedString("Preferences...", comment: "")
             configMenuItem.keyEquivalent = ","
             configMenuItem.keyEquivalentModifierMask = .command
             configMenuItem.target = self
             configMenuItem.action = #selector(Self.onConfigClick(_:))
-            mainMenu.addItem(configMenuItem)
+            menu.addItem(configMenuItem)
             
-            mainMenu.addItem(.separator())
+            menu.addItem(.separator())
             
             let quitItem = NSMenuItem()
-            quitItem.title = "Quit"
+            quitItem.title = NSLocalizedString("Quit", comment: "")
             quitItem.target = self
             quitItem.keyEquivalent = "q"
             quitItem.keyEquivalentModifierMask = .command
             quitItem.action = #selector(Self.onQuitClick(_:))
-            mainMenu.addItem(quitItem)
+            menu.addItem(quitItem)
             
-            statusBarItem.menu = mainMenu
+            statusBarItem.menu = menu
         }
     }
     
@@ -134,34 +125,26 @@ class MacExtrasConfigurator: NSObject {
         delegate.start()
     }
     
-    public func toOffState() {
-        self.statusMenuItem.title = off
-        self.statusActionOnItem.isEnabled = true
-        self.statusActionOffItem.isEnabled = false
-        self.statusActionRestartItem.isEnabled = false
-        self.statusBarItem.button?.image = NSImage(
-            systemSymbolName: "network",
-            accessibilityDescription: nil
-        )
-    }
-    
     public func updateListen(_ listen: String?) {
         if listen == nil {
             statusListenItem.isHidden = true
             return
         }
         statusListenItem.isHidden = false
-        statusListenItem.title = "✈️ \(listen!)"
+        statusListenItem.attributedTitle = NSAttributedString(string: "\(listen!.replacingOccurrences(of: ";", with: "\n"))")
+    }
+    
+    public func toOffState() {
+        self.statusActionOnItem.isEnabled = true
+        self.statusActionOffItem.isEnabled = false
+        self.statusActionRestartItem.isEnabled = false
+        self.statusBarItem.button?.image = inActiveImg
     }
     
     public func toOnState() {
-        self.statusMenuItem.title = on
         self.statusActionOnItem.isEnabled = false
         self.statusActionOffItem.isEnabled = true
         self.statusActionRestartItem.isEnabled = true
-        self.statusBarItem.button?.image = NSImage(
-            systemSymbolName: "network.badge.shield.half.filled",
-            accessibilityDescription: nil
-        )
+        self.statusBarItem.button?.image = activeImg
     }
 }
