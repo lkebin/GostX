@@ -2,16 +2,22 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>Preferences...</key>
-    <string>设置...</string>
-    <key>Quit</key>
-    <string>退出</string>
-    <key>Stop</key>
-    <string>停止</string>
-    <key>Restart</key>
-    <string>重启</string>
-    <key>Start</key>
-    <string>启动</string>
+	<key>About</key>
+	<string>关于</string>
+	<key>argument-description</key>
+	<string>备注：参数将自动保存，以 # 开头的行将被忽略</string>
+	<key>Arguments</key>
+	<string>参数</string>
+	<key>Preferences...</key>
+	<string>设置...</string>
+	<key>Quit</key>
+	<string>退出</string>
+	<key>Stop</key>
+	<string>停止</string>
+	<key>Restart</key>
+	<string>重启</string>
+	<key>Start</key>
+	<string>启动</string>
 	<key>StringKey</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

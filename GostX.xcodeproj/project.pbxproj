@@ -48,7 +48,6 @@
 		B532A685285B528D00159BAC /* GostXUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GostXUITests.swift; sourceTree = "<group>"; };
 		B532A687285B528D00159BAC /* GostXUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GostXUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		B5AEDDB02864920800C09ED6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		B5AF722C28634A6500BB5F98 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		B5B0E073285B62B80035A6F2 /* MacExtrasConfigurator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacExtrasConfigurator.swift; sourceTree = "<group>"; };
 		B5B0E079285C63080035A6F2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		B5C1CF1529DD6E7C008AA934 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
@@ -144,7 +143,6 @@
 		B5AF722B28634A6500BB5F98 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				B5AF722C28634A6500BB5F98 /* UserNotifications.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -159,7 +157,6 @@
 				B532A662285B528900159BAC /* Sources */,
 				B532A663285B528900159BAC /* Frameworks */,
 				B532A664285B528900159BAC /* Resources */,
-				B5B0E078285C328C0035A6F2 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -276,26 +273,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		B5B0E078285C328C0035A6F2 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n# ${SOURCE_ROOT}/GostX/gost-resource.sh\n";
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		B532A662285B528900159BAC /* Sources */ = {
