@@ -20,7 +20,12 @@ class MacExtrasConfigurator: NSObject {
     
     private var menu: NSMenu = NSMenu()
     private var activeImg: NSImage? = NSImage(systemSymbolName: "network.badge.shield.half.filled", accessibilityDescription: nil)
-    private var inActiveImg: NSImage? =  NSImage(systemSymbolName: "network.badge.shield.half.filled", accessibilityDescription: nil)?.withSymbolConfiguration(NSImage.SymbolConfiguration(hierarchicalColor:  NSColor.systemGray))
+    private var inActiveImg: NSImage? =  NSImage(
+        systemSymbolName: "network.badge.shield.half.filled",
+        accessibilityDescription: nil
+    )?.withSymbolConfiguration(
+        NSImage.SymbolConfiguration(paletteColors: [NSColor.init(red: 75, green: 75, blue: 75, alpha: 0.8)])
+    )
     
     init(delegate: AppDelegate) {
         self.delegate = delegate
