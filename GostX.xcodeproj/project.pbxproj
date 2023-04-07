@@ -17,6 +17,7 @@
 		B5B0E074285B62B80035A6F2 /* MacExtrasConfigurator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B0E073285B62B80035A6F2 /* MacExtrasConfigurator.swift */; };
 		B5B0E07A285C63080035A6F2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B0E079285C63080035A6F2 /* SettingsView.swift */; };
 		B5C1CF1429DD6E7C008AA934 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = B5C1CF1629DD6E7C008AA934 /* Localizable.stringsdict */; };
+		B5F6387929DEFF31009A1287 /* Arguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F6387829DEFF31009A1287 /* Arguments.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,6 +53,7 @@
 		B5B0E079285C63080035A6F2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		B5C1CF1529DD6E7C008AA934 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 		B5C1CF1729DD6E90008AA934 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.stringsdict"; sourceTree = "<group>"; };
+		B5F6387829DEFF31009A1287 /* Arguments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Arguments.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -111,6 +113,7 @@
 				B5B0E073285B62B80035A6F2 /* MacExtrasConfigurator.swift */,
 				B5B0E079285C63080035A6F2 /* SettingsView.swift */,
 				B5AEDDB02864920800C09ED6 /* AppDelegate.swift */,
+				B5F6387829DEFF31009A1287 /* Arguments.swift */,
 			);
 			path = GostX;
 			sourceTree = "<group>";
@@ -279,6 +282,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B5F6387929DEFF31009A1287 /* Arguments.swift in Sources */,
 				B5AEDDB12864920800C09ED6 /* AppDelegate.swift in Sources */,
 				B5B0E07A285C63080035A6F2 /* SettingsView.swift in Sources */,
 				B5B0E074285B62B80035A6F2 /* MacExtrasConfigurator.swift in Sources */,

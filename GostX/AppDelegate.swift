@@ -9,16 +9,18 @@ import SwiftUI
 import os
 import Gost
 
-let defaultsArgumentsKey = "arguments"
 let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "runtime")
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var menu: MacExtrasConfigurator?
-    private var executable: String = "\(Bundle.main.resourcePath!)/gost/gost"
+//    private var executable: String = "\(Bundle.main.resourcePath!)/gost/gost"
     private var logPipe: Pipe?
-    private var window: NSWindow?
+    
+    public var arguments: Arguments?
+//    private var window: NSWindow?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        self.arguments = Arguments()
         self.menu = MacExtrasConfigurator(delegate: self)
         self.logPipe = pipe()
         self.start()
@@ -45,7 +47,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func start() -> () {
-        let args: NSString = parseArguments(fetchArguments()) as NSString
+        let arguments = Arguments()
+        
+        let args: NSString = arguments.fetchActiveOne().Value as NSString
+        
         /* var fd: Int32? = 1 */ 
         var fd = self.logPipe?.fileHandleForWriting.fileDescriptor
         let fdPtr = UnsafeMutablePointer<CLong>.allocate(capacity: 1)
@@ -67,29 +72,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.menu?.updateListen(String(cString:i!.pointee.listen))
         self.menu?.toOnState()
         free(i)
-    }
-    
-    private func parseArguments(_ v: String) -> String {
-        if !v.isEmpty {
-            return v.components(separatedBy: CharacterSet.newlines).filter { e in
-                return !e.isEmpty && !e.hasPrefix("#")
-            }.map{ e in
-                return e.trimmingCharacters(in: CharacterSet.whitespaces)
-            }.joined(separator: " ")
-        } else {
-            return ""
-        }
-    }
-    
-    private func fetchArguments() -> String {
-        let defaults = UserDefaults.standard
-        var a = defaults.string(forKey: defaultsArgumentsKey)
-        
-        if a == nil {
-            a = "-L socks5://:1080"
-        }
-        
-        return a!
     }
     
     private func pipe() -> Pipe {

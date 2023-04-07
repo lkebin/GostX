@@ -9,7 +9,7 @@ import Foundation
 import AppKit
 import SwiftUI
 
-class MacExtrasConfigurator: NSObject {
+class MacExtrasConfigurator: NSObject, NSMenuDelegate {
     private var delegate: AppDelegate
     private var statusBar: NSStatusBar
     public var statusBarItem: NSStatusItem
@@ -17,9 +17,11 @@ class MacExtrasConfigurator: NSObject {
     public var statusActionOffItem: NSMenuItem
     public var statusActionRestartItem: NSMenuItem
     public var statusListenItem: NSMenuItem
+    public var argsItem: NSMenuItem = NSMenuItem()
     
     private var menu: NSMenu = NSMenu()
     private var activeImg: NSImage? = NSImage(systemSymbolName: "network.badge.shield.half.filled", accessibilityDescription: nil)
+    
     private var inActiveImg: NSImage? =  NSImage(
         systemSymbolName: "network.badge.shield.half.filled",
         accessibilityDescription: nil
@@ -46,61 +48,71 @@ class MacExtrasConfigurator: NSObject {
     // MARK: - MenuConfig
     
     private func createMenu() {
-        if let statusBarButton = statusBarItem.button {
-            statusBarButton.image = activeImg
-            
-            menu.autoenablesItems = false
-            
-            // Listening
-            statusListenItem.isEnabled = false
-            menu.addItem(statusListenItem)
-            
-            menu.addItem(.separator())
-            
-            // Actions
-            statusActionOnItem.title = NSLocalizedString("Start", comment: "start the service")
-            statusActionOnItem.target = self
-            statusActionOnItem.isEnabled = false
-            statusActionOnItem.action = #selector(Self.onStartClick(_:))
-            menu.addItem(statusActionOnItem)
-            
-            statusActionOffItem.title = NSLocalizedString("Stop", comment: "stop the service")
-            statusActionOffItem.target = self
-            statusActionOffItem.isEnabled = false
-            statusActionOffItem.action = #selector(Self.onStopClick(_:))
-            menu.addItem(statusActionOffItem)
-            
-            statusActionRestartItem.title = NSLocalizedString("Restart", comment: "")
-            statusActionRestartItem.target = self
-            statusActionRestartItem.isEnabled = false
-            statusActionRestartItem.action = #selector(Self.onRestartClick(_:))
-            menu.addItem(statusActionRestartItem)
-            
-            menu.addItem(.separator())
-            
-            let configMenuItem = NSMenuItem()
-            configMenuItem.title = NSLocalizedString("Preferences...", comment: "")
-            configMenuItem.keyEquivalent = ","
-            configMenuItem.keyEquivalentModifierMask = .command
-            configMenuItem.target = self
-            configMenuItem.action = #selector(Self.onConfigClick(_:))
-            menu.addItem(configMenuItem)
-            
-            menu.addItem(.separator())
-            
-            let quitItem = NSMenuItem()
-            quitItem.title = NSLocalizedString("Quit", comment: "")
-            quitItem.target = self
-            quitItem.keyEquivalent = "q"
-            quitItem.keyEquivalentModifierMask = .command
-            quitItem.action = #selector(Self.onQuitClick(_:))
-            menu.addItem(quitItem)
-            
-            statusBarItem.menu = menu
-        }
+        menu.delegate = self
+        menu.autoenablesItems = false
+        
+        // Listening
+        statusListenItem.isEnabled = false
+        menu.addItem(statusListenItem)
+        
+        menu.addItem(.separator())
+        
+        // Arguments
+        argsItem.submenu = NSMenu()
+        menu.addItem(argsItem)
+        
+        menu.addItem(.separator())
+        
+        // Actions
+        statusActionOnItem.title = NSLocalizedString("Start", comment: "start the service")
+        statusActionOnItem.target = self
+        statusActionOnItem.isEnabled = false
+        statusActionOnItem.action = #selector(onStartClick)
+        menu.addItem(statusActionOnItem)
+        
+        statusActionOffItem.title = NSLocalizedString("Stop", comment: "stop the service")
+        statusActionOffItem.target = self
+        statusActionOffItem.isEnabled = false
+        statusActionOffItem.action = #selector(onStopClick)
+        menu.addItem(statusActionOffItem)
+        
+        statusActionRestartItem.title = NSLocalizedString("Restart", comment: "")
+        statusActionRestartItem.target = self
+        statusActionRestartItem.isEnabled = false
+        statusActionRestartItem.action = #selector(onRestartClick)
+        menu.addItem(statusActionRestartItem)
+        
+        menu.addItem(.separator())
+        
+        let configMenuItem = NSMenuItem()
+        configMenuItem.title = NSLocalizedString("Preferences...", comment: "")
+        configMenuItem.keyEquivalent = ","
+        configMenuItem.keyEquivalentModifierMask = .command
+        configMenuItem.target = self
+        configMenuItem.action = #selector(onConfigClick)
+        menu.addItem(configMenuItem)
+        
+        menu.addItem(.separator())
+        
+        let quitItem = NSMenuItem()
+        quitItem.title = NSLocalizedString("Quit", comment: "")
+        quitItem.target = self
+        quitItem.keyEquivalent = "q"
+        quitItem.keyEquivalentModifierMask = .command
+        quitItem.action = #selector(onQuitClick)
+        menu.addItem(quitItem)
+        
+        statusBarItem.menu = menu
     }
     
     // MARK: - Actions
+    
+    @objc private func onArgumentClick(_ sender: Any?) {
+        delegate.arguments?.setActive(name:(sender! as! NSMenuItem).title)
+        delegate.stop()
+        delegate.start()
+        updateArgsMenuItem()
+    }
     
     @objc private func onConfigClick(_ sender: Any?) {
         NSApp.activate(ignoringOtherApps: true)
@@ -151,5 +163,28 @@ class MacExtrasConfigurator: NSObject {
         self.statusActionOffItem.isEnabled = true
         self.statusActionRestartItem.isEnabled = true
         self.statusBarItem.button?.image = activeImg
+    }
+    
+    func menuWillOpen(_ menu: NSMenu) {
+        updateArgsMenuItem()
+    }
+    
+    private func updateArgsMenuItem() {
+        let arg = delegate.arguments!.fetchActiveOne()
+        argsItem.title = arg.Name
+        argsItem.toolTip = arg.Value
+        
+        argsItem.submenu = NSMenu()
+        
+        // Arguments list
+        for a in delegate.arguments!.fetchList() {
+            let i = NSMenuItem()
+            i.title = a.Name
+            i.toolTip = a.Value
+            i.action = #selector(onArgumentClick)
+            i.target = self
+            i.state = argsItem.title == a.Name ? .on : .off
+            argsItem.submenu?.addItem(i)
+        }
     }
 }
