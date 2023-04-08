@@ -15,12 +15,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var menu: MacExtrasConfigurator?
 //    private var executable: String = "\(Bundle.main.resourcePath!)/gost/gost"
     private var logPipe: Pipe?
-    
-    public var arguments: Arguments?
 //    private var window: NSWindow?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        self.arguments = Arguments()
         self.menu = MacExtrasConfigurator(delegate: self)
         self.logPipe = pipe()
         self.start()
@@ -48,8 +45,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func start() -> () {
         let arguments = Arguments()
-        
-        let args: NSString = arguments.fetchActiveOne().Value as NSString
+        arguments.updateActive()
+        let args: NSString = arguments.fetchActive().Value as NSString
         
         /* var fd: Int32? = 1 */ 
         var fd = self.logPipe?.fileHandleForWriting.fileDescriptor

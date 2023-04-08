@@ -20,7 +20,7 @@ class Arguments: NSObject {
         return parse(raw())
     }
     
-    public func fetchActiveOne() -> Argument {
+    public func fetchActive() -> Argument {
         let dict = UserDefaults.standard.dictionary(forKey: defaultsArgumentsActiveKey)
         if dict != nil {
             return Argument(Name: dict?["Name"] as! String, Value: dict?["Value"] as! String)
@@ -38,6 +38,17 @@ class Arguments: NSObject {
         let lines = fetchList()
         for l in lines {
             if l.Name == name {
+                UserDefaults.standard.set(["Name": l.Name, "Value": l.Value], forKey: defaultsArgumentsActiveKey)
+                return
+            }
+        }
+    }
+    
+    public func updateActive() {
+        let lines = fetchList()
+        let active = fetchActive()
+        for l in lines {
+            if l.Name == active.Name {
                 UserDefaults.standard.set(["Name": l.Name, "Value": l.Value], forKey: defaultsArgumentsActiveKey)
                 return
             }

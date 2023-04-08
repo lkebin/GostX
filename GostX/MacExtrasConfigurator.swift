@@ -108,7 +108,7 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
     // MARK: - Actions
     
     @objc private func onArgumentClick(_ sender: Any?) {
-        delegate.arguments?.setActive(name:(sender! as! NSMenuItem).title)
+        Arguments().setActive(name:(sender! as! NSMenuItem).title)
         delegate.stop()
         delegate.start()
         updateArgsMenuItem()
@@ -170,14 +170,15 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
     }
     
     private func updateArgsMenuItem() {
-        let arg = delegate.arguments!.fetchActiveOne()
+        let arguments = Arguments()
+        let arg = arguments.fetchActive()
         argsItem.title = arg.Name
         argsItem.toolTip = arg.Value
         
         argsItem.submenu = NSMenu()
         
         // Arguments list
-        for a in delegate.arguments!.fetchList() {
+        for a in arguments.fetchList() {
             let i = NSMenuItem()
             i.title = a.Name
             i.toolTip = a.Value
