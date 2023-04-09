@@ -22,10 +22,10 @@ debug-dmg release-dmg:
 	t="$(TARGET)" && t="`tr '[:lower:]' '[:upper:]' <<< $${t:0:1}`$${t:1}" \
 	  && rm -rf build/Build/Products/$${t}/GostX/ \
 	  && mkdir build/Build/Products/$${t}/GostX \
-	  && cp -r build/Build/Products/$${t}/GostX.app build/$${t}/GostX/ \
+	  && cp -r build/Build/Products/$${t}/GostX.app build/Build/Products/$${t}/GostX/ \
 	  && ln -s /Applications build/Build/Products/$${t}/GostX/Applications \
 	  && hdiutil create build/Build/Products/$${t}/GostX.dmg -ov -volname "GostX" -fs HFS+ -srcfolder build/Build/Products/$${t}/GostX/ \
-	  && rm -rf build/$${t}/GostX/
+	  && rm -rf build/Build/Products/$${t}/GostX/
 
 go/libgost.a:
 	cd go && $(MAKE)
