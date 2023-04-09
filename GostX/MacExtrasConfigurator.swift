@@ -20,14 +20,8 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
     public var argsItem: NSMenuItem = NSMenuItem()
     
     private var menu: NSMenu = NSMenu()
-    private var activeImg: NSImage? = NSImage(systemSymbolName: "network.badge.shield.half.filled", accessibilityDescription: nil)
-    
-    private var inActiveImg: NSImage? =  NSImage(
-        systemSymbolName: "network.badge.shield.half.filled",
-        accessibilityDescription: nil
-    )?.withSymbolConfiguration(
-        NSImage.SymbolConfiguration(paletteColors: [NSColor.init(red: 75, green: 75, blue: 75, alpha: 0.8)])
-    )
+    private var activeImg: NSImage? = NSImage(named: "StatusBarActive")
+    private var inActiveImg: NSImage? =  NSImage(named: "StatusBarInactive")
     
     init(delegate: AppDelegate) {
         self.delegate = delegate
