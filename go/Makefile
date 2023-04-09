@@ -1,6 +1,6 @@
 GO := ${PWD}/build/go/bin/go
-TARGET_ARM64 := arm64-apple-macos12
-TARGET_AMD64 := x86_64-apple-macos12
+TARGET_ARM64 := arm64-apple-macos11
+TARGET_AMD64 := x86_64-apple-macos11
 
 .PHONY: all
 all: libgost_arm64.a libgost_amd64.a
@@ -9,10 +9,10 @@ all: libgost_arm64.a libgost_amd64.a
 	rm -rf libgost_arm64.* libgost_amd64.*
 
 libgost_arm64.a: build/tor-static
-	CGO_CFLAGS="-mmacosx-version-min=12.0" CGO_ENABLED=1 GOARCH=arm64 $(GO) build --buildmode=c-archive -trimpath --ldflags="-s -w" -o libgost_arm64.a
+	CGO_CFLAGS="-mmacosx-version-min=11.0" CGO_ENABLED=1 GOARCH=arm64 $(GO) build --buildmode=c-archive -trimpath --ldflags="-s -w" -o libgost_arm64.a
 
 libgost_amd64.a: build/tor-static
-	CGO_CFLAGS="-mmacosx-version-min=12.0" CGO_ENABLED=1 GOARCH=amd64 $(GO) build --buildmode=c-archive -trimpath --ldflags="-s -w" -o libgost_amd64.a
+	CGO_CFLAGS="-mmacosx-version-min=11.0" CGO_ENABLED=1 GOARCH=amd64 $(GO) build --buildmode=c-archive -trimpath --ldflags="-s -w" -o libgost_amd64.a
 
 build/tor-static: build/tor-static/arm64 build/tor-static/amd64
 	# libevent
