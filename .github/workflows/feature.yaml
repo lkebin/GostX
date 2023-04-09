@@ -19,12 +19,12 @@ jobs:
           brew install automake
           make
           make debug-dmg
-          shasum -a 256 build/Debug/GostX.dmg > build/Debug/GostX.dmg.checksum
+          shasum -a 256 build/Build/Products/Debug/GostX.dmg > build/Build/Products/Debug/GostX.dmg.checksum
 
       - name: Archive
         uses: actions/upload-artifact@v3
         with:
           name: GostX
           path: |
-            build/Debug/GostX.dmg
-            build/Debug/GostX.dmg.checksum
+            build/Build/Products/Debug/GostX.dmg
+            build/Build/Products/Debug/GostX.dmg.checksum
