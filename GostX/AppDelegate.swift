@@ -13,9 +13,7 @@ let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "runtime
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var menu: MacExtrasConfigurator?
-//    private var executable: String = "\(Bundle.main.resourcePath!)/gost/gost"
     private var logPipe: Pipe?
-//    private var window: NSWindow?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         self.menu = MacExtrasConfigurator(delegate: self)
@@ -45,7 +43,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func start() -> () {
         let arguments = Arguments()
-        arguments.updateActive()
+        arguments.refreshActive()
+        
         let args: NSString = arguments.fetchActive().Value as NSString
         
         /* var fd: Int32? = 1 */ 
@@ -68,7 +67,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let i: UnsafeMutablePointer<info>? = gostInfo();
         self.menu?.updateListen(String(cString:i!.pointee.listen))
         self.menu?.toOnState()
-        free(i)
+        i?.deallocate()
     }
     
     private func pipe() -> Pipe {
