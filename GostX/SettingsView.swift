@@ -56,7 +56,7 @@ struct ArgumentView: View {
                 HighlightedTextEditor(text: $arguments, highlightRules: rules)
                     .introspect { editor in
                         editor.textView.allowsUndo = true
-                        editor.textView.updateCandidates()
+                        editor.textView.breakUndoCoalescing()
                     }
             
 //            TextEditor(text: $arguments)
