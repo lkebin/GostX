@@ -59,18 +59,21 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
         
         // Actions
         statusActionOnItem.title = NSLocalizedString("Start", comment: "start the service")
+        statusActionOnItem.image = NSImage(systemSymbolName: "play.fill", accessibilityDescription: "")
         statusActionOnItem.target = self
         statusActionOnItem.isEnabled = false
         statusActionOnItem.action = #selector(onStartClick)
         menu.addItem(statusActionOnItem)
         
         statusActionOffItem.title = NSLocalizedString("Stop", comment: "stop the service")
+        statusActionOffItem.image = NSImage(systemSymbolName: "stop.fill", accessibilityDescription: "")
         statusActionOffItem.target = self
         statusActionOffItem.isEnabled = false
         statusActionOffItem.action = #selector(onStopClick)
         menu.addItem(statusActionOffItem)
         
         statusActionRestartItem.title = NSLocalizedString("Restart", comment: "")
+        statusActionRestartItem.image = NSImage(systemSymbolName: "gobackward", accessibilityDescription: "")
         statusActionRestartItem.target = self
         statusActionRestartItem.isEnabled = false
         statusActionRestartItem.action = #selector(onRestartClick)
@@ -80,6 +83,7 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
         
         let configMenuItem = NSMenuItem()
         configMenuItem.title = NSLocalizedString("Preferences...", comment: "")
+        configMenuItem.image = NSImage(systemSymbolName: "gear", accessibilityDescription: "")
         configMenuItem.keyEquivalent = ","
         configMenuItem.keyEquivalentModifierMask = .command
         configMenuItem.target = self
@@ -90,6 +94,7 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
         
         let quitItem = NSMenuItem()
         quitItem.title = NSLocalizedString("Quit", comment: "")
+        quitItem.image = NSImage(systemSymbolName: "power", accessibilityDescription: "")
         quitItem.target = self
         quitItem.keyEquivalent = "q"
         quitItem.keyEquivalentModifierMask = .command
@@ -167,7 +172,6 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
         let arguments = Arguments()
         let arg = arguments.fetchActive()
         argsItem.title = arg.Name
-        argsItem.toolTip = arg.Value
         
         argsItem.submenu = NSMenu()
         

@@ -44,7 +44,7 @@ class Arguments: NSObject {
         }
     }
     
-    public func updateActive() {
+    public func refreshActive() {
         let lines = fetchList()
         let active = fetchActive()
         for l in lines {
