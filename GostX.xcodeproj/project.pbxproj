@@ -499,7 +499,7 @@
 					"-L./go/tor-static/xz/dist/lib",
 					"-llzma",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.buhaoyong.GostX;
+				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.GostX;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/go/";
@@ -549,7 +549,7 @@
 					"-L./go/tor-static/xz/dist/lib",
 					"-llzma",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.buhaoyong.GostX;
+				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.GostX;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/go/";
