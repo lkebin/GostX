@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"net"
+	"strings"
 
 	"github.com/cretz/bine/control"
 	"github.com/cretz/bine/process"
@@ -36,7 +37,8 @@ func (s *torServer) Serve(h gost.Handler, opts ...gost.ServerOption) error {
 		return err
 	}
 
-	if err := t.Control.SetConf(control.KeyVals("SocksPort", s.node.Addr)...); err != nil {
+	// Remove : from left of ':9050'
+	if err := t.Control.SetConf(control.KeyVals("SocksPort", strings.TrimPrefix(s.node.Addr, ":"))...); err != nil {
 		return err
 	}
 
