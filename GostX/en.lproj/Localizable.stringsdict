@@ -8,8 +8,8 @@
 	<string>Note: value saved automatically, line of start with # symbol is ignored.</string>
 	<key>Arguments</key>
 	<string>Arguments</string>
-	<key>Preferences...</key>
-	<string>Preferences...</string>
+	<key>Settings...</key>
+	<string>Settings...</string>
 	<key>Quit</key>
 	<string>Quit</string>
 	<key>Stop</key>
