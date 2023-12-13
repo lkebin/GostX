@@ -8,7 +8,7 @@
 	<string>备注：参数将自动保存，以 # 开头的行将被忽略</string>
 	<key>Arguments</key>
 	<string>参数</string>
-	<key>Preferences...</key>
+	<key>Settings...</key>
 	<string>设置...</string>
 	<key>Quit</key>
 	<string>退出</string>
