@@ -22,6 +22,7 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
     private var menu: NSMenu = NSMenu()
     private var activeImg: NSImage? = NSImage(named: "StatusBarActive")
     private var inActiveImg: NSImage? =  NSImage(named: "StatusBarInactive")
+    private var settingsHostingController: NSHostingController<SettingsView>?
     
     init(delegate: AppDelegate) {
         self.delegate = delegate
@@ -82,7 +83,7 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
         menu.addItem(.separator())
         
         let configMenuItem = NSMenuItem()
-        configMenuItem.title = NSLocalizedString("Preferences...", comment: "")
+        configMenuItem.title = NSLocalizedString("Settings...", comment: "")
         configMenuItem.image = NSImage(systemSymbolName: "gear", accessibilityDescription: "")
         configMenuItem.keyEquivalent = ","
         configMenuItem.keyEquivalentModifierMask = .command
@@ -116,12 +117,13 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
     @objc private func onConfigClick(_ sender: Any?) {
         NSApp.activate(ignoringOtherApps: true)
         NSApp.setActivationPolicy(.regular)
-        
-        if #available(macOS 13.0, *) {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        } else {
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-        }
+
+        settingsHostingController = NSHostingController(rootView: SettingsView())
+        let window = NSWindow(contentViewController: settingsHostingController!)
+        window.title = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "Settings Window"
+        window.setContentSize(NSSize(width: 800, height: 400))
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
     }
     
     @objc private func onQuitClick(_ sender: Any?) {

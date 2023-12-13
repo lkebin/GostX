@@ -1,4 +1,4 @@
-GO := ${PWD}/build/go/bin/go
+GO := $(PWD)/build/go/bin/go
 TARGET_ARM64 := arm64-apple-macos11
 TARGET_AMD64 := x86_64-apple-macos11
 

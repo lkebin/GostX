@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Cocoa
 import os
 import Gost
 
@@ -29,6 +30,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         
         return false
+    }
+    
+    func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
+        return true
     }
     
     func quit() {

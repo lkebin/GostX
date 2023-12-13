@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		B523FCA529E169180050578C /* HighlightedTextEditor in Frameworks */ = {isa = PBXBuildFile; productRef = B523FCA429E169180050578C /* HighlightedTextEditor */; };
-		B532A66A285B528900159BAC /* GostXApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B532A669285B528900159BAC /* GostXApp.swift */; };
+		B532A66A285B528900159BAC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = B532A669285B528900159BAC /* main.swift */; };
 		B532A66E285B528D00159BAC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B532A66D285B528D00159BAC /* Assets.xcassets */; };
 		B532A671285B528D00159BAC /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B532A670285B528D00159BAC /* Preview Assets.xcassets */; };
 		B532A67C285B528D00159BAC /* GostXTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B532A67B285B528D00159BAC /* GostXTests.swift */; };
@@ -40,7 +40,7 @@
 
 /* Begin PBXFileReference section */
 		B532A666285B528900159BAC /* GostX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GostX.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B532A669285B528900159BAC /* GostXApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GostXApp.swift; sourceTree = "<group>"; };
+		B532A669285B528900159BAC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		B532A66D285B528D00159BAC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B532A670285B528D00159BAC /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		B532A672285B528D00159BAC /* GostX.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GostX.entitlements; sourceTree = "<group>"; };
@@ -108,7 +108,7 @@
 			isa = PBXGroup;
 			children = (
 				B5C1CF1629DD6E7C008AA934 /* Localizable.stringsdict */,
-				B532A669285B528900159BAC /* GostXApp.swift */,
+				B532A669285B528900159BAC /* main.swift */,
 				B532A66D285B528D00159BAC /* Assets.xcassets */,
 				B532A672285B528D00159BAC /* GostX.entitlements */,
 				B532A66F285B528D00159BAC /* Preview Content */,
@@ -219,7 +219,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1340;
-				LastUpgradeCheck = 1340;
+				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					B532A665285B528900159BAC = {
 						CreatedOnToolsVersion = 13.4.1;
@@ -294,7 +294,7 @@
 				B5AEDDB12864920800C09ED6 /* AppDelegate.swift in Sources */,
 				B5B0E07A285C63080035A6F2 /* SettingsView.swift in Sources */,
 				B5B0E074285B62B80035A6F2 /* MacExtrasConfigurator.swift in Sources */,
-				B532A66A285B528900159BAC /* GostXApp.swift in Sources */,
+				B532A66A285B528900159BAC /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -377,6 +377,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -438,6 +439,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -468,9 +470,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"GostX/Preview Content\"";
 				DEVELOPMENT_TEAM = "";
-				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GostX/Info.plist;
@@ -518,9 +521,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"GostX/Preview Content\"";
 				DEVELOPMENT_TEAM = "";
-				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GostX/Info.plist;
@@ -565,6 +569,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 12.3;
@@ -584,6 +589,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 12.3;
@@ -602,6 +608,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
@@ -619,6 +626,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
