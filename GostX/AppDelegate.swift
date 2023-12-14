@@ -12,11 +12,36 @@ import Gost
 
 let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "runtime")
 
+@objc protocol EditMenuActions {
+    func redo(_ sender: AnyObject)
+    func undo(_ sender: AnyObject)
+}
+
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var menu: MacExtrasConfigurator?
     private var logPipe: Pipe?
     
+    func mainMenu() {
+        let mainMenu = NSMenu(title: "MainMenu")
+        var menuItem = mainMenu.addItem(withTitle: "", action: nil, keyEquivalent: "")
+        var submenu = NSMenu(title: "Application")
+        mainMenu.setSubmenu(submenu, for: menuItem)
+        
+        menuItem = mainMenu.addItem(withTitle:"Edit", action:nil, keyEquivalent:"")
+        submenu = NSMenu(title:NSLocalizedString("Edit", comment:"Edit menu"))
+        submenu.addItem(withTitle: "Undo", action: #selector(EditMenuActions.undo(_:)), keyEquivalent: "z")
+        submenu.addItem(withTitle: "Redo", action: #selector(EditMenuActions.redo(_:)), keyEquivalent: "Z")
+        submenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        submenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        submenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        submenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        mainMenu.setSubmenu(submenu, for: menuItem)
+        
+        NSApp.mainMenu = mainMenu
+    }
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
+        self.mainMenu()
         self.menu = MacExtrasConfigurator(delegate: self)
         self.logPipe = pipe()
         self.start()
