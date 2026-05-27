@@ -9,11 +9,11 @@ all: debug
 
 .PHONY: debug
 debug: go/libgost.a
-	xcodebuild OTHER_LDFLAGS="$(OTHER_LDFLAGS)" -scheme GostX -project GostX.xcodeproj -configuration Debug -derivedDataPath ./build
+	xcodebuild OTHER_LDFLAGS="$(OTHER_LDFLAGS)" -scheme GostX -project macos/GostX.xcodeproj -configuration Debug -derivedDataPath ./build
 
 .PHONY: release
 release: go/libgost.a
-	xcodebuild OTHER_LDFLAGS="$(OTHER_LDFLAGS)" -scheme GostX -project GostX.xcodeproj -configuration Release -derivedDataPath ./build
+	xcodebuild OTHER_LDFLAGS="$(OTHER_LDFLAGS)" -scheme GostX -project macos/GostX.xcodeproj -configuration Release -derivedDataPath ./build
 
 .PHONY: debug-dmg release-dmg
 debug-dmg release-dmg: TARGET = $(subst -dmg,,$@)
@@ -36,4 +36,4 @@ libgost-clean:
 
 .PHONY: clean
 clean: libgost-clean
-	xcodebuild clean -project GostX.xcodeproj -scheme GostX
+	xcodebuild clean -project macos/GostX.xcodeproj -scheme GostX

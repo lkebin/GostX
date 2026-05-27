@@ -486,26 +486,26 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/go/";
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../go/";
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
-					"-L./go/tor-static/tor",
+					"-L$(SRCROOT)/../go/tor-static/tor",
 					"-ltor",
-					"-L./go/tor-static/zlib/dist/lib",
+					"-L$(SRCROOT)/../go/tor-static/zlib/dist/lib",
 					"-lz",
-					"-L./go/tor-static/libevent/dist/lib",
+					"-L$(SRCROOT)/../go/tor-static/libevent/dist/lib",
 					"-levent",
-					"-L./go/tor-static/openssl/dist/lib",
+					"-L$(SRCROOT)/../go/tor-static/openssl/dist/lib",
 					"-lssl",
 					"-lcrypto",
-					"-L./go/tor-static/xz/dist/lib",
+					"-L$(SRCROOT)/../go/tor-static/xz/dist/lib",
 					"-llzma",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.GostX;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/go/";
+				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/../go/";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
@@ -537,26 +537,26 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/go/";
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../go/";
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
-					"-L./go/tor-static/tor",
+					"-L$(SRCROOT)/../go/tor-static/tor",
 					"-ltor",
-					"-L./go/tor-static/zlib/dist/lib",
+					"-L$(SRCROOT)/../go/tor-static/zlib/dist/lib",
 					"-lz",
-					"-L./go/tor-static/libevent/dist/lib",
+					"-L$(SRCROOT)/../go/tor-static/libevent/dist/lib",
 					"-levent",
-					"-L./go/tor-static/openssl/dist/lib",
+					"-L$(SRCROOT)/../go/tor-static/openssl/dist/lib",
 					"-lssl",
 					"-lcrypto",
-					"-L./go/tor-static/xz/dist/lib",
+					"-L$(SRCROOT)/../go/tor-static/xz/dist/lib",
 					"-llzma",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.GostX;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/go/";
+				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/../go/";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
