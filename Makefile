@@ -1,5 +1,20 @@
-.PHONY: all
-all: debug
+.PHONY: all macos android clean
+
+all: macos
+
+macos: go/libgost.a
+	xcodebuild \
+	  -scheme GostX -project macos/GostX.xcodeproj \
+	  -configuration Debug -derivedDataPath ./build
+
+android: go/gostlib.aar
+	cd android && ./gradlew assembleDebug
+
+go/libgost.a:
+	cd go && $(MAKE) libgost.a
+
+go/gostlib.aar:
+	cd go && $(MAKE) gostlib.aar
 
 .PHONY: debug
 debug: go/libgost.a
@@ -12,7 +27,6 @@ release: go/libgost.a
 .PHONY: debug-dmg release-dmg
 debug-dmg release-dmg: TARGET = $(subst -dmg,,$@)
 debug-dmg release-dmg:
-	# xcodebuild will create GostX.app under build folder
 	t="$(TARGET)" && t="`tr '[:lower:]' '[:upper:]' <<< $${t:0:1}`$${t:1}" \
 	  && rm -rf build/Build/Products/$${t}/GostX/ \
 	  && mkdir build/Build/Products/$${t}/GostX \
@@ -21,13 +35,8 @@ debug-dmg release-dmg:
 	  && hdiutil create build/Build/Products/$${t}/GostX.dmg -ov -volname "GostX" -fs HFS+ -srcfolder build/Build/Products/$${t}/GostX/ \
 	  && rm -rf build/Build/Products/$${t}/GostX/
 
-go/libgost.a:
-	cd go && $(MAKE)
-
-.PHONY: libgost-clean
-libgost-clean:
-	cd go && $(MAKE) clean
-
 .PHONY: clean
-clean: libgost-clean
-	xcodebuild clean -project macos/GostX.xcodeproj -scheme GostX
+clean:
+	cd go && $(MAKE) clean
+	xcodebuild clean -project macos/GostX.xcodeproj -scheme GostX 2>/dev/null || true
+	cd android && ./gradlew clean 2>/dev/null || true

@@ -7,4 +7,6 @@ build/*
 
 go/*.h
 go/*.a
+go/*.aar
+go/*.jar
 go/build/
