@@ -1,19 +1,13 @@
-OTHER_LDFLAGS := -L./go/tor-static/tor -ltor \
-				 -L./go/tor-static/zlib/dist/lib -lz \
-				 -L./go/tor-static/libevent/dist/lib -levent \
-				 -L./go/tor-static/openssl/dist/lib -lssl -lcrypto \
-				 -L./go/tor-static/xz/dist/lib -llzma
-
 .PHONY: all
 all: debug
 
 .PHONY: debug
 debug: go/libgost.a
-	xcodebuild OTHER_LDFLAGS="$(OTHER_LDFLAGS)" -scheme GostX -project macos/GostX.xcodeproj -configuration Debug -derivedDataPath ./build
+	xcodebuild -scheme GostX -project macos/GostX.xcodeproj -configuration Debug -derivedDataPath ./build
 
 .PHONY: release
 release: go/libgost.a
-	xcodebuild OTHER_LDFLAGS="$(OTHER_LDFLAGS)" -scheme GostX -project macos/GostX.xcodeproj -configuration Release -derivedDataPath ./build
+	xcodebuild -scheme GostX -project macos/GostX.xcodeproj -configuration Release -derivedDataPath ./build
 
 .PHONY: debug-dmg release-dmg
 debug-dmg release-dmg: TARGET = $(subst -dmg,,$@)
