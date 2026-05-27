@@ -6,12 +6,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.gostx.data.GlobalVpnState
 import com.gostx.data.VpnStatus
+import com.gostx.service.GostVpnService
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
-
-private const val ACTION_START = "com.gostx.START_VPN"
-private const val ACTION_STOP = "com.gostx.STOP_VPN"
-private const val SERVICE_CLASS = "com.gostx.service.GostVpnService"
 
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -22,10 +19,10 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         val ctx = getApplication<Application>()
         val action = if (vpnState.value.status == VpnStatus.CONNECTED ||
             vpnState.value.status == VpnStatus.CONNECTING
-        ) ACTION_STOP else ACTION_START
+        ) GostVpnService.ACTION_STOP else GostVpnService.ACTION_START
 
-        val intent = Intent(action).setClassName(ctx, SERVICE_CLASS)
-        if (action == ACTION_START) ctx.startForegroundService(intent)
+        val intent = Intent(ctx, GostVpnService::class.java).apply { this.action = action }
+        if (action == GostVpnService.ACTION_START) ctx.startForegroundService(intent)
         else ctx.startService(intent)
     }
 }
