@@ -25,7 +25,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gostx.data.VpnStatus
 
 @Composable
-fun HomeScreen(vm: HomeViewModel = viewModel()) {
+fun HomeScreen(
+    onRequestVpnPermission: () -> Unit = {},
+    vm: HomeViewModel = viewModel()
+) {
     val state by vm.vpnState.collectAsState()
 
     Column(
@@ -78,7 +81,7 @@ fun HomeScreen(vm: HomeViewModel = viewModel()) {
         Spacer(Modifier.height(48.dp))
 
         Button(
-            onClick = { vm.toggleVpn() },
+            onClick = { vm.toggleVpn(onRequestVpnPermission) },
             modifier = Modifier.fillMaxWidth().height(56.dp),
             enabled = state.status != VpnStatus.CONNECTING
         ) {

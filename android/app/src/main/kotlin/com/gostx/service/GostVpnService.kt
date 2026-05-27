@@ -15,12 +15,19 @@ import com.gostx.data.LogRepository
 import com.gostx.data.VpnStatus
 import com.gostx.notification.NOTIFICATION_ID
 import com.gostx.notification.NotificationHelper
+import java.lang.NoSuchMethodException
 import java.lang.reflect.InvocationTargetException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+
+internal fun shouldRestartVpnOnNetworkAvailable(
+    status: VpnStatus,
+    isVpnNetwork: Boolean,
+    restartInProgress: Boolean
+): Boolean = status == VpnStatus.CONNECTED && !isVpnNetwork && !restartInProgress
 
 class GostVpnService : VpnService() {
 
@@ -45,6 +52,7 @@ class GostVpnService : VpnService() {
     private var tunFd: ParcelFileDescriptor? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private lateinit var configRepo: ConfigRepository
+    @Volatile private var reconnectInProgress = false
 
     override fun onCreate() {
         super.onCreate()
@@ -87,7 +95,7 @@ class GostVpnService : VpnService() {
 
         tunFd = builder.establish() ?: run {
             log("Failed to establish VPN interface")
-            GlobalVpnState.setError("VPN 接口建立失败")
+            GlobalVpnState.setError("VPN 接口建立失败，请先授予 VPN 权限")
             GostLibBridge.stop()
             stopSelf()
             return
@@ -114,7 +122,7 @@ class GostVpnService : VpnService() {
         saveLastRunState(true)
     }
 
-    private fun stopVpn() {
+    private fun stopVpn(updatePersistentState: Boolean = true) {
         unregisterNetworkCallback()
         GostLibBridge.stopVPN()
         GostLibBridge.stop()
@@ -122,8 +130,12 @@ class GostVpnService : VpnService() {
         GlobalVpnState.setStopped()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
-        saveLastRunState(false)
-        log("VPN stopped")
+        if (updatePersistentState) {
+            saveLastRunState(false)
+            log("VPN stopped")
+        } else {
+            log("VPN restarting after network change")
+        }
     }
 
     private fun closeTun() {
@@ -147,10 +159,21 @@ class GostVpnService : VpnService() {
         val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val cb = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
-                if (GlobalVpnState.state.value.status == VpnStatus.CONNECTED) {
+                val isVpnNetwork = cm.getNetworkCapabilities(network)
+                    ?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
+                if (shouldRestartVpnOnNetworkAvailable(
+                        status = GlobalVpnState.state.value.status,
+                        isVpnNetwork = isVpnNetwork,
+                        restartInProgress = reconnectInProgress
+                    )) {
+                    reconnectInProgress = true
                     scope.launch {
-                        stopVpn()
-                        startVpn()
+                        try {
+                            stopVpn(updatePersistentState = false)
+                            startVpn()
+                        } finally {
+                            reconnectInProgress = false
+                        }
                     }
                 }
             }
@@ -198,6 +221,8 @@ private object GostLibBridge {
         }.toTypedArray()
         return try {
             clazz().getMethod(name, *types).invoke(null, *args)
+        } catch (e: NoSuchMethodException) {
+            throw IllegalStateException("gostlib.Gostlib#$name not found; verify the generated AAR matches the expected API", e)
         } catch (e: InvocationTargetException) {
             val cause = e.targetException
             if (cause is Exception) throw cause
