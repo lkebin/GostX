@@ -490,17 +490,8 @@
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
-					"-L$(SRCROOT)/../go/tor-static/tor",
-					"-ltor",
-					"-L$(SRCROOT)/../go/tor-static/zlib/dist/lib",
-					"-lz",
-					"-L$(SRCROOT)/../go/tor-static/libevent/dist/lib",
-					"-levent",
-					"-L$(SRCROOT)/../go/tor-static/openssl/dist/lib",
-					"-lssl",
-					"-lcrypto",
-					"-L$(SRCROOT)/../go/tor-static/xz/dist/lib",
-					"-llzma",
+					"-lgost",
+					"-lresolv",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.GostX;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -541,17 +532,8 @@
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
-					"-L$(SRCROOT)/../go/tor-static/tor",
-					"-ltor",
-					"-L$(SRCROOT)/../go/tor-static/zlib/dist/lib",
-					"-lz",
-					"-L$(SRCROOT)/../go/tor-static/libevent/dist/lib",
-					"-levent",
-					"-L$(SRCROOT)/../go/tor-static/openssl/dist/lib",
-					"-lssl",
-					"-lcrypto",
-					"-L$(SRCROOT)/../go/tor-static/xz/dist/lib",
-					"-llzma",
+					"-lgost",
+					"-lresolv",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.GostX;
 				PRODUCT_NAME = "$(TARGET_NAME)";

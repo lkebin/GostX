@@ -71,33 +71,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.menu?.toOffState()
     }
     
-    func start() -> () {
-        let arguments = Arguments()
-        arguments.refreshActive()
-        
-        let args: NSString = arguments.fetchActive().Value as NSString
-        
-        /* var fd: Int32? = 1 */ 
+    func start() {
+        let yaml = UserDefaults.standard.string(forKey: defaultsArgumentsKey) ?? defaultGostYAML
+
         var fd = self.logPipe?.fileHandleForWriting.fileDescriptor
         let fdPtr = UnsafeMutablePointer<CLong>.allocate(capacity: 1)
-        withUnsafeMutablePointer(to: &fd, { (ptr: UnsafeMutablePointer<Int32?>) in
+        withUnsafeMutablePointer(to: &fd) { ptr in
             fdPtr.initialize(to: CLong(ptr.pointee!))
-        })
+        }
 
-        let isFailed = gostRun(UnsafeMutablePointer<CChar>(mutating: args.utf8String),UnsafeMutablePointer<CLong>(mutating: fdPtr))
-        if (isFailed != 0) {
+        let isFailed = gostRunYaml(
+            UnsafeMutablePointer<CChar>(mutating: (yaml as NSString).utf8String),
+            UnsafeMutablePointer<CLong>(mutating: fdPtr)
+        )
+
+        if isFailed != 0 {
             self.menu?.toOffState()
-            // sometimes, if pass two or more same -L option value causes gost run faild,
-            // but gost already started one service, so call stop to close that one
             stop()
-            
             return
         }
-        
-        let i: UnsafeMutablePointer<info>? = gostInfo();
-        self.menu?.updateListen(String(cString:i!.pointee.listen))
+
+        if let infoPtr = gostInfo() {
+            let statusJSON = String(cString: infoPtr.pointee.status_json)
+            self.menu?.updateListen(statusJSON)
+            infoPtr.deallocate()
+        }
         self.menu?.toOnState()
-        i?.deallocate()
     }
     
     private func pipe() -> Pipe {

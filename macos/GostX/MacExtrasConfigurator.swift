@@ -52,8 +52,9 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
         
         menu.addItem(.separator())
         
-        // Arguments
-        argsItem.submenu = NSMenu()
+        // Configuration
+        argsItem.target = self
+        argsItem.action = #selector(onConfigClick)
         menu.addItem(argsItem)
         
         menu.addItem(.separator())
@@ -108,10 +109,7 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
     // MARK: - Actions
     
     @objc private func onArgumentClick(_ sender: Any?) {
-        Arguments().setActive(name:(sender! as! NSMenuItem).title)
-        delegate.stop()
-        delegate.start()
-        updateArgsMenuItem()
+        onConfigClick(sender)
     }
     
     @objc private func onConfigClick(_ sender: Any?) {
@@ -171,21 +169,9 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
     }
     
     private func updateArgsMenuItem() {
-        let arguments = Arguments()
-        let arg = arguments.fetchActive()
-        argsItem.title = arg.Name
-        
-        argsItem.submenu = NSMenu()
-        
-        // Arguments list
-        for a in arguments.fetchList() {
-            let i = NSMenuItem()
-            i.title = a.Name
-            i.toolTip = a.Value
-            i.action = #selector(onArgumentClick)
-            i.target = self
-            i.state = argsItem.title == a.Name ? .on : .off
-            argsItem.submenu?.addItem(i)
-        }
+        argsItem.title = NSLocalizedString("Configuration", comment: "")
+        argsItem.image = NSImage(systemSymbolName: "doc.text", accessibilityDescription: "")
+        argsItem.toolTip = UserDefaults.standard.string(forKey: defaultsArgumentsKey) ?? defaultGostYAML
+        argsItem.submenu = nil
     }
 }
