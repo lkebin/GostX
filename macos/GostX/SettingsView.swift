@@ -1,76 +1,56 @@
-//
-//  SettingsView.swift
-//  GostX
-//
-//  Created by 刘科彬 on 2022/6/17.
-//
-
+// macos/GostX/SettingsView.swift
 import SwiftUI
 import HighlightedTextEditor
 
-//let betweenUnderscores = try! NSRegularExpression(pattern: "_[^_]+_", options: [])
 let reOpts = NSRegularExpression.Options([.anchorsMatchLines])
-let commentRule = try! NSRegularExpression(pattern: "^\\#.*", options: reOpts)
-let listenFlagRule = try! NSRegularExpression(pattern: "(\\s+-L\\s+)|(^-L)", options: reOpts)
-let forwardFlagRule = try! NSRegularExpression(pattern: "(\\s+-F\\s+)|(^-F)", options: reOpts)
+let yamlKeyRule   = try! NSRegularExpression(
+    pattern: "^(\\s*)(services|chains|hops|name|addr|handler|listener|connector|dialer|type|chain|auth|tls|metadata|bypass|resolver|hosts|retries|timeout)\\s*:",
+    options: reOpts)
+let yamlCommentRule = try! NSRegularExpression(pattern: "^\\s*#.*", options: reOpts)
 
 struct SettingsView: View {
     var body: some View {
         TabView {
-            ArgumentView()
+            YamlConfigView()
                 .tabItem {
-                    Label(NSLocalizedString("Arguments", comment: ""), systemImage: "gear")
+                    Label(NSLocalizedString("Configuration", comment: ""), systemImage: "doc.text")
                 }
-                .tag("argument")
+                .tag("config")
         }
         .padding(5)
     }
 }
 
-struct ArgumentView: View {
+struct YamlConfigView: View {
     @AppStorage(defaultsArgumentsKey)
-    private var arguments = "-L socks5://:1080"
-    
+    private var yamlConfig = defaultGostYAML
+
     private let rules: [HighlightRule] = [
         HighlightRule(
-            pattern: commentRule,
+            pattern: yamlCommentRule,
             formattingRule: TextFormattingRule(key: .foregroundColor, value: NSColor.systemGray)
         ),
         HighlightRule(
-            pattern: listenFlagRule,
+            pattern: yamlKeyRule,
             formattingRules: [
                 TextFormattingRule(fontTraits: .bold),
-            ]
-        ),
-        HighlightRule(
-            pattern: forwardFlagRule,
-            formattingRules: [
-                TextFormattingRule(fontTraits: .bold),
+                TextFormattingRule(key: .foregroundColor, value: NSColor.systemBlue),
             ]
         ),
     ]
-        
+
     var body: some View {
-        Form {
-            VStack {
-                HighlightedTextEditor(text: $arguments, highlightRules: rules)
-                    .introspect { editor in
-                        editor.textView.allowsUndo = true
-                        editor.textView.breakUndoCoalescing()
-                    }
-            
-//            TextEditor(text: $arguments)
-//                .padding(5)
-//                .cornerRadius(20.0)
-//                .shadow(radius: 1.0)
-//                .font(Font.system(size: 12).monospaced())
-//                .frame(minWidth: 350, minHeight: 200, alignment: .leading)
-                
-                Text(NSLocalizedString("argument-description", comment: ""))
-                    .padding(.horizontal, 5)
-                    .font(Font.system(size:12))
-                    .foregroundColor(.gray)
-            }
+        VStack {
+            HighlightedTextEditor(text: $yamlConfig, highlightRules: rules)
+                .introspect { editor in
+                    editor.textView.allowsUndo = true
+                    editor.textView.breakUndoCoalescing()
+                    editor.textView.font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
+                }
+            Text("gost v3 YAML configuration — https://gost.run/docs/")
+                .padding(.horizontal, 5)
+                .font(Font.system(size: 12))
+                .foregroundColor(.gray)
         }
     }
 }
