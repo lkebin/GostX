@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">GostX</string>
+    <string name="vpn_start">启动 VPN</string>
+    <string name="vpn_stop">停止 VPN</string>
+    <string name="notification_title">GostX 运行中</string>
+    <string name="notification_stop">停止</string>
+    <string name="tile_label">GostX VPN</string>
+</resources>
