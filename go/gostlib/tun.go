@@ -32,8 +32,16 @@ func StartVPN(fd int, mtu int) error {
 		return fmt.Errorf("invalid TUN file descriptor: %d: %w", fd, err)
 	}
 
+	// Dup the fd so tun2socks can close its own copy independently without
+	// invalidating Android's ParcelFileDescriptor. FD.Close() calls unix.Close
+	// on the fd it holds; using a dup prevents double-close of the original fd.
+	tunFd := fd
+	if dup, err := unix.Dup(fd); err == nil {
+		tunFd = dup
+	}
+
 	engine.Insert(&engine.Key{
-		Device:   fmt.Sprintf("fd://%d", fd),
+		Device:   fmt.Sprintf("fd://%d", tunFd),
 		Proxy:    "socks5://" + VPNProxyAddr,
 		LogLevel: "error",
 		MTU:      mtu,

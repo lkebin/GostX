@@ -7,13 +7,33 @@ private const val KEY_ACTIVE = "config_active_profile"
 const val DEFAULT_PROFILE_ID = "default"
 
 val DEFAULT_YAML = """
+# GostX VPN 配置
+# tun2socks 将设备所有流量转发到 127.0.0.1:10808
+# 在此配置您的 gost 代理链，实现加密隧道转发
+
 services:
-  - name: socks5-outbound
-    addr: :1080
+  - name: tun
+    addr: 127.0.0.1:10808
     handler:
       type: socks5
+      chain: upstream
     listener:
       type: tcp
+
+chains:
+  - name: upstream
+    hops:
+      - name: hop0
+        nodes:
+          - name: server
+            addr: 您的代理服务器:端口
+            connector:
+              type: ss
+              metadata:
+                method: chacha20-ietf-poly1305
+                password: 您的密码
+            dialer:
+              type: tcp
 """.trimIndent()
 
 class ConfigRepository(private val prefs: SharedPreferences) {

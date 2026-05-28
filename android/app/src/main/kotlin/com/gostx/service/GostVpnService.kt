@@ -119,6 +119,10 @@ class GostVpnService : VpnService() {
             .addDnsServer("8.8.8.8")
             .setSession("GostX")
             .setBlocking(false)
+            // Exclude our own app from VPN routing so gost's outbound connections
+            // bypass the TUN interface, preventing the tun2socks→gost→tun2socks
+            // routing loop that causes OOM crashes.
+            .addDisallowedApplication(packageName)
 
         tunFd = builder.establish() ?: run {
             log("Failed to establish VPN interface")
@@ -163,7 +167,12 @@ class GostVpnService : VpnService() {
         GostLibBridge.stop()
         closeTun()
         GlobalVpnState.setStopped()
-        stopForeground(STOP_FOREGROUND_REMOVE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
         stopSelf()
         if (updatePersistentState) {
             saveLastRunState(false)
