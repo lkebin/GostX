@@ -65,6 +65,12 @@ class GostVpnService : VpnService() {
     private var vpnLogJob: Job? = null
     private lateinit var configRepo: ConfigRepository
     @Volatile private var reconnectInProgress = false
+    // Timestamp (ms) of the last successful VPN connect. Suppresses onAvailable
+    // restarts for RECONNECT_COOLDOWN_MS after each connect because Android fires
+    // onAvailable for all existing non-VPN networks whenever VPN routing changes,
+    // which would otherwise trigger an infinite restart loop.
+    @Volatile private var lastVpnConnectTime = 0L
+    private val RECONNECT_COOLDOWN_MS = 30_000L
 
     override fun onCreate() {
         super.onCreate()
@@ -151,6 +157,7 @@ class GostVpnService : VpnService() {
             val status = GostLibBridge.getStatus()
             val addr = parseFirstAddress(status)
             GlobalVpnState.setConnected(addr)
+            lastVpnConnectTime = System.currentTimeMillis()
             promoteToForeground(addr)  // update notification with actual listen address
             log("VPN started, gost status: $status")
             registerNetworkCallback()
@@ -178,18 +185,22 @@ class GostVpnService : VpnService() {
         GostLibBridge.stopVPN()
         closeTun()
         GostLibBridge.stop()
-        GlobalVpnState.setStopped()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        } else {
-            @Suppress("DEPRECATION")
-            stopForeground(true)
-        }
-        stopSelf()
         if (updatePersistentState) {
+            GlobalVpnState.setStopped()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } else {
+                @Suppress("DEPRECATION")
+                stopForeground(true)
+            }
+            stopSelf()
             saveLastRunState(false)
             log("VPN stopped")
         } else {
+            // Reconnect path: keep the foreground service running so Android does
+            // not consider the session ended. Status goes back to CONNECTING so
+            // the UI shows a brief reconnecting indicator without a full STOPPED flash.
+            GlobalVpnState.setConnecting()
             log("VPN restarting after network change")
         }
     }
@@ -232,7 +243,13 @@ class GostVpnService : VpnService() {
             override fun onAvailable(network: Network) {
                 val isVpnNetwork = cm.getNetworkCapabilities(network)
                     ?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
-                if (shouldRestartVpnOnNetworkAvailable(
+                // Ignore network-available callbacks fired within the cooldown window
+                // after VPN connects. Android re-notifies all non-VPN networks whenever
+                // VPN routing changes; without this guard each notification would trigger
+                // a restart, creating an infinite loop.
+                val cooldownExpired =
+                    (System.currentTimeMillis() - lastVpnConnectTime) > RECONNECT_COOLDOWN_MS
+                if (cooldownExpired && shouldRestartVpnOnNetworkAvailable(
                         status = GlobalVpnState.state.value.status,
                         isVpnNetwork = isVpnNetwork,
                         restartInProgress = reconnectInProgress
