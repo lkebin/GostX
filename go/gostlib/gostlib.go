@@ -50,6 +50,12 @@ var (
 	services []service.Service
 	cancelFn context.CancelFunc
 	serveWg  sync.WaitGroup
+
+	// vpnChainName is the gost chain name extracted from the tungo service in
+	// the user's config. StartVPN uses this to route gVisor TCP/UDP sessions
+	// directly through the chain, with no extra proxy listening port.
+	// Empty string means no tungo service found; legacy tun2socks path is used.
+	vpnChainName string
 )
 
 var stateCond = sync.NewCond(&mu)
@@ -97,19 +103,58 @@ func Start(yamlConfig string) error {
 	return nil
 }
 
-// StartVPNMode starts gost with an auto-injected internal SOCKS5 at 127.0.0.1:10808.
+// StartVPNMode starts gost for VPN mode.
+//
+// If the config contains a service with handler.type=tungo, that service is
+// extracted and skipped (the gVisor stack in StartVPN handles it directly).
+// The chain named in that service is stored so StartVPN can route through it.
+//
+// If no tungo service is present the old behaviour applies: an internal SOCKS5
+// listener is injected at 127.0.0.1:10808 and StartVPN uses the tun2socks
+// engine to route traffic there (backward compatibility).
 func StartVPNMode(yamlConfig string) error {
 	cfg := &config.Config{}
 	if err := yaml.Unmarshal([]byte(yamlConfig), cfg); err != nil {
 		return fmt.Errorf("invalid YAML config: %w", err)
 	}
-	injectInternalSocks5(cfg)
 
-	b, err := yaml.Marshal(cfg)
+	chainName, filtered := extractTungoService(cfg)
+
+	mu.Lock()
+	vpnChainName = chainName
+	mu.Unlock()
+
+	if chainName == "" {
+		// Legacy path: inject internal SOCKS5 so tun2socks has somewhere to
+		// send traffic.
+		injectInternalSocks5(filtered)
+	}
+
+	b, err := yaml.Marshal(filtered)
 	if err != nil {
 		return err
 	}
 	return Start(string(b))
+}
+
+// extractTungoService scans cfg for a service whose handler type is "tungo",
+// removes it from the services list (we handle it via gVisor in StartVPN),
+// and returns its chain name plus the filtered config.
+func extractTungoService(cfg *config.Config) (chainName string, filtered *config.Config) {
+	filtered = new(config.Config)
+	*filtered = *cfg
+	filtered.Services = nil
+
+	for _, svc := range cfg.Services {
+		if svc != nil && svc.Handler != nil && svc.Handler.Type == "tungo" {
+			if chainName == "" && svc.Handler.Chain != "" {
+				chainName = svc.Handler.Chain
+			}
+			continue // skip – handled by the gVisor stack
+		}
+		filtered.Services = append(filtered.Services, svc)
+	}
+	return chainName, filtered
 }
 
 // Stop stops all running gost services.

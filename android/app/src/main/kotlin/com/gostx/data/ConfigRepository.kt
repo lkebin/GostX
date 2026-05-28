@@ -8,17 +8,17 @@ const val DEFAULT_PROFILE_ID = "default"
 
 val DEFAULT_YAML = """
 # GostX VPN 配置
-# tun2socks 将设备所有流量转发到 127.0.0.1:10808
-# 在此配置您的 gost 代理链，实现加密隧道转发
+# 使用 tungo 模式：gVisor 直接处理 TUN 数据包，无需额外监听端口
+# 配置代理链 upstream，所有流量将通过此链路由
 
 services:
-  - name: tun
-    addr: 127.0.0.1:10808
+  - name: vpn
+    addr: :0
     handler:
-      type: socks5
+      type: tungo
       chain: upstream
     listener:
-      type: tcp
+      type: tungo
 
 chains:
   - name: upstream
