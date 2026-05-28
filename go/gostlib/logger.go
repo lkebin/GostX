@@ -2,109 +2,83 @@ package gostlib
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
+	"unsafe"
 
 	corelogger "github.com/go-gost/core/logger"
+	"github.com/sirupsen/logrus"
 )
 
-// chanLogger implements corelogger.Logger and writes log lines to vpnLogCh so
-// they appear in the app's log screen alongside VPN transport events.
+// vpnLogHook is a logrus hook that forwards gost internal log entries to
+// vpnLogCh so they appear in the app's log screen.
 //
-// Set as gost's default logger once at package init; all service, handler, and
-// chain activity is captured automatically.
-type chanLogger struct {
-	level  corelogger.LogLevel
-	fields map[string]any
-}
+// The hook is attached to the logrus.Logger that loader.Load() creates via
+// installLogrusHook(). This avoids using corelogger.SetDefault() with a
+// custom concrete type, which would panic because atomic.Value enforces type
+// consistency across all Store() calls.
+type vpnLogHook struct{}
 
-// levelOrder maps level strings to comparable ints (lower = more verbose).
-var levelOrder = map[corelogger.LogLevel]int{
-	corelogger.TraceLevel: 0,
-	corelogger.DebugLevel: 1,
-	corelogger.InfoLevel:  2,
-	corelogger.WarnLevel:  3,
-	corelogger.ErrorLevel: 4,
-	corelogger.FatalLevel: 5,
-}
-
-func init() {
-	// Install our channel-backed logger as gost's default. All service,
-	// handler, and chain log output will flow to GetVPNLog().
-	corelogger.SetDefault(&chanLogger{level: corelogger.InfoLevel})
-}
-
-func (l *chanLogger) WithFields(m map[string]any) corelogger.Logger {
-	merged := make(map[string]any, len(l.fields)+len(m))
-	for k, v := range l.fields {
-		merged[k] = v
+func (h *vpnLogHook) Levels() []logrus.Level {
+	return []logrus.Level{
+		logrus.InfoLevel,
+		logrus.WarnLevel,
+		logrus.ErrorLevel,
+		logrus.FatalLevel,
 	}
-	for k, v := range m {
-		merged[k] = v
-	}
-	return &chanLogger{level: l.level, fields: merged}
 }
 
-// formatPrefix builds a short context prefix from interesting fields so log
-// lines look like "[INFO] svc/handler: message" rather than a raw dump of all
-// fields.
-func (l *chanLogger) formatPrefix() string {
-	var sb strings.Builder
-	for _, key := range []string{"service", "listener", "handler", "connector", "dialer", "hop", "node"} {
-		if v, ok := l.fields[key]; ok {
-			if sb.Len() > 0 {
-				sb.WriteByte('/')
-			}
-			sb.WriteString(fmt.Sprintf("%v", v))
-		}
-	}
-	return sb.String()
-}
-
-func (l *chanLogger) emit(level corelogger.LogLevel, msg string) {
-	if !l.IsLevelEnabled(level) {
-		return
-	}
-	prefix := l.formatPrefix()
+func (h *vpnLogHook) Fire(entry *logrus.Entry) error {
 	var sb strings.Builder
 	sb.WriteByte('[')
-	sb.WriteString(strings.ToUpper(string(level))[0:4])
-	sb.WriteByte(']')
-	if prefix != "" {
-		sb.WriteByte(' ')
-		sb.WriteString(prefix)
-		sb.WriteByte(':')
+	level := entry.Level.String()
+	if len(level) >= 4 {
+		sb.WriteString(strings.ToUpper(level[:4]))
+	} else {
+		sb.WriteString(strings.ToUpper(level))
 	}
-	sb.WriteByte(' ')
-	sb.WriteString(msg)
-	logVPN("%s", sb.String())
+	sb.WriteString("] ")
+	sb.WriteString(entry.Message)
+	for k, v := range entry.Data {
+		sb.WriteString(fmt.Sprintf(" %s=%v", k, v))
+	}
+	logVPN(sb.String())
+	return nil
 }
 
-func (l *chanLogger) Trace(args ...any)            { l.emit(corelogger.TraceLevel, fmt.Sprint(args...)) }
-func (l *chanLogger) Tracef(f string, a ...any)    { l.emit(corelogger.TraceLevel, fmt.Sprintf(f, a...)) }
-func (l *chanLogger) Debug(args ...any)            { l.emit(corelogger.DebugLevel, fmt.Sprint(args...)) }
-func (l *chanLogger) Debugf(f string, a ...any)    { l.emit(corelogger.DebugLevel, fmt.Sprintf(f, a...)) }
-func (l *chanLogger) Info(args ...any)             { l.emit(corelogger.InfoLevel, fmt.Sprint(args...)) }
-func (l *chanLogger) Infof(f string, a ...any)     { l.emit(corelogger.InfoLevel, fmt.Sprintf(f, a...)) }
-func (l *chanLogger) Warn(args ...any)             { l.emit(corelogger.WarnLevel, fmt.Sprint(args...)) }
-func (l *chanLogger) Warnf(f string, a ...any)     { l.emit(corelogger.WarnLevel, fmt.Sprintf(f, a...)) }
-func (l *chanLogger) Error(args ...any)            { l.emit(corelogger.ErrorLevel, fmt.Sprint(args...)) }
-func (l *chanLogger) Errorf(f string, a ...any)    { l.emit(corelogger.ErrorLevel, fmt.Sprintf(f, a...)) }
-func (l *chanLogger) Fatal(args ...any)            { l.emit(corelogger.FatalLevel, fmt.Sprint(args...)) }
-func (l *chanLogger) Fatalf(f string, a ...any)    { l.emit(corelogger.FatalLevel, fmt.Sprintf(f, a...)) }
-
-func (l *chanLogger) GetLevel() corelogger.LogLevel { return l.level }
-
-func (l *chanLogger) IsLevelEnabled(level corelogger.LogLevel) bool {
-	return levelOrder[level] >= levelOrder[l.level]
-}
-
-// SetLogLevel changes the minimum log level captured from gost internals.
-// Accepted values: "trace", "debug", "info", "warn", "error".
-// Default is "info".
-func SetLogLevel(level string) {
-	lv := corelogger.LogLevel(strings.ToLower(level))
-	if _, ok := levelOrder[lv]; !ok {
-		lv = corelogger.InfoLevel
+// installLogrusHook attaches vpnLogHook to the logrus.Logger that backs
+// the gost default logger. Must be called after loader.Load() which creates
+// and registers the logger.
+//
+// The gost default logger is a *logrusLogger (unexported type in go-gost/x).
+// We reach its *logrus.Entry field via reflect + unsafe to call AddHook
+// without needing to export the type.
+//
+// loader.Load() creates a fresh logrus.Logger on every call so there is no
+// risk of accumulating duplicate hooks across Stop/Start cycles.
+func installLogrusHook() {
+	l := corelogger.Default()
+	if l == nil {
+		return
 	}
-	corelogger.SetDefault(&chanLogger{level: lv})
+	v := reflect.ValueOf(l)
+	if v.Kind() != reflect.Ptr || v.IsNil() {
+		return
+	}
+	elem := v.Elem()
+	// "logger" is the *logrus.Entry field in go-gost/x's logrusLogger struct.
+	f := elem.FieldByName("logger")
+	if !f.IsValid() || f.Kind() != reflect.Ptr {
+		return
+	}
+	// UnsafeAddr gives the address of the unexported field in memory so we
+	// can read the *logrus.Entry without going through Interface() (which
+	// panics for unexported fields).
+	entry := *(**logrus.Entry)(unsafe.Pointer(f.UnsafeAddr()))
+	if entry == nil || entry.Logger == nil {
+		return
+	}
+	entry.Logger.AddHook(&vpnLogHook{})
+	// Keep logrus writing to stderr (Android logcat) for external debugging;
+	// the hook additionally forwards log lines to the in-app log UI.
 }

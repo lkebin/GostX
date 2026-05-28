@@ -98,6 +98,9 @@ func Start(yamlConfig string) error {
 	if err := loader.Load(&loadCfg); err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
+	// loader.Load() calls corelogger.SetDefault() with a *logrusLogger.
+	// Attach our hook now so gost internal logs also appear in the app UI.
+	installLogrusHook()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	svcs, err := startServices(ctx, cfg)
