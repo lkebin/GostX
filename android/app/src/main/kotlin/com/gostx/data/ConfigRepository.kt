@@ -9,8 +9,13 @@ const val DEFAULT_PROFILE_ID = "default"
 val DEFAULT_YAML = """
 # GostX VPN 配置
 # 使用 tungo 模式：gVisor 直接处理 TUN 数据包，无需额外监听端口
-# 配置代理链 upstream，所有流量将通过此链路由
-
+#
+# ⚠️  metadata 位置很重要：
+#   - connector 的参数（如 SS 的 method/password）放在 connector.metadata 下
+#   - dialer 的参数（如 WSS 的 path、host）放在 dialer.metadata 下
+#   - 不要把 dialer 参数放在节点级别的 metadata 下，否则会被忽略
+#
+# 示例 1: Shadowsocks over TCP（最简单）
 services:
   - name: vpn
     addr: :0
@@ -34,6 +39,21 @@ chains:
                 password: 您的密码
             dialer:
               type: tcp
+
+# 示例 2: HTTP CONNECT over WebSocket (WSS)
+# chains:
+#   - name: upstream
+#     hops:
+#       - name: hop0
+#         nodes:
+#           - name: server
+#             addr: your.server.com:443
+#             connector:
+#               type: http
+#             dialer:
+#               type: wss
+#               metadata:
+#                 path: /your-secret-path   # ← 必须在 dialer.metadata 下，不是节点级别
 """.trimIndent()
 
 class ConfigRepository(private val prefs: SharedPreferences) {

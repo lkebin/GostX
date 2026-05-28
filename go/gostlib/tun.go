@@ -7,6 +7,7 @@ import (
 	"net"
 	"strconv"
 	"sync"
+	"sync/atomic"
 
 	"golang.org/x/sys/unix"
 
@@ -90,6 +91,13 @@ func startVPNGVisor(fd, mtu int, chainName string) error {
 	var chainer gostchain.Chainer
 	if chainName != "" {
 		chainer = registry.ChainRegistry().Get(chainName)
+		if chainer == nil {
+			logVPN("[warn] chain %q not found in registry – traffic will route directly", chainName)
+		} else {
+			logVPN("[info] chain %q found, gVisor stack starting (fd=%d mtu=%d)", chainName, fd, mtu)
+		}
+	} else {
+		logVPN("[info] no chain name – gVisor stack will route directly (fd=%d mtu=%d)", fd, mtu)
 	}
 	router := xchain.NewRouter(gostchain.ChainRouterOption(chainer))
 
@@ -166,6 +174,8 @@ func StopVPN() error {
 		tunStack = nil
 	}
 
+	resetVPNStats()
+
 	tunRunning = false
 	return nil
 }
@@ -183,14 +193,20 @@ func (h *gostTransportHandler) HandleTCP(conn adapter.TCPConn) {
 
 		id := conn.ID()
 		dst := net.JoinHostPort(id.LocalAddress.String(), strconv.Itoa(int(id.LocalPort)))
+		n := atomic.AddInt64(&vpnTCPConns, 1)
+		logVPN("[tcp#%d] dial %s", n, dst)
 
 		upstream, err := h.router.Dial(context.Background(), "tcp", dst)
 		if err != nil {
+			atomic.AddInt64(&vpnFailedConns, 1)
+			logVPN("[tcp#%d] dial %s failed: %v", n, dst, err)
 			return
 		}
 		defer upstream.Close()
+		logVPN("[tcp#%d] relaying %s", n, dst)
 
 		relay(conn, upstream)
+		logVPN("[tcp#%d] done %s", n, dst)
 	}()
 }
 
@@ -200,26 +216,49 @@ func (h *gostTransportHandler) HandleUDP(conn adapter.UDPConn) {
 
 		id := conn.ID()
 		dst := net.JoinHostPort(id.LocalAddress.String(), strconv.Itoa(int(id.LocalPort)))
+		n := atomic.AddInt64(&vpnUDPConns, 1)
+		logVPN("[udp#%d] dial %s", n, dst)
 
-		// router.Dial("udp", ...) establishes a UDP tunnel through the chain
-		// (e.g., SOCKS5 UDP Associate). Read/Write exchange complete UDP
-		// datagrams, matching what gonet.UDPConn delivers per Read/Write call.
+		// router.Dial("udp", ...) sends X-Gost-Protocol:udp via HTTP CONNECT chains
+		// so the server wraps the connection as a UDP tunnel.
 		upstream, err := h.router.Dial(context.Background(), "udp", dst)
 		if err != nil {
+			atomic.AddInt64(&vpnFailedConns, 1)
+			logVPN("[udp#%d] dial %s failed: %v", n, dst, err)
 			return
 		}
 		defer upstream.Close()
+		logVPN("[udp#%d] relaying %s", n, dst)
 
 		relay(conn, upstream)
 	}()
 }
 
-// relay pipes data bidirectionally between src and dst and returns once either
-// direction closes.
+// relay pipes data bidirectionally between src and dst. When one direction
+// reaches EOF, CloseWrite is called on the other side so the remote peer
+// receives a proper FIN and the other goroutine unblocks.
 func relay(src, dst net.Conn) {
 	done := make(chan struct{}, 2)
-	go func() { io.Copy(dst, src); done <- struct{}{} }()
-	go func() { io.Copy(src, dst); done <- struct{}{} }()
+	go func() {
+		io.Copy(dst, src)
+		closeWrite(dst)
+		done <- struct{}{}
+	}()
+	go func() {
+		io.Copy(src, dst)
+		closeWrite(src)
+		done <- struct{}{}
+	}()
 	<-done
 	<-done
+}
+
+// closeWrite signals write-EOF on c if it supports half-close (e.g. TCP).
+func closeWrite(c net.Conn) {
+	type halfCloser interface {
+		CloseWrite() error
+	}
+	if hc, ok := c.(halfCloser); ok {
+		_ = hc.CloseWrite()
+	}
 }

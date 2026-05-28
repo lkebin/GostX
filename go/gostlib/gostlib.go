@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+	"sync/atomic"
 
 	"github.com/go-gost/core/service"
 	"github.com/go-gost/x/config"
@@ -193,7 +194,8 @@ func IsRunning() bool {
 	return running
 }
 
-// GetStatus returns a JSON string containing running state and service addresses.
+// GetStatus returns a JSON string containing running state, service addresses,
+// and VPN connection counters.
 func GetStatus() string {
 	mu.Lock()
 	defer mu.Unlock()
@@ -206,8 +208,11 @@ func GetStatus() string {
 	}
 
 	b, _ := json.Marshal(map[string]any{
-		"running":   running,
-		"addresses": addrs,
+		"running":     running,
+		"addresses":   addrs,
+		"tcpConns":    atomic.LoadInt64(&vpnTCPConns),
+		"udpConns":    atomic.LoadInt64(&vpnUDPConns),
+		"failedConns": atomic.LoadInt64(&vpnFailedConns),
 	})
 	return string(b)
 }

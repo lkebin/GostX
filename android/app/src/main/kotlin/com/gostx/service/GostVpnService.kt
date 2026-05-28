@@ -22,8 +22,11 @@ import java.lang.reflect.InvocationTargetException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 internal fun shouldRestartVpnOnNetworkAvailable(
@@ -59,6 +62,7 @@ class GostVpnService : VpnService() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
     private var tunFd: ParcelFileDescriptor? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    private var vpnLogJob: Job? = null
     private lateinit var configRepo: ConfigRepository
     @Volatile private var reconnectInProgress = false
 
@@ -151,6 +155,7 @@ class GostVpnService : VpnService() {
             log("VPN started, gost status: $status")
             registerNetworkCallback()
             saveLastRunState(true)
+            startVpnLogPolling()
         } catch (e: Exception) {
             log("VPN post-start error: ${e.message}")
             GlobalVpnState.setError("VPN 启动后错误: ${e.message}")
@@ -163,6 +168,8 @@ class GostVpnService : VpnService() {
 
     private fun stopVpn(updatePersistentState: Boolean = true) {
         unregisterNetworkCallback()
+        vpnLogJob?.cancel()
+        vpnLogJob = null
         // stopVPN closes tun2socks' dup'd fd (ref count 2→1).
         // closeTun closes the original fd (ref count 1→0), which ends the Android VPN
         // session immediately so the status-bar VPN icon disappears right away.
@@ -193,6 +200,21 @@ class GostVpnService : VpnService() {
     }
 
     private fun log(msg: String) = LogRepository.append(msg)
+
+    /** Polls the Go VPN log buffer every second and forwards entries to LogRepository. */
+    private fun startVpnLogPolling() {
+        vpnLogJob = scope.launch {
+            while (isActive) {
+                delay(1000)
+                val msgs = GostLibBridge.getVPNLog()
+                if (msgs.isNotEmpty()) {
+                    msgs.trimEnd('\n').split('\n').forEach { line ->
+                        if (line.isNotEmpty()) LogRepository.append(line)
+                    }
+                }
+            }
+        }
+    }
 
     private fun parseFirstAddress(statusJson: String): String {
         val match = Regex(""""addresses":\["([^"]+)"""").find(statusJson)
@@ -296,4 +318,6 @@ private object GostLibBridge {
     }
 
     fun getStatus(): String = invoke("getStatus") as? String ?: ""
+
+    fun getVPNLog(): String = invoke("getVPNLog") as? String ?: ""
 }
