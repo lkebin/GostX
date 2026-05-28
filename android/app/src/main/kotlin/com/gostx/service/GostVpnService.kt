@@ -19,6 +19,7 @@ import com.gostx.notification.NOTIFICATION_ID
 import com.gostx.notification.NotificationHelper
 import java.lang.NoSuchMethodException
 import java.lang.reflect.InvocationTargetException
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -50,7 +51,12 @@ class GostVpnService : VpnService() {
         }
     }
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        log("Uncaught coroutine exception: ${throwable.message}")
+        GlobalVpnState.setError("意外错误: ${throwable.message}")
+        stopSelf()
+    }
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
     private var tunFd: ParcelFileDescriptor? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private lateinit var configRepo: ConfigRepository
@@ -133,14 +139,22 @@ class GostVpnService : VpnService() {
             return
         }
 
-        val status = GostLibBridge.getStatus()
-        val addr = parseFirstAddress(status)
-        GlobalVpnState.setConnected(addr)
-        promoteToForeground(addr)  // update notification with actual listen address
-        log("VPN started, gost status: $status")
-
-        registerNetworkCallback()
-        saveLastRunState(true)
+        try {
+            val status = GostLibBridge.getStatus()
+            val addr = parseFirstAddress(status)
+            GlobalVpnState.setConnected(addr)
+            promoteToForeground(addr)  // update notification with actual listen address
+            log("VPN started, gost status: $status")
+            registerNetworkCallback()
+            saveLastRunState(true)
+        } catch (e: Exception) {
+            log("VPN post-start error: ${e.message}")
+            GlobalVpnState.setError("VPN 启动后错误: ${e.message}")
+            closeTun()
+            GostLibBridge.stopVPN()
+            GostLibBridge.stop()
+            stopSelf()
+        }
     }
 
     private fun stopVpn(updatePersistentState: Boolean = true) {
