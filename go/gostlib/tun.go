@@ -163,16 +163,16 @@ func StopVPN() error {
 	if tunUseLegacy {
 		engine.Stop()
 	} else {
-		// Close the dup'd fd BEFORE Wait(): the fdbased endpoint goroutine is
-		// blocked inside BlockingRead(tunDupFd). Closing the fd interrupts the
-		// syscall, the goroutine exits, and Wait() returns promptly.
-		// If we close it after Wait() we get a deadlock.
+		// Close the dup'd fd first so the fdbased inbound-dispatch goroutine
+		// unblocks and exits. Then close the stack. We intentionally skip
+		// tunStack.Wait(): it can block indefinitely waiting for TCP endpoint
+		// goroutines to drain. The dup'd fd is closed, the stack is destroyed,
+		// and all remaining goroutines will encounter errors and exit on their own.
 		if tunDupFd >= 0 {
 			unix.Close(tunDupFd)
 			tunDupFd = -1
 		}
 		tunStack.Close()
-		tunStack.Wait()
 		tunStack = nil
 	}
 
