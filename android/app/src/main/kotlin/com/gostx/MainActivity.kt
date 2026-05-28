@@ -8,16 +8,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Article
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -61,7 +53,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GostXApp(
     configRepository: ConfigRepository,
@@ -69,28 +60,18 @@ fun GostXApp(
 ) {
     val navController = rememberNavController()
     MaterialTheme {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("GostX") },
-                    actions = {
-                        IconButton(onClick = { navController.navigate(Screen.Logs.route) }) {
-                            Icon(Icons.AutoMirrored.Filled.Article, contentDescription = "日志")
-                        }
-                        IconButton(onClick = { navController.navigate(Screen.Config.route) }) {
-                            Icon(Icons.Filled.Settings, contentDescription = "配置")
-                        }
-                    }
-                )
-            }
-        ) { padding ->
+        Scaffold { padding ->
             NavHost(
                 navController = navController,
                 startDestination = Screen.Home.route,
                 modifier = Modifier.padding(padding)
             ) {
                 composable(Screen.Home.route) {
-                    HomeScreen(onRequestVpnPermission = onRequestVpnPermission)
+                    HomeScreen(
+                        onRequestVpnPermission = onRequestVpnPermission,
+                        onNavigateToLogs = { navController.navigate(Screen.Logs.route) },
+                        onNavigateToConfig = { navController.navigate(Screen.Config.route) }
+                    )
                 }
                 composable(Screen.Logs.route) { LogScreen(onBack = { navController.popBackStack() }) }
                 composable(Screen.Config.route) {

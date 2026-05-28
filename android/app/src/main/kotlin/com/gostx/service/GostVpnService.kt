@@ -2,11 +2,13 @@ package com.gostx.service
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.VpnService
+import android.os.Build
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
 import com.gostx.data.ConfigRepository
@@ -63,6 +65,12 @@ class GostVpnService : VpnService() {
     override fun onBind(intent: Intent?): IBinder? = super.onBind(intent)
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_START) {
+            // Promote to foreground synchronously here — before any coroutine —
+            // to satisfy the 5-second requirement and supply the mandatory
+            // foreground service type on API 34 (UPSIDE_DOWN_CAKE)+.
+            promoteToForeground("")
+        }
         when (intent?.action) {
             ACTION_START -> scope.launch { startVpn() }
             ACTION_STOP -> scope.launch { stopVpn() }
@@ -70,9 +78,22 @@ class GostVpnService : VpnService() {
         return START_STICKY
     }
 
+    // API-safe startForeground: supplies FOREGROUND_SERVICE_TYPE_SPECIAL_USE on API 34+
+    // to avoid MissingForegroundServiceTypeException when foregroundServiceType is declared
+    // in the manifest.
+    private fun promoteToForeground(addr: String) {
+        val notification = NotificationHelper.buildRunningNotification(this, addr)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        } else {
+            @Suppress("DEPRECATION")
+            startForeground(NOTIFICATION_ID, notification)
+        }
+    }
+
     private fun startVpn() {
         GlobalVpnState.setConnecting()
-        startForeground(NOTIFICATION_ID, NotificationHelper.buildRunningNotification(this, ""))
+        // startForeground already called synchronously in onStartCommand
 
         val yaml = configRepo.getActiveConfig()
 
@@ -115,7 +136,7 @@ class GostVpnService : VpnService() {
         val status = GostLibBridge.getStatus()
         val addr = parseFirstAddress(status)
         GlobalVpnState.setConnected(addr)
-        startForeground(NOTIFICATION_ID, NotificationHelper.buildRunningNotification(this, addr))
+        promoteToForeground(addr)  // update notification with actual listen address
         log("VPN started, gost status: $status")
 
         registerNetworkCallback()
