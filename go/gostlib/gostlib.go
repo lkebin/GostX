@@ -12,6 +12,7 @@ import (
 	"github.com/go-gost/x/config"
 	"github.com/go-gost/x/config/loader"
 	serviceparser "github.com/go-gost/x/config/parsing/service"
+	"github.com/go-gost/x/registry"
 
 	_ "github.com/go-gost/x/connector/direct"
 	_ "github.com/go-gost/x/connector/http"
@@ -260,7 +261,55 @@ func GetVPNDNSAddr() string {
 	return vpnDNSVirtualAddr
 }
 
-// GetStatus returns a JSON string containing running state, service addresses,
+// ValidateConfig checks yamlConfig for errors without starting any services.
+// Returns an empty string if the config is valid, or a human-readable error
+// message describing the first problem found.
+//
+// Checks performed (in order):
+//  1. YAML syntax
+//  2. Each service's handler and listener type is registered
+//  3. Every chain reference names a chain that exists in the config
+func ValidateConfig(yamlConfig string) string {
+	cfg := &config.Config{}
+	if err := yaml.Unmarshal([]byte(yamlConfig), cfg); err != nil {
+		return fmt.Sprintf("YAML 解析错误: %v", err)
+	}
+
+	for _, svc := range cfg.Services {
+		if svc == nil {
+			continue
+		}
+		if svc.Handler != nil && svc.Handler.Type != "" {
+			if registry.HandlerRegistry().Get(svc.Handler.Type) == nil {
+				return fmt.Sprintf("未知 handler 类型 %q (服务 %q)", svc.Handler.Type, svc.Name)
+			}
+		}
+		if svc.Listener != nil && svc.Listener.Type != "" {
+			if registry.ListenerRegistry().Get(svc.Listener.Type) == nil {
+				return fmt.Sprintf("未知 listener 类型 %q (服务 %q)", svc.Listener.Type, svc.Name)
+			}
+		}
+	}
+
+	chainNames := make(map[string]bool, len(cfg.Chains))
+	for _, ch := range cfg.Chains {
+		if ch != nil {
+			chainNames[ch.Name] = true
+		}
+	}
+	for _, svc := range cfg.Services {
+		if svc == nil || svc.Handler == nil {
+			continue
+		}
+		if ref := svc.Handler.Chain; ref != "" && !chainNames[ref] {
+			return fmt.Sprintf("服务 %q 引用了不存在的 chain: %q", svc.Name, ref)
+		}
+	}
+
+	return ""
+}
+
+
 // and VPN connection counters.
 func GetStatus() string {
 	mu.Lock()

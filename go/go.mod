@@ -5,9 +5,11 @@ go 1.25.0
 require (
 	github.com/go-gost/core v0.2.1
 	github.com/go-gost/x v0.4.2
+	github.com/sirupsen/logrus v1.9.3
 	github.com/xjasonlyu/tun2socks/v2 v2.6.0
 	golang.org/x/sys v0.44.0
 	gopkg.in/yaml.v3 v3.0.1
+	gvisor.dev/gvisor v0.0.0-20250523182742-eede7a881b20
 )
 
 require (
@@ -63,7 +65,6 @@ require (
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/shadowsocks/go-shadowsocks2 v0.1.5 // indirect
 	github.com/shadowsocks/shadowsocks-go v0.0.0-20200409064450-3e585ff90601 // indirect
-	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
@@ -98,7 +99,6 @@ require (
 	google.golang.org/protobuf v1.35.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
-	gvisor.dev/gvisor v0.0.0-20250523182742-eede7a881b20 // indirect
 )
 
 // Monolithic google.golang.org/genproto is in the module graph (via spf13/viper → go-gost/x)
