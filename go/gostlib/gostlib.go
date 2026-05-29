@@ -275,17 +275,21 @@ func ValidateConfig(yamlConfig string) string {
 		return fmt.Sprintf("YAML 解析错误: %v", err)
 	}
 
+	// internalTypes are handler/listener types implemented inside gostlib
+	// rather than via the go-gost registry; skip the registry lookup for them.
+	internalTypes := map[string]bool{"tungo": true}
+
 	for _, svc := range cfg.Services {
 		if svc == nil {
 			continue
 		}
 		if svc.Handler != nil && svc.Handler.Type != "" {
-			if registry.HandlerRegistry().Get(svc.Handler.Type) == nil {
+			if !internalTypes[svc.Handler.Type] && registry.HandlerRegistry().Get(svc.Handler.Type) == nil {
 				return fmt.Sprintf("未知 handler 类型 %q (服务 %q)", svc.Handler.Type, svc.Name)
 			}
 		}
 		if svc.Listener != nil && svc.Listener.Type != "" {
-			if registry.ListenerRegistry().Get(svc.Listener.Type) == nil {
+			if !internalTypes[svc.Listener.Type] && registry.ListenerRegistry().Get(svc.Listener.Type) == nil {
 				return fmt.Sprintf("未知 listener 类型 %q (服务 %q)", svc.Listener.Type, svc.Name)
 			}
 		}
