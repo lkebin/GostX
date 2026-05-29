@@ -21,6 +21,40 @@ services:
     listener:
       type: tcp`
 
+// DNS service listens on a fixed loopback port.  Port 15353 must be free on the test host.
+const testDNSYAML = `
+services:
+  - name: test-socks5
+    addr: 127.0.0.1:19080
+    handler:
+      type: socks5
+    listener:
+      type: tcp
+  - name: test-dns
+    addr: 127.0.0.1:15353
+    handler:
+      type: dns
+      metadata:
+        dns: udp://8.8.8.8
+    listener:
+      type: dns
+      metadata:
+        mode: udp`
+
+// testDNSYAMLNoHost uses an unqualified address to exercise normalisation.
+const testDNSYAMLNoHost = `
+services:
+  - name: test-dns
+    addr: :15353
+    handler:
+      type: dns
+      metadata:
+        dns: udp://8.8.8.8
+    listener:
+      type: dns
+      metadata:
+        mode: udp`
+
 type fakeService struct {
 	addr          net.Addr
 	serveStarted  chan struct{}
@@ -69,6 +103,8 @@ func resetTestState(t *testing.T) {
 	running = false
 	stopping = false
 	cancelFn = nil
+	vpnChainName = ""
+	vpnDNSServiceAddr = ""
 	mu.Unlock()
 }
 
@@ -301,5 +337,67 @@ func TestStopWaitsForServeToExit(t *testing.T) {
 
 	if got := fake.closeCount.Load(); got != 1 {
 		t.Fatalf("Close() called %d times, want 1", got)
+	}
+}
+
+func TestNormalizeDNSAddr(t *testing.T) {
+	cases := []struct{ input, want string }{
+		{":5353", "127.0.0.1:5353"},
+		{"0.0.0.0:5353", "127.0.0.1:5353"},
+		{"127.0.0.1:5353", "127.0.0.1:5353"},
+		{"192.168.1.1:5353", "192.168.1.1:5353"},
+	}
+	for _, c := range cases {
+		got := normalizeDNSAddr(c.input)
+		if got != c.want {
+			t.Errorf("normalizeDNSAddr(%q) = %q, want %q", c.input, got, c.want)
+		}
+	}
+}
+
+func TestGetVPNDNSAddrNoService(t *testing.T) {
+	resetTestState(t)
+	if err := StartVPNMode(testYAML); err != nil {
+		t.Fatalf("StartVPNMode() failed: %v", err)
+	}
+	defer Stop()
+	waitForRunning(t)
+
+	if got := GetVPNDNSAddr(); got != "" {
+		t.Fatalf("GetVPNDNSAddr() = %q, want empty when no DNS service", got)
+	}
+}
+
+func TestGetVPNDNSAddrWithService(t *testing.T) {
+	resetTestState(t)
+	if err := StartVPNMode(testDNSYAML); err != nil {
+		t.Fatalf("StartVPNMode() failed: %v", err)
+	}
+	defer Stop()
+	waitForRunning(t)
+
+	if got := GetVPNDNSAddr(); got != vpnDNSVirtualAddr {
+		t.Fatalf("GetVPNDNSAddr() = %q, want %q", got, vpnDNSVirtualAddr)
+	}
+}
+
+func TestGetVPNDNSAddrNormalisesHost(t *testing.T) {
+	resetTestState(t)
+	if err := StartVPNMode(testDNSYAMLNoHost); err != nil {
+		t.Fatalf("StartVPNMode() failed: %v", err)
+	}
+	defer Stop()
+	waitForRunning(t)
+
+	// Service addr was ":15353"; vpnDNSServiceAddr must be "127.0.0.1:15353".
+	mu.Lock()
+	got := vpnDNSServiceAddr
+	mu.Unlock()
+	if got != "127.0.0.1:15353" {
+		t.Fatalf("vpnDNSServiceAddr = %q, want %q", got, "127.0.0.1:15353")
+	}
+	// GetVPNDNSAddr must still return the virtual IP.
+	if addr := GetVPNDNSAddr(); addr != vpnDNSVirtualAddr {
+		t.Fatalf("GetVPNDNSAddr() = %q, want %q", addr, vpnDNSVirtualAddr)
 	}
 }
