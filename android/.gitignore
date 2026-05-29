@@ -1,0 +1,8 @@
+.gradle
+local.properties
+build/
+app/build/
+*.iml
+.idea/
+app/libs/gostlib.aar
+app/libs/gostlib-sources.jar

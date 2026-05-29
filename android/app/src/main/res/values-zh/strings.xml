@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GostX</string>
+
+    <!-- Navigation -->
+    <string name="nav_log">日志</string>
+    <string name="nav_config">配置</string>
+    <string name="nav_back">返回</string>
+
+    <!-- VPN status -->
+    <string name="status_running">运行中</string>
+    <string name="status_connecting">连接中...</string>
+    <string name="status_error">错误</string>
+    <string name="status_stopped">已停止</string>
+    <string name="listen_addr">监听: %s</string>
+
+    <!-- VPN actions -->
+    <string name="vpn_start">启动 VPN</string>
+    <string name="vpn_stop">停止 VPN</string>
+    <string name="vpn_permission_denied">VPN 权限被拒绝</string>
+
+    <!-- Config screen -->
+    <string name="config_title">配置</string>
+    <string name="config_error_title">配置错误</string>
+    <string name="config_saved">已保存</string>
+    <string name="action_ok">确定</string>
+    <string name="action_save">保存</string>
+
+    <!-- Log screen -->
+    <string name="log_title">运行日志</string>
+    <string name="log_copy">复制</string>
+    <string name="log_clear">清空</string>
+    <string name="log_empty">暂无日志</string>
+
+    <!-- Notification -->
+    <string name="notification_title">GostX 运行中</string>
+    <string name="notification_stop">停止</string>
+    <string name="notification_connecting">连接中...</string>
+
+    <!-- Quick Settings tile -->
+    <string name="tile_label">GostX VPN</string>
+    <string name="tile_connected">已连接</string>
+    <string name="tile_connecting">连接中...</string>
+    <string name="tile_error">错误</string>
+</resources>
