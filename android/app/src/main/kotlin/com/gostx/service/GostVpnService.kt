@@ -122,11 +122,12 @@ class GostVpnService : VpnService() {
             return
         }
 
+        val vpnDnsAddr = GostLibBridge.getVpnDnsAddr()
         val builder = Builder()
             .setMtu(1500)
             .addAddress("10.0.0.2", 24)
             .addRoute("0.0.0.0", 0)
-            .addDnsServer("8.8.8.8")
+            .addDnsServer(if (vpnDnsAddr.isNotEmpty()) vpnDnsAddr else "8.8.8.8")
             .setSession("GostX")
             .setBlocking(false)
             // Exclude our own app from VPN routing so gost's outbound connections
@@ -337,4 +338,6 @@ private object GostLibBridge {
     fun getStatus(): String = invoke("getStatus") as? String ?: ""
 
     fun getVPNLog(): String = invoke("getVPNLog") as? String ?: ""
+
+    fun getVpnDnsAddr(): String = invoke("getVPNDNSAddr") as? String ?: ""
 }
