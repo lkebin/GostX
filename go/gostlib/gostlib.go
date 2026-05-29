@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"sync"
 	"sync/atomic"
 
@@ -34,6 +35,7 @@ import (
 	_ "github.com/go-gost/x/dialer/tls"
 	_ "github.com/go-gost/x/dialer/udp"
 	_ "github.com/go-gost/x/dialer/ws"
+	_ "github.com/go-gost/x/handler/dns"
 	_ "github.com/go-gost/x/handler/forward/local"
 	_ "github.com/go-gost/x/handler/forward/remote"
 	_ "github.com/go-gost/x/handler/http"
@@ -44,6 +46,7 @@ import (
 	_ "github.com/go-gost/x/handler/socks/v5"
 	_ "github.com/go-gost/x/handler/ss"
 	_ "github.com/go-gost/x/handler/tun"
+	_ "github.com/go-gost/x/listener/dns"
 	_ "github.com/go-gost/x/listener/tcp"
 	_ "github.com/go-gost/x/listener/tls"
 	_ "github.com/go-gost/x/listener/udp"
@@ -65,6 +68,10 @@ var (
 	// directly through the chain, with no extra proxy listening port.
 	// Empty string means no tungo service found; legacy tun2socks path is used.
 	vpnChainName string
+
+	// vpnDNSServiceAddr is the normalised listen address of the first DNS service
+	// found in the config, e.g. "127.0.0.1:5353". Empty when none is configured.
+	vpnDNSServiceAddr string
 )
 
 var stateCond = sync.NewCond(&mu)
@@ -72,6 +79,15 @@ var stateCond = sync.NewCond(&mu)
 // VPNProxyAddr is the loopback SOCKS5 address auto-injected by StartVPNMode.
 // tun2socks must be configured to forward traffic to this address.
 const VPNProxyAddr = "127.0.0.1:10808"
+
+// vpnDNSVirtualAddr is the virtual IP advertised to Android as the DNS server
+// when a Gost DNS service is found in the config. It must fall within the VPN
+// subnet (10.0.0.0/24) so that DNS queries are routed through the TUN fd.
+// Value is TUN address (10.0.0.2) + 1.
+const (
+	vpnDNSVirtualAddr = "10.0.0.3"
+	vpnDNSVirtualPort = 53
+)
 
 // NOTE: services are not registered in gost's global ServiceRegistry.
 // Cross-service references in YAML (e.g., relay handler → named service) are not supported.
@@ -115,6 +131,30 @@ func Start(yamlConfig string) error {
 	return nil
 }
 
+// normalizeDNSAddr replaces an empty or "0.0.0.0" host with "127.0.0.1" so
+// that the gVisor handler can dial the DNS service on the loopback interface.
+func normalizeDNSAddr(addr string) string {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return addr
+	}
+	if host == "" || host == "0.0.0.0" {
+		host = "127.0.0.1"
+	}
+	return net.JoinHostPort(host, port)
+}
+
+// detectVPNDNSService returns the normalised address of the first service in
+// cfg whose handler type is "dns", or "" if none is present.
+func detectVPNDNSService(cfg *config.Config) string {
+	for _, svc := range cfg.Services {
+		if svc != nil && svc.Handler != nil && svc.Handler.Type == "dns" && svc.Addr != "" {
+			return normalizeDNSAddr(svc.Addr)
+		}
+	}
+	return ""
+}
+
 // StartVPNMode starts gost for VPN mode.
 //
 // If the config contains a service with handler.type=tungo, that service is
@@ -132,8 +172,11 @@ func StartVPNMode(yamlConfig string) error {
 
 	chainName, filtered := extractTungoService(cfg)
 
+	dnsServiceAddr := detectVPNDNSService(cfg)
+
 	mu.Lock()
 	vpnChainName = chainName
+	vpnDNSServiceAddr = dnsServiceAddr
 	mu.Unlock()
 
 	if chainName == "" {
@@ -203,6 +246,18 @@ func IsRunning() bool {
 	mu.Lock()
 	defer mu.Unlock()
 	return running
+}
+
+// GetVPNDNSAddr returns the virtual DNS server IP (vpnDNSVirtualAddr) to
+// advertise to the Android VPN when a Gost DNS service has been detected in the
+// active config, or "" when no DNS service is configured (fall back to 8.8.8.8).
+func GetVPNDNSAddr() string {
+	mu.Lock()
+	defer mu.Unlock()
+	if vpnDNSServiceAddr == "" {
+		return ""
+	}
+	return vpnDNSVirtualAddr
 }
 
 // GetStatus returns a JSON string containing running state, service addresses,
