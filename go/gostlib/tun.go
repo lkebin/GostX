@@ -67,10 +67,11 @@ func StartVPN(fd int, mtu int) error {
 
 	mu.Lock()
 	chainName := vpnChainName
+	dnsServiceAddr := vpnDNSServiceAddr
 	mu.Unlock()
 
 	if chainName != "" {
-		return startVPNGVisor(fd, mtu, chainName)
+		return startVPNGVisor(fd, mtu, chainName, dnsServiceAddr)
 	}
 	return startVPNLegacy(fd, mtu)
 }
@@ -78,7 +79,7 @@ func StartVPN(fd int, mtu int) error {
 // startVPNGVisor creates a gVisor userspace network stack directly on the
 // Android VPN fd. Each TCP/UDP session is routed through the named gost chain
 // via a gostTransportHandler – no SOCKS5 port is opened.
-func startVPNGVisor(fd, mtu int, chainName string) error {
+func startVPNGVisor(fd, mtu int, chainName, dnsServiceAddr string) error {
 	// Dup the fd so the gVisor endpoint owns an independent copy. Android's
 	// ParcelFileDescriptor manages the original fd; closing the dup on StopVPN
 	// does not affect the original.
@@ -114,7 +115,7 @@ func startVPNGVisor(fd, mtu int, chainName string) error {
 
 	gvStack, err := core.CreateStack(&core.Config{
 		LinkEndpoint:     ep,
-		TransportHandler: &gostTransportHandler{router: router},
+		TransportHandler: &gostTransportHandler{router: router, dnsServiceAddr: dnsServiceAddr},
 	})
 	if err != nil {
 		unix.Close(dupFd)
@@ -186,7 +187,8 @@ func StopVPN() error {
 // It routes every gVisor TCP/UDP session through a gost chain Router,
 // eliminating the need for a separate SOCKS5 proxy listening port.
 type gostTransportHandler struct {
-	router *xchain.Router
+	router         *xchain.Router
+	dnsServiceAddr string // loopback address of the Gost DNS service, e.g. "127.0.0.1:5353"
 }
 
 func (h *gostTransportHandler) HandleTCP(conn adapter.TCPConn) {
@@ -198,7 +200,15 @@ func (h *gostTransportHandler) HandleTCP(conn adapter.TCPConn) {
 		n := atomic.AddInt64(&vpnTCPConns, 1)
 		logVPN("[tcp#%d] dial %s", n, dst)
 
-		upstream, err := h.router.Dial(context.Background(), "tcp", dst)
+		var upstream net.Conn
+		var err error
+		if h.dnsServiceAddr != "" &&
+			id.LocalAddress.String() == vpnDNSVirtualAddr &&
+			int(id.LocalPort) == vpnDNSVirtualPort {
+			upstream, err = net.Dial("tcp", h.dnsServiceAddr)
+		} else {
+			upstream, err = h.router.Dial(context.Background(), "tcp", dst)
+		}
 		if err != nil {
 			atomic.AddInt64(&vpnFailedConns, 1)
 			logVPN("[tcp#%d] dial %s failed: %v", n, dst, err)
@@ -221,9 +231,15 @@ func (h *gostTransportHandler) HandleUDP(conn adapter.UDPConn) {
 		n := atomic.AddInt64(&vpnUDPConns, 1)
 		logVPN("[udp#%d] dial %s", n, dst)
 
-		// router.Dial("udp", ...) sends X-Gost-Protocol:udp via HTTP CONNECT chains
-		// so the server wraps the connection as a UDP tunnel.
-		upstream, err := h.router.Dial(context.Background(), "udp", dst)
+		var upstream net.Conn
+		var err error
+		if h.dnsServiceAddr != "" &&
+			id.LocalAddress.String() == vpnDNSVirtualAddr &&
+			int(id.LocalPort) == vpnDNSVirtualPort {
+			upstream, err = net.Dial("udp", h.dnsServiceAddr)
+		} else {
+			upstream, err = h.router.Dial(context.Background(), "udp", dst)
+		}
 		if err != nil {
 			atomic.AddInt64(&vpnFailedConns, 1)
 			logVPN("[udp#%d] dial %s failed: %v", n, dst, err)
