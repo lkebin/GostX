@@ -178,13 +178,12 @@ class GostVpnService : VpnService() {
         unregisterNetworkCallback()
         vpnLogJob?.cancel()
         vpnLogJob = null
-        // stopVPN closes tun2socks' dup'd fd (ref count 2→1).
-        // closeTun closes the original fd (ref count 1→0), which ends the Android VPN
-        // session immediately so the status-bar VPN icon disappears right away.
-        // stop() waits for gost connections to drain; we do it last so the icon is
-        // already gone before the (potentially slow) gost shutdown completes.
-        GostLibBridge.stopVPN()
+        // Close the ParcelFileDescriptor first: this immediately notifies Android's
+        // ConnectivityService that the VPN session is ending, so the status-bar icon
+        // disappears right away. The Go side still holds its dup'd fd and can finish
+        // cleanly afterwards.
         closeTun()
+        GostLibBridge.stopVPN()
         GostLibBridge.stop()
         if (updatePersistentState) {
             GlobalVpnState.setStopped()
