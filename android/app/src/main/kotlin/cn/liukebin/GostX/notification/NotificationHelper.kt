@@ -42,7 +42,7 @@ object NotificationHelper {
         )
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(context.getString(R.string.notification_title))
-            .setContentText(if (addr.isNotEmpty()) "监听: $addr" else "连接中...")
+            .setContentText(if (addr.isNotEmpty()) context.getString(R.string.listen_addr, addr) else context.getString(R.string.notification_connecting))
             .setSmallIcon(android.R.drawable.ic_lock_lock)
             .setContentIntent(openIntent)
             .addAction(0, context.getString(R.string.notification_stop), stopIntent)

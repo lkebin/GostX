@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
         if (result.resultCode == Activity.RESULT_OK) {
             GostVpnService.start(this)
         } else {
-            GlobalVpnState.setError("VPN 权限被拒绝")
+            GlobalVpnState.setError(getString(R.string.vpn_permission_denied))
         }
     }
 

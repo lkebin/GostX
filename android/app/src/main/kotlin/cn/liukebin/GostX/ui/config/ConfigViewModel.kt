@@ -3,7 +3,6 @@ package cn.liukebin.GostX.ui.config
 import androidx.lifecycle.ViewModel
 import cn.liukebin.GostX.service.GostLibBridge
 import cn.liukebin.GostX.data.ConfigRepository
-import cn.liukebin.GostX.data.DEFAULT_YAML
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -51,16 +50,6 @@ class ConfigViewModel(private val repo: ConfigRepository) : ViewModel() {
         _ui.value = _ui.value.copy(validationError = null)
     }
 
-    fun validate(): Boolean {
-        return if (!_ui.value.yaml.contains("services:")) {
-            _ui.value = _ui.value.copy(validationError = "配置必须包含 services: 字段")
-            false
-        } else {
-            _ui.value = _ui.value.copy(validationError = null)
-            true
-        }
-    }
-
     fun switchProfile(profileId: String) {
         repo.setActiveProfile(profileId)
         _ui.value = _ui.value.copy(
@@ -68,9 +57,5 @@ class ConfigViewModel(private val repo: ConfigRepository) : ViewModel() {
             yaml = repo.getConfig(profileId),
             validationError = null
         )
-    }
-
-    fun resetToDefault() {
-        _ui.value = _ui.value.copy(yaml = DEFAULT_YAML, validationError = null, isSaved = false)
     }
 }

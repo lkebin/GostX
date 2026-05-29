@@ -1,8 +1,44 @@
 <resources>
     <string name="app_name">GostX</string>
-    <string name="vpn_start">启动 VPN</string>
-    <string name="vpn_stop">停止 VPN</string>
-    <string name="notification_title">GostX 运行中</string>
-    <string name="notification_stop">停止</string>
+
+    <!-- Navigation -->
+    <string name="nav_log">Log</string>
+    <string name="nav_config">Config</string>
+    <string name="nav_back">Back</string>
+
+    <!-- VPN status -->
+    <string name="status_running">Running</string>
+    <string name="status_connecting">Connecting\u2026</string>
+    <string name="status_error">Error</string>
+    <string name="status_stopped">Stopped</string>
+    <string name="listen_addr">Listen: %s</string>
+
+    <!-- VPN actions -->
+    <string name="vpn_start">Start VPN</string>
+    <string name="vpn_stop">Stop VPN</string>
+    <string name="vpn_permission_denied">VPN permission denied</string>
+
+    <!-- Config screen -->
+    <string name="config_title">Config</string>
+    <string name="config_error_title">Config Error</string>
+    <string name="config_saved">Saved</string>
+    <string name="action_ok">OK</string>
+    <string name="action_save">Save</string>
+
+    <!-- Log screen -->
+    <string name="log_title">Runtime Log</string>
+    <string name="log_copy">Copy</string>
+    <string name="log_clear">Clear</string>
+    <string name="log_empty">No logs</string>
+
+    <!-- Notification -->
+    <string name="notification_title">GostX Running</string>
+    <string name="notification_stop">Stop</string>
+    <string name="notification_connecting">Connecting\u2026</string>
+
+    <!-- Quick Settings tile -->
     <string name="tile_label">GostX VPN</string>
+    <string name="tile_connected">Connected</string>
+    <string name="tile_connecting">Connecting\u2026</string>
+    <string name="tile_error">Error</string>
 </resources>

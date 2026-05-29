@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.res.stringResource
+import cn.liukebin.GostX.R
 import cn.liukebin.GostX.data.ConfigRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,10 +52,10 @@ fun ConfigScreen(
     if (state.validationError != null) {
         AlertDialog(
             onDismissRequest = { vm.clearValidationError() },
-            title = { Text("配置错误") },
+            title = { Text(stringResource(R.string.config_error_title)) },
             text = { Text(state.validationError!!) },
             confirmButton = {
-                TextButton(onClick = { vm.clearValidationError() }) { Text("确定") }
+                TextButton(onClick = { vm.clearValidationError() }) { Text(stringResource(R.string.action_ok)) }
             }
         )
     }
@@ -61,15 +63,15 @@ fun ConfigScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("配置") },
+                title = { Text(stringResource(R.string.config_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.nav_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { vm.save() }) {
-                        Icon(Icons.Filled.Save, contentDescription = "保存")
+                        Icon(Icons.Filled.Save, contentDescription = stringResource(R.string.action_save))
                     }
                 }
             )
@@ -106,7 +108,7 @@ fun ConfigScreen(
             if (state.isSaved) {
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "已保存",
+                    stringResource(R.string.config_saved),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall
                 )

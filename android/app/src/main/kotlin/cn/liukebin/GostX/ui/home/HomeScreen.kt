@@ -30,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.res.stringResource
+import cn.liukebin.GostX.R
 import cn.liukebin.GostX.data.VpnStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,10 +50,10 @@ fun HomeScreen(
                 title = { Text("GostX") },
                 actions = {
                     IconButton(onClick = onNavigateToLogs) {
-                        Icon(Icons.AutoMirrored.Filled.Article, contentDescription = "日志")
+                        Icon(Icons.AutoMirrored.Filled.Article, contentDescription = stringResource(R.string.nav_log))
                     }
                     IconButton(onClick = onNavigateToConfig) {
-                        Icon(Icons.Filled.Settings, contentDescription = "配置")
+                        Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.nav_config))
                     }
                 }
             )
@@ -77,10 +79,10 @@ fun HomeScreen(
             Spacer(Modifier.width(8.dp))
             Text(
                 text = when (state.status) {
-                    VpnStatus.CONNECTED -> "运行中"
-                    VpnStatus.CONNECTING -> "连接中..."
-                    VpnStatus.ERROR -> "错误"
-                    VpnStatus.STOPPED -> "已停止"
+                    VpnStatus.CONNECTED -> stringResource(R.string.status_running)
+                    VpnStatus.CONNECTING -> stringResource(R.string.status_connecting)
+                    VpnStatus.ERROR -> stringResource(R.string.status_error)
+                    VpnStatus.STOPPED -> stringResource(R.string.status_stopped)
                 },
                 style = MaterialTheme.typography.titleMedium
             )
@@ -89,7 +91,7 @@ fun HomeScreen(
         if (state.listenAddr.isNotEmpty()) {
             Spacer(Modifier.height(8.dp))
             Text(
-                "监听: ${state.listenAddr}",
+                stringResource(R.string.listen_addr, state.listenAddr),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -114,7 +116,7 @@ fun HomeScreen(
             Text(
                 text = if (state.status == VpnStatus.CONNECTED ||
                     state.status == VpnStatus.CONNECTING
-                ) "停止 VPN" else "启动 VPN",
+                ) stringResource(R.string.vpn_stop) else stringResource(R.string.vpn_start),
                 style = MaterialTheme.typography.titleMedium
             )
         }

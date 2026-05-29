@@ -30,6 +30,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import cn.liukebin.GostX.R
 import cn.liukebin.GostX.data.LogRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,25 +50,25 @@ fun LogScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("运行日志") },
+                title = { Text(stringResource(R.string.log_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.nav_back))
                     }
                 },
                 actions = {
                     TextButton(onClick = {
                         val cb = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         cb.setPrimaryClip(ClipData.newPlainText("gostx_log", logs.joinToString("\n")))
-                    }) { Text("复制") }
-                    TextButton(onClick = { LogRepository.clear() }) { Text("清空") }
+                    }) { Text(stringResource(R.string.log_copy)) }
+                    TextButton(onClick = { LogRepository.clear() }) { Text(stringResource(R.string.log_clear)) }
                 }
             )
         }
     ) { padding ->
         if (logs.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("暂无日志", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.log_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             LazyColumn(

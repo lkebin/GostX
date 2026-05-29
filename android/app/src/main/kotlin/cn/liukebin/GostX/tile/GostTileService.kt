@@ -3,6 +3,7 @@ package cn.liukebin.GostX.tile
 import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
+import cn.liukebin.GostX.R
 import cn.liukebin.GostX.data.GlobalVpnState
 import cn.liukebin.GostX.data.VpnStatus
 import cn.liukebin.GostX.service.GostVpnService
@@ -27,15 +28,15 @@ class GostTileService : TileService() {
                     when (vpnState.status) {
                         VpnStatus.CONNECTED -> {
                             state = Tile.STATE_ACTIVE
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) subtitle = "已连接"
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) subtitle = getString(R.string.tile_connected)
                         }
                         VpnStatus.CONNECTING -> {
                             state = Tile.STATE_UNAVAILABLE
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) subtitle = "连接中..."
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) subtitle = getString(R.string.tile_connecting)
                         }
                         VpnStatus.ERROR -> {
                             state = Tile.STATE_INACTIVE
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) subtitle = "错误"
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) subtitle = getString(R.string.tile_error)
                         }
                         else -> {
                             state = Tile.STATE_INACTIVE
