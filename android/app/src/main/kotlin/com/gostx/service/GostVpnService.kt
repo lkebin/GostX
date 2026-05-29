@@ -113,16 +113,16 @@ class GostVpnService : VpnService() {
 
         val yaml = configRepo.getActiveConfig()
 
+        val vpnDnsAddr: String
         try {
             GostLibBridge.startVPNMode(yaml)
+            vpnDnsAddr = GostLibBridge.getVpnDnsAddr()
         } catch (e: Exception) {
             log("gost start failed: ${e.message}")
             GlobalVpnState.setError("gost 启动失败: ${e.message}")
             stopSelf()
             return
         }
-
-        val vpnDnsAddr = GostLibBridge.getVpnDnsAddr()
         val builder = Builder()
             .setMtu(1500)
             .addAddress("10.0.0.2", 24)
