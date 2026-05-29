@@ -119,14 +119,6 @@ fun HomeScreen(
             )
         }
 
-        if (state.status == VpnStatus.STOPPED) {
-            Spacer(Modifier.height(12.dp))
-            Text(
-                "首次启动将请求 VPN 权限",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
         }  // end Column
     }  // end Scaffold
 }
