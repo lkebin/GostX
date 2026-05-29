@@ -290,7 +290,7 @@ class GostVpnService : VpnService() {
     }
 }
 
-private object GostLibBridge {
+internal object GostLibBridge {
     private const val CLASS_NAME = "gostlib.Gostlib"
 
     private fun clazz(): Class<*> = try {
@@ -340,4 +340,6 @@ private object GostLibBridge {
     fun getVPNLog(): String = invoke("getVPNLog") as? String ?: ""
 
     fun getVpnDnsAddr(): String = invoke("getVPNDNSAddr") as? String ?: ""
+
+    fun validateConfig(yaml: String): String = invoke("validateConfig", yaml) as? String ?: ""
 }

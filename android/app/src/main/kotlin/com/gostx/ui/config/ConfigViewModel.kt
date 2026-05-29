@@ -1,6 +1,7 @@
 package com.gostx.ui.config
 
 import androidx.lifecycle.ViewModel
+import com.gostx.service.GostLibBridge
 import com.gostx.data.ConfigRepository
 import com.gostx.data.DEFAULT_YAML
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,8 +38,17 @@ class ConfigViewModel(private val repo: ConfigRepository) : ViewModel() {
     }
 
     fun save() {
+        val error = GostLibBridge.validateConfig(_ui.value.yaml)
+        if (error.isNotEmpty()) {
+            _ui.value = _ui.value.copy(validationError = error)
+            return
+        }
         repo.saveConfig(_ui.value.activeProfileId, _ui.value.yaml)
-        _ui.value = _ui.value.copy(isSaved = true)
+        _ui.value = _ui.value.copy(isSaved = true, validationError = null)
+    }
+
+    fun clearValidationError() {
+        _ui.value = _ui.value.copy(validationError = null)
     }
 
     fun validate(): Boolean {

@@ -8,15 +8,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -47,6 +47,17 @@ fun ConfigScreen(
 ) {
     val state by vm.uiState.collectAsState()
 
+    if (state.validationError != null) {
+        AlertDialog(
+            onDismissRequest = { vm.clearValidationError() },
+            title = { Text("配置错误") },
+            text = { Text(state.validationError!!) },
+            confirmButton = {
+                TextButton(onClick = { vm.clearValidationError() }) { Text("确定") }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -56,7 +67,11 @@ fun ConfigScreen(
                         Icon(Icons.Filled.ArrowBack, contentDescription = "返回")
                     }
                 },
-                actions = { TextButton(onClick = { vm.save() }) { Text("保存") } }
+                actions = {
+                    IconButton(onClick = { vm.save() }) {
+                        Icon(Icons.Filled.Save, contentDescription = "保存")
+                    }
+                }
             )
         }
     ) { padding ->
@@ -86,17 +101,7 @@ fun ConfigScreen(
                 onValueChange = { vm.onYamlChange(it) },
                 modifier = Modifier.fillMaxWidth().weight(1f),
                 textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp),
-                isError = state.validationError != null
             )
-
-            state.validationError?.let { err ->
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    err,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
 
             if (state.isSaved) {
                 Spacer(Modifier.height(4.dp))
@@ -105,13 +110,6 @@ fun ConfigScreen(
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall
                 )
-            }
-
-            Spacer(Modifier.height(8.dp))
-            Row {
-                OutlinedButton(onClick = { vm.validate() }) { Text("验证") }
-                Spacer(Modifier.width(8.dp))
-                OutlinedButton(onClick = { vm.resetToDefault() }) { Text("默认模板") }
             }
         }
     }
