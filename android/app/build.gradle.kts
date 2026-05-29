@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.gostx"
+    namespace = "cn.liukebin.GostX"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.gostx"
+        applicationId = "cn.liukebin.GostX"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
