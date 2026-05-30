@@ -1,0 +1,4 @@
+<resources>
+    <!-- Material3 dark background color -->
+    <color name="splash_background_dark">#FF1C1B1F</color>
+</resources>

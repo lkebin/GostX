@@ -1,3 +1,7 @@
 <resources>
-    <style name="Theme.GostX" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Light theme: white splash background -->
+    <style name="Theme.GostX" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:windowSplashScreenBackground">@android:color/white</item>
+    </style>
 </resources>
