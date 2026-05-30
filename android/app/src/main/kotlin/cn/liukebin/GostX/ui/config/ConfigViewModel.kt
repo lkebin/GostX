@@ -27,7 +27,7 @@ class ConfigViewModel(private val repo: ConfigRepository) : ViewModel() {
         val id = repo.getActiveProfileId()
         _ui.value = ConfigUiState(
             yaml = repo.getConfig(id),
-            profiles = repo.getProfiles(),
+            profiles = repo.getProfiles().map { it.id },
             activeProfileId = id
         )
     }
