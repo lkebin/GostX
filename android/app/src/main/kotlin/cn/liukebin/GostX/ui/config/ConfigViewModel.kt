@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 data class ConfigUiState(
@@ -36,23 +37,20 @@ class ConfigViewModel(
     init {
         load()
         viewModelScope.launch {
-            GlobalVpnState.state.collect { vpnState ->
-                _ui.value = _ui.value.copy(canDelete = computeCanDelete(vpnState.status))
+            combine(GlobalVpnState.state, repo.profilesFlow) { vpnState, profiles ->
+                profiles.size > 1 && (vpnState.status == VpnStatus.STOPPED || vpnState.status == VpnStatus.ERROR)
+            }.collect { canDelete ->
+                _ui.value = _ui.value.copy(canDelete = canDelete)
             }
         }
     }
 
-    private fun computeCanDelete(status: VpnStatus): Boolean =
-        repo.getProfiles().size > 1 && (status == VpnStatus.STOPPED || status == VpnStatus.ERROR)
-
     private fun load() {
         val profiles = repo.getProfiles()
         val name = profiles.find { it.id == profileId }?.name ?: profileId
-        val status = GlobalVpnState.state.value.status
         _ui.value = ConfigUiState(
             profileName = name,
-            yaml = repo.getConfig(profileId),
-            canDelete = computeCanDelete(status)
+            yaml = repo.getConfig(profileId)
         )
     }
 

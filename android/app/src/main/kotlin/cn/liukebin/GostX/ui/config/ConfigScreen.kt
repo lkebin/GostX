@@ -1,7 +1,6 @@
 package cn.liukebin.GostX.ui.config
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,7 +12,6 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -36,18 +35,24 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.res.stringResource
 import cn.liukebin.GostX.R
 import cn.liukebin.GostX.data.ConfigRepository
+import kotlinx.coroutines.flow.collect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfigScreen(
     repo: ConfigRepository,
+    profileId: String,
     onBack: () -> Unit,
     vm: ConfigViewModel = viewModel(factory = object : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = ConfigViewModel(repo) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = ConfigViewModel(repo, profileId) as T
     })
 ) {
     val state by vm.uiState.collectAsState()
+
+    LaunchedEffect(vm) {
+        vm.navBack.collect { onBack() }
+    }
 
     if (state.validationError != null) {
         AlertDialog(
@@ -63,7 +68,7 @@ fun ConfigScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.config_title)) },
+                title = { Text(state.profileName.ifEmpty { stringResource(R.string.config_title) }) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.nav_back))
@@ -84,20 +89,6 @@ fun ConfigScreen(
                 .imePadding()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            if (state.profiles.size > 1) {
-                Row {
-                    state.profiles.forEach { id ->
-                        FilterChip(
-                            selected = id == state.activeProfileId,
-                            onClick = { vm.switchProfile(id) },
-                            label = { Text(id) },
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                    }
-                }
-                Spacer(Modifier.height(8.dp))
-            }
-
             OutlinedTextField(
                 value = state.yaml,
                 onValueChange = { vm.onYamlChange(it) },

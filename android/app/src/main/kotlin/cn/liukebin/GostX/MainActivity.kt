@@ -3,6 +3,7 @@ package cn.liukebin.GostX
 import android.app.Activity
 import android.content.Context
 import android.net.VpnService
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -76,12 +77,23 @@ fun GostXApp(
                     HomeScreen(
                         onRequestVpnPermission = onRequestVpnPermission,
                         onNavigateToLogs = { navController.navigate(Screen.Logs.route) },
-                        onNavigateToConfig = { navController.navigate(Screen.Config.route) }
+                        onNavigateToConfig = {
+                            navController.navigate(
+                                Screen.ConfigEdit.createRoute(configRepository.getActiveProfileId())
+                            )
+                        }
                     )
                 }
                 composable(Screen.Logs.route) { LogScreen(onBack = { navController.popBackStack() }) }
-                composable(Screen.Config.route) {
-                    ConfigScreen(repo = configRepository, onBack = { navController.popBackStack() })
+                composable(Screen.ConfigEdit.route) { backStackEntry ->
+                    val profileId = backStackEntry.arguments?.getString("profileId")
+                        ?.let(Uri::decode)
+                        ?: configRepository.getActiveProfileId()
+                    ConfigScreen(
+                        repo = configRepository,
+                        profileId = profileId,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
             }
         }
