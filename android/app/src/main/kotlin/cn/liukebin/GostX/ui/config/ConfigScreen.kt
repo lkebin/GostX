@@ -129,7 +129,7 @@ fun ConfigScreen(
         RenameProfileDialog(
             currentName = state.profileName,
             otherNames = state.otherProfileNames,
-            onConfirm = { vm.renameProfile(it) },
+            onConfirm = { vm.renameProfile(it); showRenameDialog = false },
             onDismiss = { showRenameDialog = false }
         )
     }
