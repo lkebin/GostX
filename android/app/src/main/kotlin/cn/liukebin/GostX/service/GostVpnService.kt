@@ -94,7 +94,6 @@ class GostVpnService : VpnService() {
                 startVpn()
             }
             ACTION_STOP -> scope.launch {
-                LogRepository.deleteLog()
                 stopVpn()
             }
         }
