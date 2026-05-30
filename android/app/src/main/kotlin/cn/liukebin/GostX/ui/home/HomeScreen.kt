@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -28,8 +29,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -123,12 +126,6 @@ fun HomeScreen(
                             contentDescription = stringResource(R.string.nav_log)
                         )
                     }
-                    IconButton(onClick = { showAddDialog = true }) {
-                        Icon(
-                            Icons.Filled.Add,
-                            contentDescription = stringResource(R.string.profile_add)
-                        )
-                    }
                 }
             )
         },
@@ -169,20 +166,51 @@ fun HomeScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            items(homeState.profiles, key = { it.id }) { profile ->
-                ProfileListItem(
-                    profile = profile,
-                    isActive = profile.id == homeState.activeProfileId,
-                    radioEnabled = canSetActiveProfile(vpnState.status),
-                    onActivate = { vm.setActiveProfile(profile.id) },
-                    onEdit = { onNavigateToConfigEdit(profile.id) }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.profiles_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.weight(1f)
                 )
-                HorizontalDivider()
+                SmallFloatingActionButton(
+                    onClick = { showAddDialog = true },
+                    shape = RoundedCornerShape(12.dp),
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.profile_add))
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 1.dp,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                LazyColumn {
+                    items(homeState.profiles, key = { it.id }) { profile ->
+                        ProfileListItem(
+                            profile = profile,
+                            isActive = profile.id == homeState.activeProfileId,
+                            radioEnabled = canSetActiveProfile(vpnState.status),
+                            onActivate = { vm.setActiveProfile(profile.id) },
+                            onEdit = { onNavigateToConfigEdit(profile.id) }
+                        )
+                        if (profile.id != homeState.profiles.last().id) {
+                            HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+                        }
+                    }
+                }
             }
         }
     }
