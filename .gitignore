@@ -10,3 +10,6 @@ go/*.a
 go/*.aar
 go/*.jar
 go/build/
+
+# 个人配置（含敏感信息，不提交）
+android/config-templates/*.yaml
