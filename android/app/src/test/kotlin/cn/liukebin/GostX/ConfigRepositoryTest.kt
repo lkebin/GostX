@@ -101,4 +101,54 @@ class ConfigRepositoryTest {
         repo.setActiveProfile("Second")
         assertEquals("Second", repo.activeProfileIdFlow.value)
     }
+
+    @Test fun `getConfig for default profile returns DEFAULT_YAML when not stored`() {
+        val yaml = repo.getConfig(DEFAULT_PROFILE_ID)
+        assertTrue(yaml.contains("tungo"))
+    }
+
+    @Test fun `getActiveConfig returns yaml for active profile`() {
+        repo.addProfile("Second")
+        repo.saveConfig("Second", "yaml: content")
+        repo.setActiveProfile("Second")
+        assertEquals("yaml: content", repo.getActiveConfig())
+    }
+
+    @Test fun `saveConfig persists yaml and makes profile retrievable`() {
+        repo.saveConfig(DEFAULT_PROFILE_ID, "custom: yaml")
+        assertEquals("custom: yaml", repo.getConfig(DEFAULT_PROFILE_ID))
+    }
+
+    @Test fun `deleteProfile does nothing when only one profile exists`() {
+        repo.deleteProfile(DEFAULT_PROFILE_ID)
+        assertEquals(1, repo.getProfiles().size)
+        assertEquals(DEFAULT_PROFILE_ID, repo.getProfiles()[0].id)
+    }
+
+    @Test fun `activeProfileIdFlow updates when deleteProfile changes active`() {
+        repo.addProfile("Second")
+        repo.setActiveProfile("Second")
+        repo.deleteProfile("Second")
+        assertEquals(DEFAULT_PROFILE_ID, repo.activeProfileIdFlow.value)
+    }
+
+    @Test fun `fake shared preferences getStringSet returns stored set`() {
+        val values = mutableSetOf("one", "two")
+        prefs.edit().putStringSet("set-key", values).apply()
+        assertEquals(values, prefs.getStringSet("set-key", mutableSetOf("default")))
+    }
+
+    @Test fun `fake shared preferences clear defers mutation until apply`() {
+        prefs.edit().putString("first", "value").putString("second", "value").apply()
+
+        val editor = prefs.edit().clear()
+
+        assertEquals("value", prefs.getString("first", null))
+        assertEquals("value", prefs.getString("second", null))
+
+        editor.apply()
+
+        assertNull(prefs.getString("first", null))
+        assertNull(prefs.getString("second", null))
+    }
 }
