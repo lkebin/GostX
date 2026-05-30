@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -141,6 +142,7 @@ fun HomeScreen(
                     }
                 },
                 modifier = Modifier.alpha(if (isTransitioning) 0.5f else 1f),
+                shape = CircleShape,
                 containerColor = when (vpnState.status) {
                     VpnStatus.CONNECTED -> Color(0xFF4CAF50)
                     VpnStatus.ERROR -> MaterialTheme.colorScheme.error
@@ -150,7 +152,9 @@ fun HomeScreen(
                 if (isTransitioning) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        trackColor = Color.Transparent
                     )
                 } else {
                     Icon(
