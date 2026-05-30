@@ -78,7 +78,7 @@ class ConfigViewModel(
     fun renameProfile(newName: String) {
         val trimmed = newName.trim()
         if (repo.renameProfile(profileId, trimmed)) {
-            _navBack.tryEmit(Unit)
+            _ui.value = _ui.value.copy(profileName = trimmed)
         }
     }
 

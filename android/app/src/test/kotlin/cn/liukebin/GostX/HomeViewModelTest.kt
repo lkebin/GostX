@@ -51,37 +51,37 @@ class HomeViewModelTest {
 
     @Test
     fun `homeState reflects repository profiles and active id`() = runTest(dispatcher) {
-        repo.addProfile("Second")
-        repo.setActiveProfile("Second")
+        val secondId = repo.addProfile("Second")!!
+        repo.setActiveProfile(secondId)
 
         val viewModel = createViewModel()
         advanceUntilIdle()
 
         assertEquals(
-            HomeUiState(profiles = repo.getProfiles(), activeProfileId = "Second"),
+            HomeUiState(profiles = repo.getProfiles(), activeProfileId = secondId),
             viewModel.homeState.value
         )
     }
 
     @Test
     fun `setActiveProfile updates repository when vpn stopped`() = runTest(dispatcher) {
-        repo.addProfile("Second")
+        val secondId = repo.addProfile("Second")!!
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.setActiveProfile("Second")
+        viewModel.setActiveProfile(secondId)
 
-        assertEquals("Second", repo.getActiveProfileId())
+        assertEquals(secondId, repo.getActiveProfileId())
     }
 
     @Test
     fun `setActiveProfile ignored while vpn connecting`() = runTest(dispatcher) {
-        repo.addProfile("Second")
+        val secondId = repo.addProfile("Second")!!
         GlobalVpnState.setConnecting()
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.setActiveProfile("Second")
+        viewModel.setActiveProfile(secondId)
 
         assertEquals(DEFAULT_PROFILE_ID, repo.getActiveProfileId())
     }
@@ -91,8 +91,9 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        assertTrue(viewModel.addProfile("Second"))
-        assertTrue(repo.getProfiles().any { it.id == "Second" })
+        val newId = viewModel.addProfile("Second")
+        assertTrue(newId != null)
+        assertTrue(repo.getProfiles().any { it.name == "Second" })
     }
 
     @Test
@@ -105,6 +106,6 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertEquals(before + 1, viewModel.homeState.value.profiles.size)
-        assertTrue(viewModel.homeState.value.profiles.any { it.id == "LateProfile" })
+        assertTrue(viewModel.homeState.value.profiles.any { it.name == "LateProfile" })
     }
 }

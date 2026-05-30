@@ -97,14 +97,14 @@ class ConfigViewModelTest {
 
     @Test
     fun `canDelete reactsToProfileListChange`() = runTest(dispatcher) {
-        repo.addProfile("Second")
+        val secondId = repo.addProfile("Second")!!
         GlobalVpnState.setStopped()
         val viewModel = ConfigViewModel(repo, DEFAULT_PROFILE_ID)
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.canDelete)
 
-        repo.deleteProfile("Second")
+        repo.deleteProfile(secondId)
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.canDelete)
@@ -124,7 +124,7 @@ class ConfigViewModelTest {
         viewModel.deleteProfile()
         advanceUntilIdle()
 
-        assertEquals(listOf(DEFAULT_PROFILE_ID, "Second"), repo.getProfiles().map { it.id })
+        assertEquals(listOf(DEFAULT_PROFILE_ID, "Second"), repo.getProfiles().map { it.name })
         assertTrue(navBackEvents.isEmpty())
         job.cancel()
     }
@@ -143,7 +143,7 @@ class ConfigViewModelTest {
         viewModel.deleteProfile()
         advanceUntilIdle()
 
-        assertEquals(listOf("Second"), repo.getProfiles().map { it.id })
+        assertEquals(listOf("Second"), repo.getProfiles().map { it.name })
         assertEquals(1, navBackEvents.size)
         job.cancel()
     }
