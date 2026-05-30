@@ -8,7 +8,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,7 +25,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -32,10 +37,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.res.stringResource
 import cn.liukebin.GostX.R
 import cn.liukebin.GostX.data.ConfigRepository
-import kotlinx.coroutines.flow.collect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,14 +46,19 @@ fun ConfigScreen(
     repo: ConfigRepository,
     profileId: String,
     onBack: () -> Unit,
-    vm: ConfigViewModel = viewModel(factory = object : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = ConfigViewModel(repo, profileId) as T
-    })
+    vm: ConfigViewModel = viewModel(
+        key = profileId,
+        factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T =
+                ConfigViewModel(repo, profileId) as T
+        }
+    )
 ) {
     val state by vm.uiState.collectAsState()
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
-    LaunchedEffect(vm) {
+    LaunchedEffect(Unit) {
         vm.navBack.collect { onBack() }
     }
 
@@ -60,7 +68,27 @@ fun ConfigScreen(
             title = { Text(stringResource(R.string.config_error_title)) },
             text = { Text(state.validationError!!) },
             confirmButton = {
-                TextButton(onClick = { vm.clearValidationError() }) { Text(stringResource(R.string.action_ok)) }
+                TextButton(onClick = { vm.clearValidationError() }) {
+                    Text(stringResource(R.string.action_ok))
+                }
+            }
+        )
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text(stringResource(R.string.profile_delete_confirm_title)) },
+            text = { Text(stringResource(R.string.profile_delete_confirm_message, state.profileName)) },
+            confirmButton = {
+                TextButton(onClick = { showDeleteConfirm = false; vm.deleteProfile() }) {
+                    Text(stringResource(R.string.action_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
             }
         )
     }
@@ -68,13 +96,24 @@ fun ConfigScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(state.profileName.ifEmpty { stringResource(R.string.config_title) }) },
+                title = { Text(state.profileName) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.nav_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.nav_back)
+                        )
                     }
                 },
                 actions = {
+                    if (state.canDelete) {
+                        IconButton(onClick = { showDeleteConfirm = true }) {
+                            Icon(
+                                Icons.Filled.Delete,
+                                contentDescription = stringResource(R.string.action_delete)
+                            )
+                        }
+                    }
                     IconButton(onClick = { vm.save() }) {
                         Icon(Icons.Filled.Save, contentDescription = stringResource(R.string.action_save))
                     }
@@ -92,7 +131,9 @@ fun ConfigScreen(
             OutlinedTextField(
                 value = state.yaml,
                 onValueChange = { vm.onYamlChange(it) },
-                modifier = Modifier.fillMaxWidth().weight(1f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
                 textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp),
             )
 
