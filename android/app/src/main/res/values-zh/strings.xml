@@ -15,9 +15,9 @@
     <string name="listen_addr">监听: %s</string>
 
     <!-- VPN actions -->
-    <string name="vpn_start">启动 VPN</string>
-    <string name="vpn_stop">停止 VPN</string>
-    <string name="vpn_permission_denied">VPN 权限被拒绝</string>
+    <string name="vpn_start">启动</string>
+    <string name="vpn_stop">停止</string>
+    <string name="vpn_permission_denied">权限被拒绝</string>
 
     <!-- Config screen -->
     <string name="config_title">配置</string>
@@ -38,7 +38,7 @@
     <string name="notification_connecting">连接中...</string>
 
     <!-- Quick Settings tile -->
-    <string name="tile_label">GostX VPN</string>
+    <string name="tile_label">GostX</string>
     <string name="tile_connected">已连接</string>
     <string name="tile_connecting">连接中...</string>
     <string name="tile_error">错误</string>
