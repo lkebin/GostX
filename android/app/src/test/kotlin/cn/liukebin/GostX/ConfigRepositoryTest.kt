@@ -3,6 +3,7 @@ package cn.liukebin.GostX
 import cn.liukebin.GostX.data.ConfigProfile
 import cn.liukebin.GostX.data.ConfigRepository
 import cn.liukebin.GostX.data.DEFAULT_PROFILE_ID
+import cn.liukebin.GostX.data.DEFAULT_YAML
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -103,8 +104,19 @@ class ConfigRepositoryTest {
     }
 
     @Test fun `getConfig for default profile returns DEFAULT_YAML when not stored`() {
-        val yaml = repo.getConfig(DEFAULT_PROFILE_ID)
-        assertTrue(yaml.contains("tungo"))
+        assertEquals(DEFAULT_YAML, repo.getConfig(DEFAULT_PROFILE_ID))
+    }
+
+    @Test fun `saveConfig on existing profile does not duplicate it in list`() {
+        val countBefore = repo.getProfiles().size
+        repo.saveConfig(DEFAULT_PROFILE_ID, "updated: yaml")
+        assertEquals(countBefore, repo.getProfiles().size)
+    }
+
+    @Test fun `saveConfig adds profile to list if not already present`() {
+        repo.saveConfig("DirectSave", "direct: yaml")
+        assertTrue(repo.getProfiles().any { it.id == "DirectSave" })
+        assertEquals("direct: yaml", repo.getConfig("DirectSave"))
     }
 
     @Test fun `getActiveConfig returns yaml for active profile`() {
