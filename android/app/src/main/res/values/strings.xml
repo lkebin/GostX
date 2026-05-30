@@ -49,6 +49,8 @@
     <string name="profile_delete_confirm_title">Delete Profile</string>
     <string name="profile_delete_confirm_message">Delete \"%s\"?</string>
     <string name="action_cancel">Cancel</string>
+    <string name="profile_rename">Rename</string>
+    <string name="profile_rename_title">Rename Profile</string>
     <string name="profile_add">Add Profile</string>
     <string name="profile_new_title">New Profile</string>
     <string name="profile_name_label">Name</string>

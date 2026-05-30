@@ -50,6 +50,8 @@
     <string name="profile_delete_confirm_title">删除配置</string>
     <string name="profile_delete_confirm_message">确定要删除 \"%s\" 吗？</string>
     <string name="action_cancel">取消</string>
+    <string name="profile_rename">重命名</string>
+    <string name="profile_rename_title">重命名配置</string>
     <string name="profile_add">添加配置</string>
     <string name="profile_new_title">新建配置</string>
     <string name="profile_name_label">名称</string>
