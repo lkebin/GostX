@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Wrap PNG icon centered in the 108dp adaptive icon canvas without stretching -->
 <bitmap xmlns:android="http://schemas.android.com/apk/res/android"
-    android:src="@mipmap/ic_launcher"
+    android:src="@mipmap/ic_launcher_img"
     android:gravity="center" />
