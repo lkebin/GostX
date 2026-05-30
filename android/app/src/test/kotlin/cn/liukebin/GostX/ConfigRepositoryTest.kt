@@ -32,11 +32,17 @@ class ConfigRepositoryTest {
         assertEquals("Config 2", repo.getNextDefaultName())
     }
 
-    @Test fun `getNextDefaultName skips non-sequential gaps`() {
+    @Test fun `getNextDefaultName returns next sequential number`() {
         repo.addProfile("Config 1")
         repo.addProfile("Config 2")
         repo.addProfile("Config 3")
         assertEquals("Config 4", repo.getNextDefaultName())
+    }
+
+    @Test fun `getNextDefaultName fills gaps in sequence`() {
+        repo.addProfile("Config 1")
+        repo.addProfile("Config 3")
+        assertEquals("Config 2", repo.getNextDefaultName())
     }
 
     @Test fun `addProfile returns true for new unique name`() {
@@ -80,6 +86,14 @@ class ConfigRepositoryTest {
         repo.addProfile("ToDelete")
         repo.deleteProfile("ToDelete")
         assertFalse(repo.getProfiles().any { it.id == "ToDelete" })
+    }
+
+    @Test fun `deleteProfile removes DEFAULT_PROFILE_ID when another profile exists`() {
+        repo.addProfile("Other")
+        repo.setActiveProfile("Other")
+        repo.deleteProfile(DEFAULT_PROFILE_ID)
+        assertFalse(repo.getProfiles().any { it.id == DEFAULT_PROFILE_ID })
+        assertEquals("Other", repo.getActiveProfileId())
     }
 
     @Test fun `profilesFlow initial value reflects stored profiles`() {
