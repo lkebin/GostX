@@ -22,14 +22,11 @@ internal fun resolveTileState(status: VpnStatus): Int = when (status) {
 
 internal fun canSetTileSubtitle(sdkInt: Int): Boolean = sdkInt >= Build.VERSION_CODES.Q
 
-internal fun resolveTileSubtitleRes(status: VpnStatus, sdkInt: Int): Int? {
-    if (!canSetTileSubtitle(sdkInt)) return null
-    return when (status) {
-        VpnStatus.CONNECTED -> R.string.tile_connected
-        VpnStatus.CONNECTING, VpnStatus.STOPPING -> R.string.tile_connecting
-        VpnStatus.ERROR -> R.string.tile_error
-        VpnStatus.STOPPED -> null
-    }
+internal fun resolveTileSubtitleRes(status: VpnStatus): Int? = when (status) {
+    VpnStatus.CONNECTED -> R.string.tile_connected
+    VpnStatus.CONNECTING, VpnStatus.STOPPING -> R.string.tile_connecting
+    VpnStatus.ERROR -> R.string.tile_error
+    VpnStatus.STOPPED -> null
 }
 
 class GostTileService : TileService() {
@@ -45,7 +42,7 @@ class GostTileService : TileService() {
                 qsTile?.apply {
                     state = resolveTileState(vpnState.status)
                     if (canSetTileSubtitle(Build.VERSION.SDK_INT)) {
-                        subtitle = resolveTileSubtitleRes(vpnState.status, Build.VERSION.SDK_INT)?.let(::getString)
+                        subtitle = resolveTileSubtitleRes(vpnState.status)?.let(::getString)
                     }
                     updateTile()
                 }
