@@ -75,6 +75,7 @@ class GostVpnService : VpnService() {
     override fun onCreate() {
         super.onCreate()
         NotificationHelper.createChannel(this)
+        LogRepository.init(this)
         configRepo = ConfigRepository(getSharedPreferences("gostx_prefs", Context.MODE_PRIVATE))
     }
 
@@ -88,8 +89,14 @@ class GostVpnService : VpnService() {
             promoteToForeground("")
         }
         when (intent?.action) {
-            ACTION_START -> scope.launch { startVpn() }
-            ACTION_STOP -> scope.launch { stopVpn() }
+            ACTION_START -> scope.launch {
+                LogRepository.deleteLog()
+                startVpn()
+            }
+            ACTION_STOP -> scope.launch {
+                LogRepository.deleteLog()
+                stopVpn()
+            }
         }
         return START_STICKY
     }
