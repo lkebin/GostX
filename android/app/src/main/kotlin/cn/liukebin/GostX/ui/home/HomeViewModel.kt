@@ -14,10 +14,13 @@ import kotlinx.coroutines.flow.stateIn
 enum class VpnToggleAction { START, REQUEST_PERMISSION, STOP }
 
 internal fun resolveVpnToggleAction(status: VpnStatus, hasVpnPermission: Boolean): VpnToggleAction = when {
-    status == VpnStatus.CONNECTED || status == VpnStatus.CONNECTING -> VpnToggleAction.STOP
+    status == VpnStatus.CONNECTED || status == VpnStatus.CONNECTING || status == VpnStatus.STOPPING -> VpnToggleAction.STOP
     hasVpnPermission -> VpnToggleAction.START
     else -> VpnToggleAction.REQUEST_PERMISSION
 }
+
+internal fun canSetActiveProfile(status: VpnStatus): Boolean =
+    status == VpnStatus.STOPPED || status == VpnStatus.ERROR
 
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
 

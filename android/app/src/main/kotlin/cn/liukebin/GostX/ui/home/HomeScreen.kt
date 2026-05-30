@@ -67,7 +67,7 @@ fun HomeScreen(
         Row(verticalAlignment = Alignment.CenterVertically) {
             val dotColor = when (state.status) {
                 VpnStatus.CONNECTED -> Color(0xFF4CAF50)
-                VpnStatus.CONNECTING -> Color(0xFFFFC107)
+                VpnStatus.CONNECTING, VpnStatus.STOPPING -> Color(0xFFFFC107)
                 VpnStatus.ERROR -> Color(0xFFF44336)
                 VpnStatus.STOPPED -> Color(0xFF9E9E9E)
             }
@@ -80,7 +80,7 @@ fun HomeScreen(
             Text(
                 text = when (state.status) {
                     VpnStatus.CONNECTED -> stringResource(R.string.status_running)
-                    VpnStatus.CONNECTING -> stringResource(R.string.status_connecting)
+                    VpnStatus.CONNECTING, VpnStatus.STOPPING -> stringResource(R.string.status_connecting)
                     VpnStatus.ERROR -> stringResource(R.string.status_error)
                     VpnStatus.STOPPED -> stringResource(R.string.status_stopped)
                 },
@@ -111,11 +111,12 @@ fun HomeScreen(
         Button(
             onClick = { vm.toggleVpn(onRequestVpnPermission) },
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            enabled = state.status != VpnStatus.CONNECTING
+            enabled = state.status != VpnStatus.CONNECTING && state.status != VpnStatus.STOPPING
         ) {
             Text(
                 text = if (state.status == VpnStatus.CONNECTED ||
-                    state.status == VpnStatus.CONNECTING
+                    state.status == VpnStatus.CONNECTING ||
+                    state.status == VpnStatus.STOPPING
                 ) stringResource(R.string.vpn_stop) else stringResource(R.string.vpn_start),
                 style = MaterialTheme.typography.titleMedium
             )
