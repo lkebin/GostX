@@ -14,6 +14,24 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
+internal fun resolveTileState(status: VpnStatus): Int = when (status) {
+    VpnStatus.CONNECTED -> Tile.STATE_ACTIVE
+    VpnStatus.CONNECTING, VpnStatus.STOPPING -> Tile.STATE_UNAVAILABLE
+    VpnStatus.ERROR, VpnStatus.STOPPED -> Tile.STATE_INACTIVE
+}
+
+internal fun canSetTileSubtitle(sdkInt: Int): Boolean = sdkInt >= Build.VERSION_CODES.Q
+
+internal fun resolveTileSubtitleRes(status: VpnStatus, sdkInt: Int): Int? {
+    if (!canSetTileSubtitle(sdkInt)) return null
+    return when (status) {
+        VpnStatus.CONNECTED -> R.string.tile_connected
+        VpnStatus.CONNECTING, VpnStatus.STOPPING -> R.string.tile_connecting
+        VpnStatus.ERROR -> R.string.tile_error
+        VpnStatus.STOPPED -> null
+    }
+}
+
 class GostTileService : TileService() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -25,23 +43,9 @@ class GostTileService : TileService() {
         listeningJob = scope.launch {
             GlobalVpnState.state.collect { vpnState ->
                 qsTile?.apply {
-                    when (vpnState.status) {
-                        VpnStatus.CONNECTED -> {
-                            state = Tile.STATE_ACTIVE
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) subtitle = getString(R.string.tile_connected)
-                        }
-                        VpnStatus.CONNECTING -> {
-                            state = Tile.STATE_UNAVAILABLE
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) subtitle = getString(R.string.tile_connecting)
-                        }
-                        VpnStatus.ERROR -> {
-                            state = Tile.STATE_INACTIVE
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) subtitle = getString(R.string.tile_error)
-                        }
-                        else -> {
-                            state = Tile.STATE_INACTIVE
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) subtitle = null
-                        }
+                    state = resolveTileState(vpnState.status)
+                    if (canSetTileSubtitle(Build.VERSION.SDK_INT)) {
+                        subtitle = resolveTileSubtitleRes(vpnState.status, Build.VERSION.SDK_INT)?.let(::getString)
                     }
                     updateTile()
                 }

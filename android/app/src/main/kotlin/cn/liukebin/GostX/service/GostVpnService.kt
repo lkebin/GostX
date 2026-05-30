@@ -182,6 +182,7 @@ class GostVpnService : VpnService() {
     }
 
     private fun stopVpn(updatePersistentState: Boolean = true) {
+        if (updatePersistentState) GlobalVpnState.setStopping()
         unregisterNetworkCallback()
         vpnLogJob?.cancel()
         vpnLogJob = null
