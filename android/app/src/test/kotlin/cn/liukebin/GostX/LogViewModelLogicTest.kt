@@ -55,4 +55,13 @@ class LogViewModelLogicTest {
         val (lines, _) = readFileFrom(logFile, 0L)
         assertEquals(listOf("a", "b"), lines)
     }
+
+    @Test fun `readFileFrom handles file truncation by rereading from start`() {
+        logFile.writeText("line1\nline2\n")
+        val mid = logFile.length()
+        logFile.writeText("new\n")  // overwrite with shorter content (truncation)
+        val (lines, offset) = readFileFrom(logFile, mid)
+        assertEquals(listOf("new"), lines)
+        assertEquals(logFile.length(), offset)
+    }
 }
