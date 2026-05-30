@@ -55,9 +55,9 @@ STOPPED → (start) → CONNECTING → CONNECTED → (stop) → STOPPING → STO
 │  GostX              📋    ＋    │  ← TopAppBar: log icon + add-profile "+" icon
 │─────────────────────────────────│
 │                                 │
-│  Config 1                  ○    │  ← list item, tap → navigate to ConfigEdit
-│  Config 2                  ●    │     ● = active (RadioButton selected)
-│  Config 3                  ○    │     RadioButton disabled when status is CONNECTING, STOPPING, or CONNECTED
+│  ○  Config 1               ›    │  ← RadioButton (left) activates profile
+│  ●  Config 2               ›    │     ● = active; "›" chevron (right) → ConfigEdit
+│  ○  Config 3               ›    │     RadioButton disabled when status is CONNECTING, STOPPING, or CONNECTED
 │                                 │
 │                        [VPN FAB]│  ← FloatingActionButton, bottom-right
 └─────────────────────────────────┘     uses ic_tile_vpn drawable
