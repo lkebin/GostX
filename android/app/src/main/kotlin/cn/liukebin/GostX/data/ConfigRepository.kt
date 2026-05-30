@@ -130,6 +130,27 @@ class ConfigRepository(private val prefs: SharedPreferences) {
         return true
     }
 
+    fun renameProfile(oldId: String, newName: String): Boolean {
+        if (newName.contains(',')) return false
+        val current = _profilesFlow.value
+        if (current.none { it.id == oldId }) return false
+        if (current.any { it.id == newName && it.id != oldId }) return false
+        if (newName == oldId) return true
+        val yaml = getConfig(oldId)
+        val newList = current.map { if (it.id == oldId) ConfigProfile(newName, newName) else it }
+        val editor = prefs.edit()
+            .putString(KEY_PROFILES, newList.joinToString(",") { it.id })
+            .putString("config_profile_$newName", yaml)
+            .remove("config_profile_$oldId")
+        if (_activeProfileIdFlow.value == oldId) {
+            editor.putString(KEY_ACTIVE, newName)
+            _activeProfileIdFlow.value = newName
+        }
+        editor.apply()
+        _profilesFlow.value = newList
+        return true
+    }
+
     fun deleteProfile(profileId: String) {
         val current = _profilesFlow.value
         if (current.size <= 1) return

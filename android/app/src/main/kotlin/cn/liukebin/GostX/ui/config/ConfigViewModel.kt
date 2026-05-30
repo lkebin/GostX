@@ -20,7 +20,8 @@ data class ConfigUiState(
     val yaml: String = "",
     val validationError: String? = null,
     val isSaved: Boolean = false,
-    val canDelete: Boolean = false
+    val canDelete: Boolean = false,
+    val otherProfileNames: Set<String> = emptySet()
 )
 
 class ConfigViewModel(
@@ -38,9 +39,11 @@ class ConfigViewModel(
         load()
         viewModelScope.launch {
             combine(GlobalVpnState.state, repo.profilesFlow) { vpnState, profiles ->
-                profiles.size > 1 && (vpnState.status == VpnStatus.STOPPED || vpnState.status == VpnStatus.ERROR)
-            }.collect { canDelete ->
-                _ui.value = _ui.value.copy(canDelete = canDelete)
+                val canDelete = profiles.size > 1 && (vpnState.status == VpnStatus.STOPPED || vpnState.status == VpnStatus.ERROR)
+                val otherNames = profiles.filter { it.id != profileId }.map { it.name }.toSet()
+                canDelete to otherNames
+            }.collect { (canDelete, otherNames) ->
+                _ui.value = _ui.value.copy(canDelete = canDelete, otherProfileNames = otherNames)
             }
         }
     }
@@ -70,6 +73,13 @@ class ConfigViewModel(
 
     fun clearValidationError() {
         _ui.value = _ui.value.copy(validationError = null)
+    }
+
+    fun renameProfile(newName: String) {
+        val trimmed = newName.trim()
+        if (repo.renameProfile(profileId, trimmed)) {
+            _navBack.tryEmit(Unit)
+        }
     }
 
     fun deleteProfile() {

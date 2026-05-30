@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,6 +41,50 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import cn.liukebin.GostX.R
 import cn.liukebin.GostX.data.ConfigRepository
 
+@Composable
+private fun RenameProfileDialog(
+    currentName: String,
+    otherNames: Set<String>,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var name by remember(currentName) { mutableStateOf(currentName) }
+    val trimmed = name.trim()
+    val isDuplicate = trimmed != currentName && trimmed in otherNames
+    val hasComma = ',' in trimmed
+    val isError = isDuplicate || hasComma
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.profile_rename_title)) },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text(stringResource(R.string.profile_name_label)) },
+                isError = isError,
+                supportingText = when {
+                    isDuplicate -> { { Text(stringResource(R.string.profile_name_duplicate)) } }
+                    hasComma -> { { Text(stringResource(R.string.profile_name_invalid_char)) } }
+                    else -> null
+                },
+                singleLine = true
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(trimmed) },
+                enabled = !isError && trimmed.isNotEmpty() && trimmed != currentName
+            ) {
+                Text(stringResource(R.string.action_ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        }
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfigScreen(
@@ -57,6 +102,7 @@ fun ConfigScreen(
 ) {
     val state by vm.uiState.collectAsState()
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         vm.navBack.collect { onBack() }
@@ -76,6 +122,15 @@ fun ConfigScreen(
                     Text(stringResource(R.string.action_ok))
                 }
             }
+        )
+    }
+
+    if (showRenameDialog) {
+        RenameProfileDialog(
+            currentName = state.profileName,
+            otherNames = state.otherProfileNames,
+            onConfirm = { vm.renameProfile(it) },
+            onDismiss = { showRenameDialog = false }
         )
     }
 
@@ -112,6 +167,9 @@ fun ConfigScreen(
                 actions = {
                     IconButton(onClick = { vm.save() }) {
                         Icon(Icons.Filled.Save, contentDescription = stringResource(R.string.action_save))
+                    }
+                    IconButton(onClick = { showRenameDialog = true }) {
+                        Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.profile_rename))
                     }
                     IconButton(
                         onClick = { showDeleteConfirm = true },
