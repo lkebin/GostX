@@ -22,17 +22,30 @@ import java.io.File
  * Reads bytes from [file] starting at [offset].
  * Returns a (newLines, newOffset) pair. newOffset equals file length after the read,
  * or 0 if the file does not exist.
+ * If the file was truncated (length < offset), re-reads from the beginning.
  */
 internal fun readFileFrom(file: File, offset: Long): Pair<List<String>, Long> {
-    if (!file.exists()) return Pair(emptyList(), 0L)
-    val fileLen = file.length()
-    if (fileLen <= offset) return Pair(emptyList(), offset)
-    val newBytes = file.inputStream().use { stream ->
-        stream.skip(offset)
-        stream.readBytes()
+    return try {
+        if (!file.exists()) return Pair(emptyList(), 0L)
+        val fileLen = file.length()
+        when {
+            fileLen < offset -> {
+                // File was truncated; re-read from start
+                val bytes = file.inputStream().use { it.readBytes() }
+                Pair(String(bytes).lines().filter { it.isNotEmpty() }, fileLen)
+            }
+            fileLen == offset -> Pair(emptyList(), offset)
+            else -> {
+                val newBytes = file.inputStream().use { stream ->
+                    stream.skip(offset)
+                    stream.readBytes()
+                }
+                Pair(String(newBytes).lines().filter { it.isNotEmpty() }, fileLen)
+            }
+        }
+    } catch (_: Exception) {
+        Pair(emptyList(), 0L)
     }
-    val lines = String(newBytes).lines().filter { it.isNotEmpty() }
-    return Pair(lines, fileLen)
 }
 
 class LogViewModel(
