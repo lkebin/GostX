@@ -1,0 +1,7 @@
+<resources>
+    <!-- Dark theme: M3 dark surface color (#1C1B1F) as splash background -->
+    <style name="Theme.GostX" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/splash_background_dark</item>
+        <item name="android:windowSplashScreenBackground">@color/splash_background_dark</item>
+    </style>
+</resources>
