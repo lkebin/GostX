@@ -99,11 +99,11 @@ fun HomeScreen(
         AddProfileDialog(
             existingNames = existingNames,
             initialName = nextDefaultName,
-            onConfirm = { profileId ->
-                // ConfigProfile.id == name by design (see ConfigRepository); name is the profile ID
-                if (vm.addProfile(profileId)) {
+            onConfirm = { name ->
+                val newId = vm.addProfile(name)
+                if (newId != null) {
                     showAddDialog = false
-                    onNavigateToConfigEdit(profileId)
+                    onNavigateToConfigEdit(newId)
                 }
             },
             onDismiss = { showAddDialog = false }

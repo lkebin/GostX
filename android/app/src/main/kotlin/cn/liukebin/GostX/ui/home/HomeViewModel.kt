@@ -55,7 +55,7 @@ class HomeViewModel(
     }
 
     /** Returns false if the name is already taken. */
-    fun addProfile(name: String): Boolean = repo.addProfile(name)
+    fun addProfile(name: String): String? = repo.addProfile(name)
 
     fun toggleVpn(onVpnPermissionRequired: () -> Unit = {}) {
         val ctx = getApplication<Application>()

@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.UUID
 
 private const val KEY_PROFILES = "config_profile_list"
 private const val KEY_ACTIVE = "config_active_profile"
@@ -12,10 +13,9 @@ const val DEFAULT_PROFILE_ID = "default"
 /**
  * Represents a named VPN configuration profile.
  *
- * [id] serves as both the unique key (used in SharedPreferences) and the display name.
- * [id] == [name] by design: profile names are unique, so the name itself is the key.
- * The two-field form exists so callers can reference `profile.name` semantically
- * without coupling to the storage key implementation.
+ * [id] is a stable opaque key (UUID for new profiles, legacy name-as-id for
+ * profiles created before the UUID migration). [name] is the user-visible label
+ * and can be changed freely without affecting [id].
  */
 data class ConfigProfile(val id: String, val name: String)
 
@@ -117,36 +117,29 @@ class ConfigRepository(private val prefs: SharedPreferences) {
         return "Config $n"
     }
 
-    fun addProfile(name: String): Boolean {
+    fun addProfile(name: String): String? {
         val current = _profilesFlow.value
-        if (current.any { it.id == name }) return false
-        if (name.contains(',')) return false
-        val newList = current + ConfigProfile(name, name)
+        if (current.any { it.name == name }) return null
+        if (name.contains(',')) return null
+        val id = UUID.randomUUID().toString()
+        val newList = current + ConfigProfile(id, name)
         prefs.edit()
             .putString(KEY_PROFILES, newList.joinToString(",") { it.id })
-            .putString("config_profile_$name", "")
+            .putString("config_profile_name_$id", name)
+            .putString("config_profile_$id", "")
             .apply()
         _profilesFlow.value = newList
-        return true
+        return id
     }
 
     fun renameProfile(oldId: String, newName: String): Boolean {
         if (newName.contains(',')) return false
         val current = _profilesFlow.value
-        if (current.none { it.id == oldId }) return false
-        if (current.any { it.id == newName && it.id != oldId }) return false
-        if (newName == oldId) return true
-        val yaml = getConfig(oldId)
-        val newList = current.map { if (it.id == oldId) ConfigProfile(newName, newName) else it }
-        val editor = prefs.edit()
-            .putString(KEY_PROFILES, newList.joinToString(",") { it.id })
-            .putString("config_profile_$newName", yaml)
-            .remove("config_profile_$oldId")
-        if (_activeProfileIdFlow.value == oldId) {
-            editor.putString(KEY_ACTIVE, newName)
-            _activeProfileIdFlow.value = newName
-        }
-        editor.apply()
+        val profile = current.find { it.id == oldId } ?: return false
+        if (newName == profile.name) return true
+        if (current.any { it.name == newName && it.id != oldId }) return false
+        val newList = current.map { if (it.id == oldId) ConfigProfile(oldId, newName) else it }
+        prefs.edit().putString("config_profile_name_$oldId", newName).apply()
         _profilesFlow.value = newList
         return true
     }
@@ -158,6 +151,7 @@ class ConfigRepository(private val prefs: SharedPreferences) {
         val editor = prefs.edit()
             .putString(KEY_PROFILES, newList.joinToString(",") { it.id })
             .remove("config_profile_$profileId")
+            .remove("config_profile_name_$profileId")
         if (_activeProfileIdFlow.value == profileId) {
             val newActive = newList.first().id
             editor.putString(KEY_ACTIVE, newActive)
@@ -168,7 +162,11 @@ class ConfigRepository(private val prefs: SharedPreferences) {
     }
 
     private fun loadProfilesFromPrefs(): List<ConfigProfile> {
-        val raw = prefs.getString(KEY_PROFILES, null) ?: return listOf(ConfigProfile(DEFAULT_PROFILE_ID, DEFAULT_PROFILE_ID))
-        return raw.split(",").filter { it.isNotBlank() }.map { ConfigProfile(it, it) }
+        val raw = prefs.getString(KEY_PROFILES, null)
+            ?: return listOf(ConfigProfile(DEFAULT_PROFILE_ID, DEFAULT_PROFILE_ID))
+        return raw.split(",").filter { it.isNotBlank() }.map { id ->
+            val name = prefs.getString("config_profile_name_$id", null) ?: id
+            ConfigProfile(id, name)
+        }
     }
 }
