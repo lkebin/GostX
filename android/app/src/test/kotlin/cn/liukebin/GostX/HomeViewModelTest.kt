@@ -94,4 +94,17 @@ class HomeViewModelTest {
         assertTrue(viewModel.addProfile("Second"))
         assertTrue(repo.getProfiles().any { it.id == "Second" })
     }
+
+    @Test
+    fun `homeState updates reactively when profile added after creation`() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        val before = viewModel.homeState.value.profiles.size
+
+        viewModel.addProfile("LateProfile")
+        advanceUntilIdle()
+
+        assertEquals(before + 1, viewModel.homeState.value.profiles.size)
+        assertTrue(viewModel.homeState.value.profiles.any { it.id == "LateProfile" })
+    }
 }

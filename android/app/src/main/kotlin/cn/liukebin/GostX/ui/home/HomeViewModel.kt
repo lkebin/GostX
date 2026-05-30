@@ -43,7 +43,11 @@ class HomeViewModel(
         repo.profilesFlow,
         repo.activeProfileIdFlow
     ) { profiles, activeId -> HomeUiState(profiles = profiles, activeProfileId = activeId) }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, HomeUiState())
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            HomeUiState(profiles = repo.profilesFlow.value, activeProfileId = repo.activeProfileIdFlow.value)
+        )
 
     fun setActiveProfile(profileId: String) {
         if (!canSetActiveProfile(vpnState.value.status)) return
