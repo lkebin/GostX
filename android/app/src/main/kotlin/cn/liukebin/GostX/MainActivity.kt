@@ -15,9 +15,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import cn.liukebin.GostX.data.ConfigRepository
 import cn.liukebin.GostX.data.GlobalVpnState
 import cn.liukebin.GostX.ui.Screen
@@ -75,17 +77,19 @@ fun GostXApp(
             ) {
                 composable(Screen.Home.route) {
                     HomeScreen(
+                        repo = configRepository,
                         onRequestVpnPermission = onRequestVpnPermission,
                         onNavigateToLogs = { navController.navigate(Screen.Logs.route) },
-                        onNavigateToConfig = {
-                            navController.navigate(
-                                Screen.ConfigEdit.createRoute(configRepository.getActiveProfileId())
-                            )
+                        onNavigateToConfigEdit = { profileId ->
+                            navController.navigate(Screen.ConfigEdit.createRoute(profileId))
                         }
                     )
                 }
                 composable(Screen.Logs.route) { LogScreen(onBack = { navController.popBackStack() }) }
-                composable(Screen.ConfigEdit.route) { backStackEntry ->
+                composable(
+                    route = Screen.ConfigEdit.route,
+                    arguments = listOf(navArgument("profileId") { type = NavType.StringType })
+                ) { backStackEntry ->
                     val profileId = backStackEntry.arguments?.getString("profileId")
                         ?.let(Uri::decode)
                         ?: configRepository.getActiveProfileId()
