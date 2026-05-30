@@ -61,4 +61,5 @@
     <string name="vpn_stop_label">Stop VPN</string>
     <string name="vpn_loading_label">Loading</string>
     <string name="service_info_title">Running Service</string>
+    <string name="profiles_title">Profiles</string>
 </resources>
