@@ -21,15 +21,18 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledIconButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -181,11 +184,13 @@ fun HomeScreen(
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.weight(1f)
                 )
-                SmallFloatingActionButton(
+                FilledIconButton(
                     onClick = { showAddDialog = true },
                     shape = RoundedCornerShape(12.dp),
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
                 ) {
                     Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.profile_add))
                 }
@@ -263,30 +268,22 @@ private fun ProfileListItem(
     onActivate: () -> Unit,
     onEdit: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        RadioButton(
-            selected = isActive,
-            onClick = onActivate,
-            enabled = radioEnabled,
-            modifier = Modifier.padding(start = 8.dp)
-        )
-        Text(
-            text = profile.name,
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 8.dp),
-            style = MaterialTheme.typography.bodyLarge
-        )
-        IconButton(onClick = onEdit) {
-            Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = stringResource(R.string.nav_config)
+    ListItem(
+        headlineContent = { Text(profile.name) },
+        leadingContent = {
+            RadioButton(
+                selected = isActive,
+                onClick = onActivate,
+                enabled = radioEnabled
             )
+        },
+        trailingContent = {
+            IconButton(onClick = onEdit) {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = stringResource(R.string.nav_config)
+                )
+            }
         }
-    }
+    )
 }
