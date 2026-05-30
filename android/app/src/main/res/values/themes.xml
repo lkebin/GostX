@@ -3,6 +3,5 @@
     <style name="Theme.GostX" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@android:color/white</item>
         <item name="android:windowSplashScreenBackground">@android:color/white</item>
-        <item name="android:windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
     </style>
 </resources>
