@@ -8,15 +8,15 @@
 
     <!-- VPN status -->
     <string name="status_running">Running</string>
-    <string name="status_connecting">Connecting\u2026</string>
+    <string name="status_connecting">Connecting...</string>
     <string name="status_error">Error</string>
     <string name="status_stopped">Stopped</string>
     <string name="listen_addr">Listen: %s</string>
 
     <!-- VPN actions -->
-    <string name="vpn_start">Start VPN</string>
-    <string name="vpn_stop">Stop VPN</string>
-    <string name="vpn_permission_denied">VPN permission denied</string>
+    <string name="vpn_start">Start</string>
+    <string name="vpn_stop">Stop</string>
+    <string name="vpn_permission_denied">Permission denied</string>
 
     <!-- Config screen -->
     <string name="config_title">Config</string>
@@ -34,11 +34,11 @@
     <!-- Notification -->
     <string name="notification_title">GostX Running</string>
     <string name="notification_stop">Stop</string>
-    <string name="notification_connecting">Connecting\u2026</string>
+    <string name="notification_connecting">Connecting...</string>
 
     <!-- Quick Settings tile -->
-    <string name="tile_label">GostX VPN</string>
+    <string name="tile_label">GostX</string>
     <string name="tile_connected">Connected</string>
-    <string name="tile_connecting">Connecting\u2026</string>
+    <string name="tile_connecting">Connecting...</string>
     <string name="tile_error">Error</string>
 </resources>
