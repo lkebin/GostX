@@ -30,6 +30,8 @@
     <string name="log_copy">Copy</string>
     <string name="log_clear">Clear</string>
     <string name="log_empty">No logs</string>
+    <string name="log_follow_on">Resume live tail</string>
+    <string name="log_follow_off">Pause live tail</string>
 
     <!-- Notification -->
     <string name="notification_title">GostX Running</string>
