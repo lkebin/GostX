@@ -1,9 +1,12 @@
 package cn.liukebin.GostX.ui.home
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,6 +15,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -19,12 +24,14 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -36,7 +43,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -74,18 +80,18 @@ fun HomeScreen(
     val homeState by vm.homeState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showAddDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
+    var showServiceModal by remember { mutableStateOf(false) }
 
     val existingNames = remember(homeState.profiles) { homeState.profiles.map { it.name }.toSet() }
     val nextDefaultName = remember(homeState.profiles) { repo.getNextDefaultName() }
 
     LaunchedEffect(vpnState) {
-        when {
-            vpnState.status == VpnStatus.CONNECTED && vpnState.listenAddr.isNotEmpty() ->
-                snackbarHostState.showSnackbar(context.getString(R.string.listen_addr, vpnState.listenAddr))
-            vpnState.status == VpnStatus.ERROR && vpnState.error != null ->
-                snackbarHostState.showSnackbar(vpnState.error!!)
+        if (vpnState.status == VpnStatus.ERROR && vpnState.error != null) {
+            snackbarHostState.showSnackbar(vpnState.error!!)
         }
+    }
+    LaunchedEffect(vpnState.status) {
+        if (vpnState.status != VpnStatus.CONNECTED) showServiceModal = false
     }
 
     if (showAddDialog) {
@@ -127,7 +133,13 @@ fun HomeScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { if (!isTransitioning) vm.toggleVpn(onRequestVpnPermission) },
+                onClick = {
+                    when {
+                        isTransitioning -> {}
+                        vpnState.status == VpnStatus.CONNECTED -> showServiceModal = true
+                        else -> vm.toggleVpn(onRequestVpnPermission)
+                    }
+                },
                 modifier = Modifier.alpha(if (isTransitioning) 0.5f else 1f),
                 containerColor = when (vpnState.status) {
                     VpnStatus.CONNECTED -> Color(0xFF4CAF50)
@@ -167,6 +179,45 @@ fun HomeScreen(
                     onEdit = { onNavigateToConfigEdit(profile.id) }
                 )
                 HorizontalDivider()
+            }
+        }
+    }
+
+    if (showServiceModal) {
+        ModalBottomSheet(
+            onDismissRequest = { showServiceModal = false },
+            sheetState = rememberModalBottomSheetState()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
+                    .navigationBarsPadding()
+            ) {
+                Text(
+                    text = stringResource(R.string.service_info_title),
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                if (vpnState.listenAddr.isNotEmpty()) {
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = stringResource(R.string.listen_addr, vpnState.listenAddr),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(Modifier.height(24.dp))
+                Button(
+                    onClick = {
+                        showServiceModal = false
+                        vm.toggleVpn(onRequestVpnPermission)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(stringResource(R.string.vpn_stop_label))
+                }
+                Spacer(Modifier.height(8.dp))
             }
         }
     }

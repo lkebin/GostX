@@ -59,4 +59,5 @@
     <string name="vpn_start_label">启动 VPN</string>
     <string name="vpn_stop_label">停止 VPN</string>
     <string name="vpn_loading_label">加载中</string>
+    <string name="service_info_title">运行中的服务</string>
 </resources>

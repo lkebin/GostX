@@ -58,4 +58,5 @@
     <string name="vpn_start_label">Start VPN</string>
     <string name="vpn_stop_label">Stop VPN</string>
     <string name="vpn_loading_label">Loading</string>
+    <string name="service_info_title">Running Service</string>
 </resources>
