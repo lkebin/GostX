@@ -16,15 +16,15 @@ class GostTileServiceLogicTest {
         assertEquals(Tile.STATE_UNAVAILABLE, resolveTileState(VpnStatus.STOPPING))
     }
 
-    @Test fun `stopping vpn uses connecting subtitle on q and above`() {
+    @Test fun `stopping vpn uses connecting subtitle`() {
         assertEquals(
             R.string.tile_connecting,
-            resolveTileSubtitleRes(VpnStatus.STOPPING, Build.VERSION_CODES.Q)
+            resolveTileSubtitleRes(VpnStatus.STOPPING)
         )
     }
 
-    @Test fun `stopping vpn has no subtitle below q`() {
-        assertNull(resolveTileSubtitleRes(VpnStatus.STOPPING, Build.VERSION_CODES.P))
+    @Test fun `stopped vpn has no subtitle`() {
+        assertNull(resolveTileSubtitleRes(VpnStatus.STOPPED))
     }
 
     @Test fun `tile subtitle setter is gated below q`() {

@@ -19,6 +19,7 @@ internal fun resolveVpnToggleAction(status: VpnStatus, hasVpnPermission: Boolean
     else -> VpnToggleAction.REQUEST_PERMISSION
 }
 
+// Used in Task 6 by HomeViewModel to guard setActiveProfile() calls.
 internal fun canSetActiveProfile(status: VpnStatus): Boolean =
     status == VpnStatus.STOPPED || status == VpnStatus.ERROR
 
