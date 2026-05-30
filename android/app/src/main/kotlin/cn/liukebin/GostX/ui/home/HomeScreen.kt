@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -73,11 +74,15 @@ fun HomeScreen(
     val homeState by vm.homeState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showAddDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    val existingNames = remember(homeState.profiles) { homeState.profiles.map { it.name }.toSet() }
+    val nextDefaultName = remember(homeState.profiles) { repo.getNextDefaultName() }
 
     LaunchedEffect(vpnState) {
         when {
             vpnState.status == VpnStatus.CONNECTED && vpnState.listenAddr.isNotEmpty() ->
-                snackbarHostState.showSnackbar("监听: ${vpnState.listenAddr}")
+                snackbarHostState.showSnackbar(context.getString(R.string.listen_addr, vpnState.listenAddr))
             vpnState.status == VpnStatus.ERROR && vpnState.error != null ->
                 snackbarHostState.showSnackbar(vpnState.error!!)
         }
@@ -85,12 +90,13 @@ fun HomeScreen(
 
     if (showAddDialog) {
         AddProfileDialog(
-            existingNames = homeState.profiles.map { it.name }.toSet(),
-            initialName = repo.getNextDefaultName(),
-            onConfirm = { name ->
-                if (vm.addProfile(name)) {
+            existingNames = existingNames,
+            initialName = nextDefaultName,
+            onConfirm = { profileId ->
+                // ConfigProfile.id == name by design (see ConfigRepository); name is the profile ID
+                if (vm.addProfile(profileId)) {
                     showAddDialog = false
-                    onNavigateToConfigEdit(name)
+                    onNavigateToConfigEdit(profileId)
                 }
             },
             onDismiss = { showAddDialog = false }
