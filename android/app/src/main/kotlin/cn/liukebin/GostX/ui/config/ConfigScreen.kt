@@ -62,6 +62,10 @@ fun ConfigScreen(
         vm.navBack.collect { onBack() }
     }
 
+    LaunchedEffect(state.canDelete) {
+        if (!state.canDelete) showDeleteConfirm = false
+    }
+
     if (state.validationError != null) {
         AlertDialog(
             onDismissRequest = { vm.clearValidationError() },
@@ -106,16 +110,17 @@ fun ConfigScreen(
                     }
                 },
                 actions = {
-                    if (state.canDelete) {
-                        IconButton(onClick = { showDeleteConfirm = true }) {
-                            Icon(
-                                Icons.Filled.Delete,
-                                contentDescription = stringResource(R.string.action_delete)
-                            )
-                        }
-                    }
                     IconButton(onClick = { vm.save() }) {
                         Icon(Icons.Filled.Save, contentDescription = stringResource(R.string.action_save))
+                    }
+                    IconButton(
+                        onClick = { showDeleteConfirm = true },
+                        enabled = state.canDelete
+                    ) {
+                        Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = stringResource(R.string.action_delete)
+                        )
                     }
                 }
             )
