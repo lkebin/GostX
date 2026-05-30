@@ -1,10 +1,15 @@
 package cn.liukebin.GostX.data
 
 import android.content.SharedPreferences
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 private const val KEY_PROFILES = "config_profile_list"
 private const val KEY_ACTIVE = "config_active_profile"
 const val DEFAULT_PROFILE_ID = "default"
+
+data class ConfigProfile(val id: String, val name: String)
 
 val DEFAULT_YAML = """
 # GostX VPN 配置
@@ -58,38 +63,82 @@ chains:
 
 class ConfigRepository(private val prefs: SharedPreferences) {
 
-    fun getProfiles(): List<String> {
-        val raw = prefs.getString(KEY_PROFILES, null) ?: return listOf(DEFAULT_PROFILE_ID)
-        return raw.split(",").filter { it.isNotBlank() }
+    private val _profilesFlow = MutableStateFlow<List<ConfigProfile>>(emptyList())
+    val profilesFlow: StateFlow<List<ConfigProfile>> = _profilesFlow.asStateFlow()
+
+    private val _activeProfileIdFlow = MutableStateFlow(DEFAULT_PROFILE_ID)
+    val activeProfileIdFlow: StateFlow<String> = _activeProfileIdFlow.asStateFlow()
+
+    init {
+        _profilesFlow.value = loadProfilesFromPrefs()
+        _activeProfileIdFlow.value = prefs.getString(KEY_ACTIVE, DEFAULT_PROFILE_ID) ?: DEFAULT_PROFILE_ID
     }
 
-    fun getActiveProfileId(): String =
-        prefs.getString(KEY_ACTIVE, DEFAULT_PROFILE_ID) ?: DEFAULT_PROFILE_ID
+    fun getProfiles(): List<ConfigProfile> = _profilesFlow.value
 
-    fun setActiveProfile(id: String) = prefs.edit().putString(KEY_ACTIVE, id).apply()
+    fun getActiveProfileId(): String = _activeProfileIdFlow.value
+
+    fun setActiveProfile(id: String) {
+        prefs.edit().putString(KEY_ACTIVE, id).apply()
+        _activeProfileIdFlow.value = id
+    }
 
     fun getConfig(profileId: String): String =
-        prefs.getString("config_profile_$profileId", null) ?: DEFAULT_YAML
+        prefs.getString("config_profile_$profileId", null)
+            ?: if (profileId == DEFAULT_PROFILE_ID) DEFAULT_YAML else ""
 
     fun getActiveConfig(): String = getConfig(getActiveProfileId())
 
     fun saveConfig(profileId: String, yaml: String) {
         val editor = prefs.edit().putString("config_profile_$profileId", yaml)
-        val profiles = getProfiles().toMutableList()
-        if (!profiles.contains(profileId)) {
-            profiles.add(profileId)
-            editor.putString(KEY_PROFILES, profiles.joinToString(","))
+        val profiles = _profilesFlow.value
+        if (profiles.none { it.id == profileId }) {
+            val newList = profiles + ConfigProfile(profileId, profileId)
+            editor.putString(KEY_PROFILES, newList.joinToString(",") { it.id })
+            editor.apply()
+            _profilesFlow.value = newList
+        } else {
+            editor.apply()
         }
-        editor.apply()
+    }
+
+    fun getNextDefaultName(): String {
+        val existingNames = _profilesFlow.value.map { it.name }.toSet()
+        var n = 1
+        while ("Config $n" in existingNames) n++
+        return "Config $n"
+    }
+
+    fun addProfile(name: String): Boolean {
+        val current = _profilesFlow.value
+        if (current.any { it.id == name }) return false
+        val newList = current + ConfigProfile(name, name)
+        prefs.edit()
+            .putString(KEY_PROFILES, newList.joinToString(",") { it.id })
+            .putString("config_profile_$name", "")
+            .apply()
+        _profilesFlow.value = newList
+        return true
     }
 
     fun deleteProfile(profileId: String) {
-        if (profileId == DEFAULT_PROFILE_ID) return
-        val profiles = getProfiles().toMutableList().also { it.remove(profileId) }
-        prefs.edit()
-            .putString(KEY_PROFILES, profiles.joinToString(","))
+        val current = _profilesFlow.value
+        if (current.size <= 1) return
+        val newList = current.filter { it.id != profileId }
+        val editor = prefs.edit()
+            .putString(KEY_PROFILES, newList.joinToString(",") { it.id })
             .remove("config_profile_$profileId")
-            .apply()
-        if (getActiveProfileId() == profileId) setActiveProfile(DEFAULT_PROFILE_ID)
+        if (_activeProfileIdFlow.value == profileId) {
+            val newActive = newList.first().id
+            editor.putString(KEY_ACTIVE, newActive)
+            _activeProfileIdFlow.value = newActive
+        }
+        editor.apply()
+        _profilesFlow.value = newList
+    }
+
+    private fun loadProfilesFromPrefs(): List<ConfigProfile> {
+        val raw = prefs.getString(KEY_PROFILES, null) ?: return listOf(ConfigProfile(DEFAULT_PROFILE_ID, DEFAULT_PROFILE_ID))
+        return raw.split(",").filter { it.isNotBlank() }.map { ConfigProfile(it, it) }
     }
 }
