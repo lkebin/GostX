@@ -120,6 +120,7 @@ class ConfigRepository(private val prefs: SharedPreferences) {
     fun addProfile(name: String): Boolean {
         val current = _profilesFlow.value
         if (current.any { it.id == name }) return false
+        if (name.contains(',')) return false
         val newList = current + ConfigProfile(name, name)
         prefs.edit()
             .putString(KEY_PROFILES, newList.joinToString(",") { it.id })

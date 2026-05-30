@@ -54,6 +54,7 @@
     <string name="profile_new_title">新建配置</string>
     <string name="profile_name_label">名称</string>
     <string name="profile_name_duplicate">名称已存在</string>
+    <string name="profile_name_invalid_char">名称不能包含逗号</string>
     <string name="action_create">创建</string>
     <string name="vpn_start_label">启动 VPN</string>
     <string name="vpn_stop_label">停止 VPN</string>
