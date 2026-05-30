@@ -53,6 +53,7 @@
     <string name="profile_new_title">New Profile</string>
     <string name="profile_name_label">Name</string>
     <string name="profile_name_duplicate">Name already exists</string>
+    <string name="profile_name_invalid_char">Name may not contain commas</string>
     <string name="action_create">Create</string>
     <string name="vpn_start_label">Start VPN</string>
     <string name="vpn_stop_label">Stop VPN</string>

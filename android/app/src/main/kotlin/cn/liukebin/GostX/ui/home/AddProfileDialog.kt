@@ -29,7 +29,7 @@ fun AddProfileDialog(
     onConfirm: (name: String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var name by remember { mutableStateOf(initialName) }
+    var name by remember(initialName) { mutableStateOf(initialName) }
     val trimmed = name.trim()
     val isDuplicate = trimmed in existingNames
     val hasComma = ',' in trimmed
@@ -46,9 +46,11 @@ fun AddProfileDialog(
                     label = { Text(stringResource(R.string.profile_name_label)) },
                     singleLine = true,
                     isError = isDuplicate || hasComma,
-                    supportingText = if (isDuplicate || hasComma) {
-                        { Text(stringResource(R.string.profile_name_duplicate), color = MaterialTheme.colorScheme.error) }
-                    } else null
+                    supportingText = when {
+                        isDuplicate -> { { Text(stringResource(R.string.profile_name_duplicate), color = MaterialTheme.colorScheme.error) } }
+                        hasComma -> { { Text(stringResource(R.string.profile_name_invalid_char), color = MaterialTheme.colorScheme.error) } }
+                        else -> null
+                    }
                 )
             }
         },
