@@ -9,6 +9,14 @@ private const val KEY_PROFILES = "config_profile_list"
 private const val KEY_ACTIVE = "config_active_profile"
 const val DEFAULT_PROFILE_ID = "default"
 
+/**
+ * Represents a named VPN configuration profile.
+ *
+ * [id] serves as both the unique key (used in SharedPreferences) and the display name.
+ * [id] == [name] by design: profile names are unique, so the name itself is the key.
+ * The two-field form exists so callers can reference `profile.name` semantically
+ * without coupling to the storage key implementation.
+ */
 data class ConfigProfile(val id: String, val name: String)
 
 val DEFAULT_YAML = """
