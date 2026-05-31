@@ -77,8 +77,10 @@ class GostVpnService : VpnService() {
         NotificationHelper.createChannel(this)
         LogRepository.init(this)
         configRepo = ConfigRepository(getSharedPreferences("gostx_prefs", Context.MODE_PRIVATE))
-        val workDir = getExternalFilesDir(null)?.absolutePath ?: filesDir.absolutePath
+        val workDir = getExternalFilesDir(null)?.absolutePath
+            ?: filesDir.absolutePath.also { log("External storage unavailable, falling back to internal: $it") }
         GostLibBridge.setWorkDir(workDir)
+            .onFailure { log("WARNING: setWorkDir($workDir) failed: ${it.message}") }
     }
 
     override fun onBind(intent: Intent?): IBinder? = super.onBind(intent)
@@ -355,7 +357,6 @@ internal object GostLibBridge {
         runCatching { invoke("setMemoryLimit", enabled) }
     }
 
-    fun setWorkDir(path: String) {
-        runCatching { invoke("setWorkDir", path) }
-    }
+    fun setWorkDir(path: String): Result<Unit> =
+        runCatching { invoke("setWorkDir", path); Unit }
 }
