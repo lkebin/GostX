@@ -1,11 +1,13 @@
 package cn.liukebin.GostX.ui.log
 
 import android.app.Application
+import androidx.annotation.MainThread
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import cn.liukebin.GostX.data.LogRepository
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -51,6 +53,7 @@ internal fun readFileFrom(file: File, offset: Long): Pair<List<String>, Long> {
 class LogViewModel(
     application: Application,
     private val logFile: File,
+    internal val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : AndroidViewModel(application) {
 
     companion object {
@@ -79,7 +82,7 @@ class LogViewModel(
 
     /** Loads existing log file content into [lines]. Call before [startPolling]. */
     fun loadInitial() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             readMutex.withLock {
                 val (lines, offset) = readFileFrom(logFile, 0L)
                 _lines.value = lines.takeLast(2000)
@@ -92,7 +95,7 @@ class LogViewModel(
      *  [isFollowing]; [isFollowing] controls only whether the view auto-scrolls. */
     fun startPolling() {
         pollJob?.cancel()
-        pollJob = viewModelScope.launch(Dispatchers.IO) {
+        pollJob = viewModelScope.launch(ioDispatcher) {
             while (isActive) {
                 delay(1000)
                 appendNewLines()
@@ -122,14 +125,18 @@ class LogViewModel(
         }
     }
 
-    /** Sets live-tail mode. When enabling, immediately reads missed lines so
-     *  the view is current without waiting for the next polling tick. */
+    /** Sets live-tail mode.
+     *  - `true`: enables auto-scroll and immediately reads any missed lines.
+     *  - `false`: disables auto-scroll; polling continues so [lines] stays current.
+     */
+    @MainThread
     fun setFollowing(value: Boolean) {
         _isFollowing.value = value
-        if (value) viewModelScope.launch(Dispatchers.IO) { appendNewLines() }
+        if (value) viewModelScope.launch(ioDispatcher) { appendNewLines() }
     }
 
     /** Toggles live-tail mode. */
+    @MainThread
     fun toggleFollow() = setFollowing(!_isFollowing.value)
 
     /** Returns full file contents for clipboard copy. Does not depend on in-memory [lines]. */
@@ -137,7 +144,7 @@ class LogViewModel(
 
     /** Truncates the log file and clears the displayed lines. */
     fun clearLog() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             readMutex.withLock {
                 LogRepository.deleteLog()
                 _lines.value = emptyList()

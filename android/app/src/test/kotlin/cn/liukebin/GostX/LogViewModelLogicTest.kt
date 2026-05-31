@@ -1,27 +1,48 @@
 package cn.liukebin.GostX
 
+import android.app.Application
 import cn.liukebin.GostX.data.LogRepository
+import cn.liukebin.GostX.ui.log.LogViewModel
 import cn.liukebin.GostX.ui.log.readFileFrom
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.mock
 import java.io.File
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class LogViewModelLogicTest {
     private lateinit var tempDir: File
     private lateinit var logFile: File
+    private lateinit var testScheduler: TestCoroutineScheduler
+    private lateinit var testDispatcher: TestDispatcher
 
     @Before fun setup() {
         tempDir = java.nio.file.Files.createTempDirectory("vmlogic_test").toFile()
         logFile = File(tempDir, "test.log")
+        testScheduler = TestCoroutineScheduler()
+        testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
     }
 
     @After fun cleanup() {
+        Dispatchers.resetMain()
         tempDir.deleteRecursively()
     }
 
@@ -115,6 +136,73 @@ class LogViewModelLogicTest {
         job.cancel() // second cancel must not throw
         // scope is automatically cleaned up when test completes
     }
+
+    @Test fun `lines update even when isFollowing is false`() = runTest(testScheduler) {
+        val vm = LogViewModel(
+            application = mock<Application>(),
+            logFile = logFile,
+            ioDispatcher = testDispatcher,
+        )
+        vm.loadInitial()
+        advanceUntilIdle()
+        vm.setFollowing(false)
+        vm.startPolling()
+        logFile.appendText("new line\n")
+        advanceTimeBy(1001)
+        assertTrue(
+            "lines should update regardless of isFollowing, got: ${vm.lines.value}",
+            vm.lines.value.any { it.contains("new line") }
+        )
+        vm.stopPolling()
+    }
+
+    @Test fun `setFollowing true reads immediately without waiting for poll tick`() = runTest(testScheduler) {
+        val vm = LogViewModel(
+            application = mock<Application>(),
+            logFile = logFile,
+            ioDispatcher = testDispatcher,
+        )
+        vm.loadInitial()
+        advanceUntilIdle()
+        logFile.appendText("missed line\n")
+        // Don't start polling — just call setFollowing(true)
+        vm.setFollowing(true)
+        runCurrent() // flush the launched coroutine
+        assertTrue(
+            "setFollowing(true) should immediately read missed lines, got: ${vm.lines.value}",
+            vm.lines.value.any { it.contains("missed line") }
+        )
+    }
+
+    @Test fun `setFollowing false does not trigger immediate read`() = runTest(testScheduler) {
+        val vm = LogViewModel(
+            application = mock<Application>(),
+            logFile = logFile,
+            ioDispatcher = testDispatcher,
+        )
+        vm.loadInitial()
+        advanceUntilIdle()
+        logFile.appendText("unread line\n")
+        vm.setFollowing(false)
+        runCurrent()
+        assertFalse(
+            "setFollowing(false) should NOT read lines immediately, got: ${vm.lines.value}",
+            vm.lines.value.any { it.contains("unread line") }
+        )
+    }
+
+    @Test fun `toggleFollow delegates to setFollowing`() = runTest(testScheduler) {
+        val vm = LogViewModel(
+            application = mock<Application>(),
+            logFile = logFile,
+            ioDispatcher = testDispatcher,
+        )
+        assertTrue(vm.isFollowing.value) // starts true
+        vm.toggleFollow()
+        assertFalse(vm.isFollowing.value)
+        vm.toggleFollow()
+        assertTrue(vm.isFollowing.value)
+    }
 }
 
 // Compile-time check: public polling and follow API
@@ -123,4 +211,5 @@ private fun _assertLogViewModelApi(vm: cn.liukebin.GostX.ui.log.LogViewModel) {
     vm.stopPolling()
     vm.setFollowing(true)
     vm.setFollowing(false)
+    vm.toggleFollow()
 }
