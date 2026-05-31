@@ -14,7 +14,6 @@ import android.os.Build
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
 import android.os.PowerManager
-import androidx.annotation.RequiresApi
 import cn.liukebin.GostX.data.ConfigRepository
 import cn.liukebin.GostX.data.GlobalVpnState
 import cn.liukebin.GostX.data.LogRepository
@@ -82,8 +81,9 @@ class GostVpnService : VpnService() {
             ?: filesDir.absolutePath.also { log("External storage unavailable, falling back to internal: $it") }
         GostLibBridge.setWorkDir(workDir)
             .onFailure { log("WARNING: setWorkDir($workDir) failed: ${it.message}") }
+        // SetLogFile uses sync.Once on the Go side — idempotent on service restart.
         GostLibBridge.setLogFile(LogRepository.getLogFile().absolutePath)
-            .onFailure { android.util.Log.e("GostX", "setLogFile failed: ${it.message}") }
+            .onFailure { log("WARNING: setLogFile failed: ${it.message}") }
     }
 
     override fun onBind(intent: Intent?): IBinder? = super.onBind(intent)
@@ -243,7 +243,6 @@ class GostVpnService : VpnService() {
     }
 
     private fun registerServiceReceiver() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
         unregisterServiceReceiver()
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
@@ -261,7 +260,6 @@ class GostVpnService : VpnService() {
         serviceReceiver = null
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     private fun handleIdleModeChanged() {
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
         if (pm.isDeviceIdleMode) {
