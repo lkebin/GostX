@@ -29,6 +29,15 @@ android {
     kotlinOptions { jvmTarget = "11" }
     buildFeatures { compose = true }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.8" }
+    packaging {
+        jniLibs {
+            // .so stored compressed in APK; extracted at install and loaded from disk.
+            // PT_LOAD segments in libgojni.so are 16KB-aligned (built with
+            // CGO_LDFLAGS="-Wl,-z,max-page-size=16384"), satisfying Android 15's
+            // 16 KB page-size requirement once the library is loaded from disk.
+            useLegacyPackaging = true
+        }
+    }
 }
 
 dependencies {

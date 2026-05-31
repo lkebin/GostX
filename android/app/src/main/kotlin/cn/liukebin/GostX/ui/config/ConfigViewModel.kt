@@ -1,34 +1,59 @@
 package cn.liukebin.GostX.ui.config
 
 import androidx.lifecycle.ViewModel
-import cn.liukebin.GostX.service.GostLibBridge
+import androidx.lifecycle.viewModelScope
 import cn.liukebin.GostX.data.ConfigRepository
+import cn.liukebin.GostX.data.GlobalVpnState
+import cn.liukebin.GostX.data.VpnStatus
+import cn.liukebin.GostX.service.GostLibBridge
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 
 data class ConfigUiState(
+    val profileName: String = "",
     val yaml: String = "",
-    val profiles: List<String> = emptyList(),
-    val activeProfileId: String = "default",
     val validationError: String? = null,
-    val isSaved: Boolean = false
+    val isSaved: Boolean = false,
+    val canDelete: Boolean = false,
+    val otherProfileNames: Set<String> = emptySet()
 )
 
-class ConfigViewModel(private val repo: ConfigRepository) : ViewModel() {
+class ConfigViewModel(
+    private val repo: ConfigRepository,
+    private val profileId: String
+) : ViewModel() {
+
     private val _ui = MutableStateFlow(ConfigUiState())
     val uiState: StateFlow<ConfigUiState> = _ui.asStateFlow()
 
+    private val _navBack = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val navBack: SharedFlow<Unit> = _navBack.asSharedFlow()
+
     init {
         load()
+        viewModelScope.launch {
+            combine(GlobalVpnState.state, repo.profilesFlow) { vpnState, profiles ->
+                val canDelete = profiles.size > 1 && (vpnState.status == VpnStatus.STOPPED || vpnState.status == VpnStatus.ERROR)
+                val otherNames = profiles.filter { it.id != profileId }.map { it.name }.toSet()
+                canDelete to otherNames
+            }.collect { (canDelete, otherNames) ->
+                _ui.value = _ui.value.copy(canDelete = canDelete, otherProfileNames = otherNames)
+            }
+        }
     }
 
     private fun load() {
-        val id = repo.getActiveProfileId()
+        val profiles = repo.getProfiles()
+        val name = profiles.find { it.id == profileId }?.name ?: profileId
         _ui.value = ConfigUiState(
-            yaml = repo.getConfig(id),
-            profiles = repo.getProfiles(),
-            activeProfileId = id
+            profileName = name,
+            yaml = repo.getConfig(profileId)
         )
     }
 
@@ -42,7 +67,7 @@ class ConfigViewModel(private val repo: ConfigRepository) : ViewModel() {
             _ui.value = _ui.value.copy(validationError = error)
             return
         }
-        repo.saveConfig(_ui.value.activeProfileId, _ui.value.yaml)
+        repo.saveConfig(profileId, _ui.value.yaml)
         _ui.value = _ui.value.copy(isSaved = true, validationError = null)
     }
 
@@ -50,12 +75,16 @@ class ConfigViewModel(private val repo: ConfigRepository) : ViewModel() {
         _ui.value = _ui.value.copy(validationError = null)
     }
 
-    fun switchProfile(profileId: String) {
-        repo.setActiveProfile(profileId)
-        _ui.value = _ui.value.copy(
-            activeProfileId = profileId,
-            yaml = repo.getConfig(profileId),
-            validationError = null
-        )
+    fun renameProfile(newName: String) {
+        val trimmed = newName.trim()
+        if (repo.renameProfile(profileId, trimmed)) {
+            _ui.value = _ui.value.copy(profileName = trimmed)
+        }
+    }
+
+    fun deleteProfile() {
+        if (!_ui.value.canDelete) return
+        repo.deleteProfile(profileId)
+        _navBack.tryEmit(Unit)
     }
 }

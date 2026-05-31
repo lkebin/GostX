@@ -44,4 +44,23 @@
     <string name="tile_connected">已连接</string>
     <string name="tile_connecting">连接中...</string>
     <string name="tile_error">错误</string>
+
+    <!-- Multi-config additions -->
+    <string name="action_delete">删除</string>
+    <string name="profile_delete_confirm_title">删除配置</string>
+    <string name="profile_delete_confirm_message">确定要删除 \"%s\" 吗？</string>
+    <string name="action_cancel">取消</string>
+    <string name="profile_rename">重命名</string>
+    <string name="profile_rename_title">重命名配置</string>
+    <string name="profile_add">添加配置</string>
+    <string name="profile_new_title">新建配置</string>
+    <string name="profile_name_label">名称</string>
+    <string name="profile_name_duplicate">名称已存在</string>
+    <string name="profile_name_invalid_char">名称不能包含逗号</string>
+    <string name="action_create">创建</string>
+    <string name="vpn_start_label">启动 VPN</string>
+    <string name="vpn_stop_label">停止 VPN</string>
+    <string name="vpn_loading_label">加载中</string>
+    <string name="service_info_title">运行中的服务</string>
+    <string name="profiles_title">配置文件</string>
 </resources>
