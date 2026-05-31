@@ -29,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.filter
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -60,23 +61,22 @@ fun LogScreen(
     // Also fires when isFollowing flips to true so the view jumps to bottom on resume.
     LaunchedEffect(lines.size, isFollowing) {
         if (isFollowing && lines.isNotEmpty()) {
-            listState.animateScrollToItem(lines.size - 1)
+            listState.scrollToItem(lines.size - 1)
         }
     }
 
     // Auto-pause follow when the user scrolls away from the bottom.
-    // Fires when a scroll gesture settles. animateScrollToItem (triggered by
-    // isFollowing=true) also settles — but always at the last item, so the
-    // `last < totalItemsCount - 1` check prevents disabling follow in that case.
+    // isScrollInProgress and layoutInfo are captured atomically in the same snapshot.
     LaunchedEffect(listState) {
-        snapshotFlow { listState.isScrollInProgress }
-            .collect { scrolling ->
-                if (!scrolling && viewModel.isFollowing.value) {
-                    val info = listState.layoutInfo
-                    val last = info.visibleItemsInfo.lastOrNull()?.index ?: return@collect
-                    if (last < info.totalItemsCount - 1) {
-                        viewModel.setFollowing(false)
-                    }
+        snapshotFlow {
+            listState.isScrollInProgress to listState.layoutInfo
+        }
+            .filter { (scrolling, _) -> !scrolling }
+            .collect { (_, info) ->
+                if (!viewModel.isFollowing.value) return@collect
+                val last = info.visibleItemsInfo.lastOrNull()?.index ?: return@collect
+                if (last < info.totalItemsCount - 1) {
+                    viewModel.setFollowing(false)
                 }
             }
     }
