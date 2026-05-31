@@ -28,6 +28,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -61,6 +62,23 @@ fun LogScreen(
         if (isFollowing && lines.isNotEmpty()) {
             listState.animateScrollToItem(lines.size - 1)
         }
+    }
+
+    // Auto-pause follow when the user scrolls away from the bottom.
+    // Fires when a scroll gesture settles. animateScrollToItem (triggered by
+    // isFollowing=true) also settles — but always at the last item, so the
+    // `last < totalItemsCount - 1` check prevents disabling follow in that case.
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }
+            .collect { scrolling ->
+                if (!scrolling && viewModel.isFollowing.value) {
+                    val info = listState.layoutInfo
+                    val last = info.visibleItemsInfo.lastOrNull()?.index ?: return@collect
+                    if (last < info.totalItemsCount - 1) {
+                        viewModel.setFollowing(false)
+                    }
+                }
+            }
     }
 
     Scaffold(
