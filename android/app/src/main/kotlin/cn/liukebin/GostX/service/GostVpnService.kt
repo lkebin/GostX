@@ -1,15 +1,15 @@
 package cn.liukebin.GostX.service
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.VpnService
-import android.content.BroadcastReceiver
-import android.content.IntentFilter
 import android.os.Build
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
@@ -66,7 +66,7 @@ class GostVpnService : VpnService() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
     private var tunFd: ParcelFileDescriptor? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
-    private var vpnLogJob: Job? = null
+    @Volatile private var vpnLogJob: Job? = null
     private lateinit var configRepo: ConfigRepository
     @Volatile private var reconnectInProgress = false
     // Timestamp (ms) of the last successful VPN connect. Suppresses onAvailable
@@ -217,8 +217,7 @@ class GostVpnService : VpnService() {
             saveLastRunState(false)
             log("VPN stopped")
         } else {
-            // Reconnect path: re-register service receiver for the new session
-            registerServiceReceiver()
+            // Reconnect path: startVpn() will re-register the receiver on success
             GlobalVpnState.setConnecting()
             log("VPN restarting after network change")
         }
@@ -319,6 +318,7 @@ class GostVpnService : VpnService() {
     }
 
     private fun registerNetworkCallback() {
+        unregisterNetworkCallback()
         val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val cb = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
@@ -365,6 +365,7 @@ class GostVpnService : VpnService() {
     }
 
     override fun onDestroy() {
+        unregisterServiceReceiver()
         scope.cancel()
         super.onDestroy()
     }
