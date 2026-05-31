@@ -77,7 +77,7 @@ class LogViewModel(
     private val readMutex = Mutex()
     @Volatile private var pollJob: Job? = null
 
-    /** Call when the log screen enters composition to load existing content and start polling. */
+    /** Loads existing log file content into [lines]. Call before [startPolling]. */
     fun loadInitial() {
         viewModelScope.launch(Dispatchers.IO) {
             readMutex.withLock {
