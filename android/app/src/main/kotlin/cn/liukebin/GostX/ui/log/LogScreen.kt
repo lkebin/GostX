@@ -24,6 +24,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -48,8 +49,10 @@ fun LogScreen(
     val listState = rememberLazyListState()
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
+    DisposableEffect(Unit) {
         viewModel.loadInitial()
+        viewModel.startPolling()
+        onDispose { viewModel.stopPolling() }
     }
 
     // Auto-scroll to the latest line only when live-tail is active.
