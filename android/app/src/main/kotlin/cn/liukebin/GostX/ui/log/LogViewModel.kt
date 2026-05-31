@@ -85,11 +85,10 @@ class LogViewModel(
                 _lines.value = lines.takeLast(2000)
                 fileOffset = offset
             }
-            startPolling()
         }
     }
 
-    private fun startPolling() {
+    fun startPolling() {
         pollJob?.cancel()
         pollJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
@@ -97,6 +96,11 @@ class LogViewModel(
                 if (_isFollowing.value) appendNewLines()
             }
         }
+    }
+
+    fun stopPolling() {
+        pollJob?.cancel()
+        pollJob = null
     }
 
     private suspend fun appendNewLines() {
