@@ -26,11 +26,8 @@ import java.lang.reflect.InvocationTargetException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 internal fun shouldRestartVpnOnNetworkAvailable(
@@ -66,7 +63,6 @@ class GostVpnService : VpnService() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
     private var tunFd: ParcelFileDescriptor? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
-    @Volatile private var vpnLogJob: Job? = null
     private lateinit var configRepo: ConfigRepository
     @Volatile private var reconnectInProgress = false
     // Timestamp (ms) of the last successful VPN connect. Suppresses onAvailable
@@ -86,6 +82,8 @@ class GostVpnService : VpnService() {
             ?: filesDir.absolutePath.also { log("External storage unavailable, falling back to internal: $it") }
         GostLibBridge.setWorkDir(workDir)
             .onFailure { log("WARNING: setWorkDir($workDir) failed: ${it.message}") }
+        GostLibBridge.setLogFile(LogRepository.getLogFile().absolutePath)
+            .onFailure { android.util.Log.e("GostX", "setLogFile failed: ${it.message}") }
     }
 
     override fun onBind(intent: Intent?): IBinder? = super.onBind(intent)
@@ -180,7 +178,6 @@ class GostVpnService : VpnService() {
             saveLastRunState(true)
             GostLibBridge.setMemoryLimit(true)
             registerServiceReceiver()
-            startVpnLogPolling()
         } catch (e: Exception) {
             log("VPN post-start error: ${e.message}")
             GlobalVpnState.setError("VPN 启动后错误: ${e.message}")
@@ -195,8 +192,6 @@ class GostVpnService : VpnService() {
     private fun stopVpn(updatePersistentState: Boolean = true) {
         if (updatePersistentState) GlobalVpnState.setStopping()
         unregisterNetworkCallback()
-        vpnLogJob?.cancel()
-        vpnLogJob = null
         // Close the ParcelFileDescriptor first: this immediately notifies Android's
         // ConnectivityService that the VPN session is ending, so the status-bar icon
         // disappears right away. The Go side still holds its dup'd fd and can finish
@@ -237,22 +232,6 @@ class GostVpnService : VpnService() {
 
     private fun log(msg: String) = LogRepository.append(msg)
 
-    /** Polls the Go VPN log buffer every second and forwards entries to LogRepository. */
-    private fun startVpnLogPolling() {
-        vpnLogJob?.cancel()
-        vpnLogJob = scope.launch {
-            while (isActive) {
-                delay(1000)
-                val msgs = GostLibBridge.getVPNLog()
-                if (msgs.isNotEmpty()) {
-                    msgs.trimEnd('\n').split('\n').forEach { line ->
-                        if (line.isNotEmpty()) LogRepository.append(line)
-                    }
-                }
-            }
-        }
-    }
-
     private fun parseFirstAddress(statusJson: String): String {
         val match = Regex(""""addresses":\["([^"]+)"""").find(statusJson)
         return match?.groupValues?.get(1) ?: ""
@@ -264,37 +243,16 @@ class GostVpnService : VpnService() {
     }
 
     private fun registerServiceReceiver() {
-        unregisterServiceReceiver() // prevent double-registration on reconnect
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
+        unregisterServiceReceiver()
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                when (intent.action) {
-                    Intent.ACTION_SCREEN_OFF -> {
-                        vpnLogJob?.cancel()
-                        vpnLogJob = null
-                    }
-                    Intent.ACTION_SCREEN_ON -> {
-                        if (GlobalVpnState.state.value.status == VpnStatus.CONNECTED &&
-                            vpnLogJob?.isActive != true
-                        ) {
-                            startVpnLogPolling()
-                        }
-                    }
-                    PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED -> {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            handleIdleModeChanged()
-                        }
-                    }
+                if (intent.action == PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED) {
+                    handleIdleModeChanged()
                 }
             }
         }
-        val filter = IntentFilter().apply {
-            addAction(Intent.ACTION_SCREEN_OFF)
-            addAction(Intent.ACTION_SCREEN_ON)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
-            }
-        }
-        registerReceiver(receiver, filter)
+        registerReceiver(receiver, IntentFilter(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED))
         serviceReceiver = receiver
     }
 
@@ -307,21 +265,9 @@ class GostVpnService : VpnService() {
     private fun handleIdleModeChanged() {
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
         if (pm.isDeviceIdleMode) {
-            // Entering Doze: stop log polling and network callback to avoid
-            // spurious reconnect attempts while the device is deeply sleeping.
-            vpnLogJob?.cancel()
-            vpnLogJob = null
             unregisterNetworkCallback()
         } else {
-            // Exiting Doze: restore network monitoring and resume log polling
-            // only if the screen is also on (isInteractive).
             registerNetworkCallback()
-            if (pm.isInteractive &&
-                GlobalVpnState.state.value.status == VpnStatus.CONNECTED &&
-                vpnLogJob?.isActive != true
-            ) {
-                startVpnLogPolling()
-            }
         }
     }
 
@@ -426,8 +372,6 @@ internal object GostLibBridge {
 
     fun getStatus(): String = invoke("getStatus") as? String ?: ""
 
-    fun getVPNLog(): String = invoke("getVPNLog") as? String ?: ""
-
     fun getVpnDnsAddr(): String = invoke("getVPNDNSAddr") as? String ?: ""
 
     fun validateConfig(yaml: String): String = invoke("validateConfig", yaml) as? String ?: ""
@@ -438,4 +382,7 @@ internal object GostLibBridge {
 
     fun setWorkDir(path: String): Result<Unit> =
         runCatching { invoke("setWorkDir", path); Unit }
+
+    fun setLogFile(path: String): Result<Unit> =
+        runCatching { invoke("setLogFile", path); Unit }
 }
