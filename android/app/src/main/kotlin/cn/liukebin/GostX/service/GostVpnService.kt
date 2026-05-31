@@ -77,6 +77,8 @@ class GostVpnService : VpnService() {
         NotificationHelper.createChannel(this)
         LogRepository.init(this)
         configRepo = ConfigRepository(getSharedPreferences("gostx_prefs", Context.MODE_PRIVATE))
+        val workDir = getExternalFilesDir(null)?.absolutePath ?: filesDir.absolutePath
+        GostLibBridge.setWorkDir(workDir)
     }
 
     override fun onBind(intent: Intent?): IBinder? = super.onBind(intent)
@@ -348,4 +350,12 @@ internal object GostLibBridge {
     fun getVpnDnsAddr(): String = invoke("getVPNDNSAddr") as? String ?: ""
 
     fun validateConfig(yaml: String): String = invoke("validateConfig", yaml) as? String ?: ""
+
+    fun setMemoryLimit(enabled: Boolean) {
+        runCatching { invoke("setMemoryLimit", enabled) }
+    }
+
+    fun setWorkDir(path: String) {
+        runCatching { invoke("setWorkDir", path) }
+    }
 }
