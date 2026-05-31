@@ -456,3 +456,35 @@ func TestSetMemoryLimit(t *testing.T) {
 		t.Errorf("SetMemoryLimit(false): GOGC = %d, want 100", prev)
 	}
 }
+
+func TestSetLogFile(t *testing.T) {
+	f, err := os.CreateTemp("", "vpnlog_test_*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := f.Name()
+	f.Close()
+	defer os.Remove(path)
+
+	if err := SetLogFile(path); err != nil {
+		t.Fatalf("SetLogFile: %v", err)
+	}
+
+	logVPN("hello %s", "world")
+	logVPN("second line")
+
+	// Give drain goroutine time to write
+	time.Sleep(100 * time.Millisecond)
+
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(strings.TrimRight(string(got), "\n"), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("expected 2 lines, got %d: %q", len(lines), string(got))
+	}
+	if lines[0] != "hello world" || lines[1] != "second line" {
+		t.Errorf("unexpected lines: %v", lines)
+	}
+}
