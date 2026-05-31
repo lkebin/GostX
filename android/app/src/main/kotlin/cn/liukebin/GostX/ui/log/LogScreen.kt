@@ -66,14 +66,15 @@ fun LogScreen(
     }
 
     // Auto-pause follow when the user scrolls away from the bottom.
-    // isScrollInProgress and layoutInfo are captured atomically in the same snapshot.
+    // Only fires on the true→false transition of isScrollInProgress (user scroll settle).
+    // scrollToItem (used for programmatic scrolling) is instant and always lands at
+    // the target, so it never triggers a false auto-pause.
     LaunchedEffect(listState) {
-        snapshotFlow {
-            listState.isScrollInProgress to listState.layoutInfo
-        }
-            .filter { (scrolling, _) -> !scrolling }
-            .collect { (_, info) ->
+        snapshotFlow { listState.isScrollInProgress }
+            .filter { !it }
+            .collect {
                 if (!viewModel.isFollowing.value) return@collect
+                val info = listState.layoutInfo
                 val last = info.visibleItemsInfo.lastOrNull()?.index ?: return@collect
                 if (last < info.totalItemsCount - 1) {
                     viewModel.setFollowing(false)
