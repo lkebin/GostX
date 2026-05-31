@@ -19,7 +19,9 @@ var (
 	vpnFailedConns int64 // sessions where router.Dial failed
 )
 
-var logDrainOnce sync.Once
+var logDrainOnce    sync.Once
+var logDrainErr     error
+var logDrainRunning atomic.Bool // true once drainLogToFile goroutine is running
 
 func logVPN(format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
@@ -34,16 +36,16 @@ func logVPN(format string, args ...any) {
 // file path. The file is opened with O_APPEND so it can be safely shared with
 // the Kotlin logger. Call once on app startup; subsequent calls are no-ops.
 func SetLogFile(path string) error {
-	var openErr error
 	logDrainOnce.Do(func() {
 		f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
-			openErr = err
+			logDrainErr = err
 			return
 		}
+		logDrainRunning.Store(true)
 		go drainLogToFile(f)
 	})
-	return openErr
+	return logDrainErr
 }
 
 // drainLogToFile runs for the lifetime of the process. It blocks on vpnLogCh
@@ -73,6 +75,10 @@ func drainLogToFile(f *os.File) {
 // newline-separated. Retained for external tooling; not called by the app
 // when SetLogFile has been configured.
 func GetVPNLog() string {
+	if logDrainRunning.Load() {
+		// drain goroutine owns the channel; direct reads would steal messages
+		return ""
+	}
 	var sb strings.Builder
 	for {
 		select {
@@ -89,12 +95,22 @@ func resetVPNStats() {
 	atomic.StoreInt64(&vpnTCPConns, 0)
 	atomic.StoreInt64(&vpnUDPConns, 0)
 	atomic.StoreInt64(&vpnFailedConns, 0)
-	// drain any stale log messages from a previous session
-	for {
-		select {
-		case <-vpnLogCh:
-		default:
-			return
+	// Only drain stale log messages when no file drain goroutine owns the channel.
+	if !logDrainRunning.Load() {
+		for {
+			select {
+			case <-vpnLogCh:
+			default:
+				return
+			}
 		}
 	}
+}
+
+// resetLogDrainForTest resets the log drain state for testing.
+// Must only be called from tests.
+func resetLogDrainForTest() {
+	logDrainOnce = sync.Once{}
+	logDrainErr = nil
+	logDrainRunning.Store(false)
 }

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	runtimeDebug "runtime/debug"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -110,6 +111,7 @@ func resetTestState(t *testing.T) {
 	vpnChainName = ""
 	vpnDNSServiceAddr = ""
 	mu.Unlock()
+	resetLogDrainForTest()
 }
 
 func waitForRunning(t *testing.T) {
@@ -458,6 +460,9 @@ func TestSetMemoryLimit(t *testing.T) {
 }
 
 func TestSetLogFile(t *testing.T) {
+	resetLogDrainForTest()
+	t.Cleanup(resetLogDrainForTest)
+
 	f, err := os.CreateTemp("", "vpnlog_test_*")
 	if err != nil {
 		t.Fatal(err)
@@ -473,8 +478,15 @@ func TestSetLogFile(t *testing.T) {
 	logVPN("hello %s", "world")
 	logVPN("second line")
 
-	// Give drain goroutine time to write
-	time.Sleep(100 * time.Millisecond)
+	// Wait up to 2s for drain goroutine to write
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		got, _ := os.ReadFile(path)
+		if strings.Count(string(got), "\n") >= 2 {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
 
 	got, err := os.ReadFile(path)
 	if err != nil {
