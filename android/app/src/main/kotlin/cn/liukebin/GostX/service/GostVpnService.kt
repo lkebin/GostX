@@ -202,10 +202,10 @@ class GostVpnService : VpnService() {
         // disappears right away. The Go side still holds its dup'd fd and can finish
         // cleanly afterwards.
         closeTun()
+        GostLibBridge.setMemoryLimit(false)  // reset GC before Go shutdown to avoid GC thrashing
         GostLibBridge.stopVPN()
         GostLibBridge.stop()
-        GostLibBridge.setMemoryLimit(false)
-        unregisterServiceReceiver()
+        runCatching { unregisterServiceReceiver() }  // must not prevent setStopped()
         if (updatePersistentState) {
             GlobalVpnState.setStopped()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
