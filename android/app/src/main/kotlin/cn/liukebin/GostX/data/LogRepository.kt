@@ -3,13 +3,12 @@ package cn.liukebin.GostX.data
 import android.content.Context
 import java.io.File
 import java.io.FileWriter
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 object LogRepository {
     @Volatile private var logFile: File? = null
-    private val timeFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.US)
+    private val timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss.SSS")
 
     fun init(context: Context) {
         if (logFile != null) return
@@ -28,10 +27,12 @@ object LogRepository {
         requireNotNull(logFile) { "LogRepository.init() must be called before use" }
 
     fun append(line: String) {
+        // @Volatile read: fast-path null-check before acquiring the lock.
+        // logFile only ever transitions null→non-null, so this is safe.
         val file = logFile ?: return
         try {
             synchronized(this) {
-                val ts = timeFormat.format(Date())
+                val ts = LocalTime.now().format(timeFormat)
                 FileWriter(file, /* append = */ true).use { it.write("$ts $line\n") }
             }
         } catch (_: Exception) {
@@ -39,9 +40,9 @@ object LogRepository {
         }
     }
 
-    /** Truncates the log file to zero bytes. Keeps the file on disk so that
-     *  any open file descriptors (e.g. Go's drain goroutine) remain valid;
-     *  O_APPEND writers will resume from offset 0 after truncation. */
+    /** Truncates the log file to zero bytes. Creates the file if it does not exist.
+     *  Keeps the file on disk so that any open file descriptors (e.g. Go's drain goroutine)
+     *  remain valid; O_APPEND writers will resume from offset 0 after truncation. */
     fun deleteLog() {
         try {
             synchronized(this) {
