@@ -94,7 +94,6 @@ class GostVpnService : VpnService() {
                 startVpn()
             }
             ACTION_STOP -> scope.launch {
-                LogRepository.deleteLog()
                 stopVpn()
             }
         }
@@ -182,6 +181,7 @@ class GostVpnService : VpnService() {
     }
 
     private fun stopVpn(updatePersistentState: Boolean = true) {
+        if (updatePersistentState) GlobalVpnState.setStopping()
         unregisterNetworkCallback()
         vpnLogJob?.cancel()
         vpnLogJob = null

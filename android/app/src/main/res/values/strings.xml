@@ -43,4 +43,23 @@
     <string name="tile_connected">Connected</string>
     <string name="tile_connecting">Connecting...</string>
     <string name="tile_error">Error</string>
+
+    <!-- Multi-config additions -->
+    <string name="action_delete">Delete</string>
+    <string name="profile_delete_confirm_title">Delete Profile</string>
+    <string name="profile_delete_confirm_message">Delete \"%s\"?</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="profile_rename">Rename</string>
+    <string name="profile_rename_title">Rename Profile</string>
+    <string name="profile_add">Add Profile</string>
+    <string name="profile_new_title">New Profile</string>
+    <string name="profile_name_label">Name</string>
+    <string name="profile_name_duplicate">Name already exists</string>
+    <string name="profile_name_invalid_char">Name may not contain commas</string>
+    <string name="action_create">Create</string>
+    <string name="vpn_start_label">Start VPN</string>
+    <string name="vpn_stop_label">Stop VPN</string>
+    <string name="vpn_loading_label">Loading</string>
+    <string name="service_info_title">Running Service</string>
+    <string name="profiles_title">Profiles</string>
 </resources>
