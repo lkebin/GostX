@@ -1,8 +1,10 @@
 package gostlib
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -22,6 +24,7 @@ var (
 var logDrainOnce    sync.Once
 var logDrainErr     error
 var logDrainRunning atomic.Bool // true once drainLogToFile goroutine is running
+var logDrainCancel  context.CancelFunc // non-nil when goroutine is running; for test cleanup only
 
 func logVPN(format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
@@ -42,32 +45,40 @@ func SetLogFile(path string) error {
 			logDrainErr = err
 			return
 		}
+		ctx, cancel := context.WithCancel(context.Background())
+		logDrainCancel = cancel
 		logDrainRunning.Store(true)
-		go drainLogToFile(f)
+		go drainLogToFile(ctx, f)
 	})
 	return logDrainErr
 }
 
-// drainLogToFile runs for the lifetime of the process. It blocks on vpnLogCh
+// drainLogToFile runs until ctx is cancelled. It blocks on vpnLogCh
 // then batches any additional messages that arrived concurrently before writing,
 // minimising the number of write syscalls.
-func drainLogToFile(f *os.File) {
+func drainLogToFile(ctx context.Context, f *os.File) {
+	defer logDrainRunning.Store(false)
 	for {
-		msg := <-vpnLogCh // block until next message
-		var b strings.Builder
-		b.WriteString(msg)
-		b.WriteByte('\n')
-	drain:
-		for {
-			select {
-			case msg = <-vpnLogCh:
-				b.WriteString(msg)
-				b.WriteByte('\n')
-			default:
-				break drain
+		select {
+		case <-ctx.Done():
+			f.Close() //nolint:errcheck
+			return
+		case msg := <-vpnLogCh:
+			var b strings.Builder
+			b.WriteString(msg)
+			b.WriteByte('\n')
+		drain:
+			for {
+				select {
+				case msg = <-vpnLogCh:
+					b.WriteString(msg)
+					b.WriteByte('\n')
+				default:
+					break drain
+				}
 			}
+			f.WriteString(b.String()) //nolint:errcheck
 		}
-		f.WriteString(b.String()) //nolint:errcheck
 	}
 }
 
@@ -108,9 +119,26 @@ func resetVPNStats() {
 }
 
 // resetLogDrainForTest resets the log drain state for testing.
-// Must only be called from tests.
+// Must only be called from tests. Cancels any running drain goroutine and
+// waits for it to exit before resetting state, making the test repeatable.
 func resetLogDrainForTest() {
+	if logDrainCancel != nil {
+		logDrainCancel()
+		// Wait for goroutine to exit (logDrainRunning goes false on exit)
+		for logDrainRunning.Load() {
+			runtime.Gosched()
+		}
+		logDrainCancel = nil
+	}
+	// Drain any messages the goroutine did not consume
+drain:
+	for {
+		select {
+		case <-vpnLogCh:
+		default:
+			break drain
+		}
+	}
 	logDrainOnce = sync.Once{}
 	logDrainErr = nil
-	logDrainRunning.Store(false)
 }
