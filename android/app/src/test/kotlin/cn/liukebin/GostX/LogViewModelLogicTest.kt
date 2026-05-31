@@ -203,6 +203,26 @@ class LogViewModelLogicTest {
         vm.toggleFollow()
         assertTrue(vm.isFollowing.value)
     }
+    @Test fun `lines are cleared when log file is truncated`() = runTest {
+        val vm = LogViewModel(
+            application = mock<Application>(),
+            logFile = logFile,
+            ioDispatcher = StandardTestDispatcher(testScheduler),
+        )
+        // Populate initial lines
+        logFile.writeText("old line 1\nold line 2\n")
+        vm.loadInitial()
+        runCurrent()
+        assertEquals(2, vm.lines.value.size)
+
+        // Simulate VPN restart: truncate file (like LogRepository.deleteLog())
+        logFile.writeText("")
+        // Next poll should clear lines
+        vm.startPolling()
+        advanceTimeBy(1001)
+        assertEquals("lines should be cleared after truncation", emptyList<String>(), vm.lines.value)
+        vm.stopPolling()
+    }
 }
 
 // Compile-time check: public polling and follow API

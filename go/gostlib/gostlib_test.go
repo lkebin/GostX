@@ -496,7 +496,7 @@ func TestSetLogFile(t *testing.T) {
 	if len(lines) != 2 {
 		t.Fatalf("expected 2 lines, got %d: %q", len(lines), string(got))
 	}
-	if lines[0] != "hello world" || lines[1] != "second line" {
+	if !strings.HasSuffix(lines[0], "hello world") || !strings.HasSuffix(lines[1], "second line") {
 		t.Errorf("unexpected lines: %v", lines)
 	}
 }

@@ -223,7 +223,7 @@ LaunchedEffect(listState) {
 }
 ```
 
-Fires when scroll settles. Only disables following when the user has scrolled up (not at the last item). Auto-scroll (`animateScrollToItem`) also triggers `isScrollInProgress`, but it always ends at the last item, so the check `last < totalItemsCount - 1` is false and following is not disabled.
+Fires when scroll settles. Only disables following when the user has scrolled up (not at the last item). Auto-scroll uses synchronous `scrollToItem` (instant, no animation) to jump to the last item, so `last < totalItemsCount - 1` is false and following is not disabled.
 
 Re-enabling follow requires the user to tap the play button in the top bar (existing behaviour).
 
