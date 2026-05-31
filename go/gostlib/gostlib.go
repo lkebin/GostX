@@ -10,6 +10,7 @@ import (
 	runtimeDebug "runtime/debug"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/go-gost/core/service"
 	"github.com/go-gost/x/config"
@@ -236,7 +237,19 @@ func Stop() error {
 
 	cancel() // guaranteed non-nil: cancelFn is always set before running=true
 
-	serveWg.Wait()
+	// Wait for service goroutines with a timeout. Some service implementations
+	// wait for active connections to drain inside Close(), which can take
+	// arbitrarily long. The 5-second cap ensures Stop() always returns so the
+	// next Start() is never blocked indefinitely on stateCond.Wait().
+	waitDone := make(chan struct{})
+	go func() {
+		serveWg.Wait()
+		close(waitDone)
+	}()
+	select {
+	case <-waitDone:
+	case <-time.After(5 * time.Second):
+	}
 
 	mu.Lock()
 	stopping = false
