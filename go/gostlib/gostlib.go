@@ -316,7 +316,7 @@ func ValidateConfig(yamlConfig string) string {
 	return ""
 }
 
-// and VPN connection counters.
+// GetStatus returns the running state, service addresses, and VPN connection counters.
 func GetStatus() string {
 	mu.Lock()
 	defer mu.Unlock()

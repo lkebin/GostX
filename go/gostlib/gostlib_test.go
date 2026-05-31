@@ -3,9 +3,11 @@ package gostlib
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"net"
 	"os"
 	"path/filepath"
+	runtimeDebug "runtime/debug"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -405,6 +407,7 @@ func TestGetVPNDNSAddrNormalisesHost(t *testing.T) {
 }
 
 func TestSetWorkDir(t *testing.T) {
+	// NOTE: os.Chdir is process-global state; this test must NOT be run in parallel.
 	orig, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
@@ -430,5 +433,26 @@ func TestSetWorkDir(t *testing.T) {
 	gotResolved, _ := filepath.EvalSymlinks(got)
 	if wantResolved != gotResolved {
 		t.Errorf("after SetWorkDir: Getwd() = %q, want %q", gotResolved, wantResolved)
+	}
+}
+
+func TestSetMemoryLimit(t *testing.T) {
+	// Restore defaults after test completes.
+	defer runtimeDebug.SetGCPercent(100)
+	defer runtimeDebug.SetMemoryLimit(math.MaxInt64)
+
+	SetMemoryLimit(true)
+	// SetGCPercent returns the previous value — use it to read current state.
+	prev := runtimeDebug.SetGCPercent(10)
+	runtimeDebug.SetGCPercent(prev) // restore
+	if prev != 10 {
+		t.Errorf("SetMemoryLimit(true): GOGC = %d, want 10", prev)
+	}
+
+	SetMemoryLimit(false)
+	prev = runtimeDebug.SetGCPercent(100)
+	runtimeDebug.SetGCPercent(prev) // restore
+	if prev != 100 {
+		t.Errorf("SetMemoryLimit(false): GOGC = %d, want 100", prev)
 	}
 }
