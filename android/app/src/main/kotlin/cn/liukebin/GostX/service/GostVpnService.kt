@@ -204,10 +204,14 @@ class GostVpnService : VpnService() {
         closeTun()
         runCatching { unregisterServiceReceiver() }
 
-        // Update UI state and release Android service resources BEFORE Go cleanup.
-        // GostLibBridge.stop() calls serveWg.Wait() which can block until all gost
-        // service goroutines exit. By updating the UI first we ensure the loading
-        // spinner is never stuck waiting for a slow/hung Go shutdown.
+        // Go cleanup: Stop() has a 5-second timeout on serveWg.Wait(), so this
+        // call is guaranteed to return within 5 seconds. STOPPING loading is shown
+        // during this time, preventing the user from starting a new connection while
+        // the previous Go shutdown is still in progress.
+        GostLibBridge.setMemoryLimit(false)
+        GostLibBridge.stopVPN()
+        GostLibBridge.stop()
+
         if (updatePersistentState) {
             GlobalVpnState.setStopped()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -218,17 +222,12 @@ class GostVpnService : VpnService() {
             }
             stopSelf()
             saveLastRunState(false)
+            log("VPN stopped")
         } else {
             // Reconnect path: startVpn() will re-register the receiver on success
             GlobalVpnState.setConnecting()
+            log("VPN restarting after network change")
         }
-
-        // Go cleanup: may block briefly while services drain; UI is already updated.
-        GostLibBridge.setMemoryLimit(false)
-        GostLibBridge.stopVPN()
-        GostLibBridge.stop()
-
-        if (updatePersistentState) log("VPN stopped") else log("VPN restarting after network change")
     }
 
     private fun closeTun() {
