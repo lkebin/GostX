@@ -1,5 +1,6 @@
 package cn.liukebin.GostX
 
+import cn.liukebin.GostX.data.LogRepository
 import cn.liukebin.GostX.ui.log.readFileFrom
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +23,38 @@ class LogViewModelLogicTest {
 
     @After fun cleanup() {
         tempDir.deleteRecursively()
+    }
+
+    @Test fun `LogRepository append prepends HH-mm-ss-SSS timestamp`() {
+        LogRepository.initForTest(logFile)
+        LogRepository.append("test message")
+        val text = logFile.readText()
+        // e.g. "23:10:01.042 test message\n"
+        assertTrue(
+            "Expected timestamp prefix, got: $text",
+            text.matches(Regex("\\d{2}:\\d{2}:\\d{2}\\.\\d{3} test message\n"))
+        )
+    }
+
+    @Test fun `LogRepository deleteLog truncates file not deletes it`() {
+        LogRepository.initForTest(logFile)
+        LogRepository.append("some content")
+        assertTrue(logFile.exists())
+        assertTrue(logFile.length() > 0)
+
+        LogRepository.deleteLog()
+
+        assertTrue("file should still exist after deleteLog", logFile.exists())
+        assertEquals("file should be empty after deleteLog", 0L, logFile.length())
+    }
+
+    @Test fun `readFileFrom treats empty truncated file as reset`() {
+        logFile.writeText("line1\nline2\n")
+        val mid = logFile.length()
+        logFile.writeText("") // simulate LogRepository.deleteLog truncation
+        val (lines, offset) = readFileFrom(logFile, mid)
+        assertEquals(emptyList<String>(), lines)
+        assertEquals(0L, offset)
     }
 
     @Test fun `readFileFrom nonexistent file returns empty list and zero offset`() {
