@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"net"
+	"os"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -399,5 +401,34 @@ func TestGetVPNDNSAddrNormalisesHost(t *testing.T) {
 	// GetVPNDNSAddr must still return the virtual IP.
 	if addr := GetVPNDNSAddr(); addr != vpnDNSVirtualAddr {
 		t.Fatalf("GetVPNDNSAddr() = %q, want %q", addr, vpnDNSVirtualAddr)
+	}
+}
+
+func TestSetWorkDir(t *testing.T) {
+	orig, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = os.Chdir(orig) }()
+
+	tmp, err := os.MkdirTemp("", "workdir_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmp)
+
+	if err := SetWorkDir(tmp); err != nil {
+		t.Fatalf("SetWorkDir(%q) failed: %v", tmp, err)
+	}
+
+	got, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Resolve symlinks: macOS /var -> /private/var
+	wantResolved, _ := filepath.EvalSymlinks(tmp)
+	gotResolved, _ := filepath.EvalSymlinks(got)
+	if wantResolved != gotResolved {
+		t.Errorf("after SetWorkDir: Getwd() = %q, want %q", gotResolved, wantResolved)
 	}
 }
