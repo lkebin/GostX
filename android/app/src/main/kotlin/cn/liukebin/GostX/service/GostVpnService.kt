@@ -8,9 +8,13 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.VpnService
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
 import android.os.Build
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
+import android.os.PowerManager
+import androidx.annotation.RequiresApi
 import cn.liukebin.GostX.data.ConfigRepository
 import cn.liukebin.GostX.data.GlobalVpnState
 import cn.liukebin.GostX.data.LogRepository
@@ -71,6 +75,7 @@ class GostVpnService : VpnService() {
     // which would otherwise trigger an infinite restart loop.
     @Volatile private var lastVpnConnectTime = 0L
     private val RECONNECT_COOLDOWN_MS = 30_000L
+    private var serviceReceiver: BroadcastReceiver? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -173,6 +178,8 @@ class GostVpnService : VpnService() {
             log("VPN started, gost status: $status")
             registerNetworkCallback()
             saveLastRunState(true)
+            GostLibBridge.setMemoryLimit(true)
+            registerServiceReceiver()
             startVpnLogPolling()
         } catch (e: Exception) {
             log("VPN post-start error: ${e.message}")
@@ -196,6 +203,8 @@ class GostVpnService : VpnService() {
         closeTun()
         GostLibBridge.stopVPN()
         GostLibBridge.stop()
+        GostLibBridge.setMemoryLimit(false)
+        unregisterServiceReceiver()
         if (updatePersistentState) {
             GlobalVpnState.setStopped()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -208,9 +217,8 @@ class GostVpnService : VpnService() {
             saveLastRunState(false)
             log("VPN stopped")
         } else {
-            // Reconnect path: keep the foreground service running so Android does
-            // not consider the session ended. Status goes back to CONNECTING so
-            // the UI shows a brief reconnecting indicator without a full STOPPED flash.
+            // Reconnect path: re-register service receiver for the new session
+            registerServiceReceiver()
             GlobalVpnState.setConnecting()
             log("VPN restarting after network change")
         }
@@ -246,6 +254,68 @@ class GostVpnService : VpnService() {
     private fun saveLastRunState(running: Boolean) {
         getSharedPreferences("gostx_prefs", Context.MODE_PRIVATE)
             .edit().putBoolean("last_vpn_running", running).apply()
+    }
+
+    private fun registerServiceReceiver() {
+        unregisterServiceReceiver() // prevent double-registration on reconnect
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                when (intent.action) {
+                    Intent.ACTION_SCREEN_OFF -> {
+                        vpnLogJob?.cancel()
+                        vpnLogJob = null
+                    }
+                    Intent.ACTION_SCREEN_ON -> {
+                        if (GlobalVpnState.state.value.status == VpnStatus.CONNECTED &&
+                            vpnLogJob?.isActive != true
+                        ) {
+                            startVpnLogPolling()
+                        }
+                    }
+                    PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED -> {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            handleIdleModeChanged()
+                        }
+                    }
+                }
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
+            }
+        }
+        registerReceiver(receiver, filter)
+        serviceReceiver = receiver
+    }
+
+    private fun unregisterServiceReceiver() {
+        serviceReceiver?.let { unregisterReceiver(it) }
+        serviceReceiver = null
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun handleIdleModeChanged() {
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        if (pm.isDeviceIdleMode) {
+            // Entering Doze: stop log polling and network callback to avoid
+            // spurious reconnect attempts while the device is deeply sleeping.
+            vpnLogJob?.cancel()
+            vpnLogJob = null
+            unregisterNetworkCallback()
+        } else {
+            // Exiting Doze: restore network monitoring and resume log polling
+            // only if the screen is also on (isInteractive).
+            registerNetworkCallback()
+            if (pm.isInteractive &&
+                GlobalVpnState.state.value.status == VpnStatus.CONNECTED &&
+                vpnLogJob?.isActive != true
+            ) {
+                startVpnLogPolling()
+            }
+        }
     }
 
     private fun registerNetworkCallback() {
