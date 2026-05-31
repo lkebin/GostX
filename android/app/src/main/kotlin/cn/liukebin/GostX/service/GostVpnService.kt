@@ -128,8 +128,10 @@ class GostVpnService : VpnService() {
 
         val vpnDnsAddr: String
         try {
+            log("[start] loading config and starting gost...")
             GostLibBridge.startVPNMode(yaml)
             vpnDnsAddr = GostLibBridge.getVpnDnsAddr()
+            log("[start] gost ready")
         } catch (e: Exception) {
             log("gost start failed: ${e.message}")
             GlobalVpnState.setError("gost 启动失败: ${e.message}")
@@ -148,6 +150,7 @@ class GostVpnService : VpnService() {
             // routing loop that causes OOM crashes.
             .addDisallowedApplication(packageName)
 
+        log("[start] establishing VPN interface...")
         tunFd = builder.establish() ?: run {
             log("Failed to establish VPN interface")
             GlobalVpnState.setError("VPN 接口建立失败，请先授予 VPN 权限")
@@ -155,8 +158,10 @@ class GostVpnService : VpnService() {
             stopSelf()
             return
         }
+        log("[start] VPN interface ready")
 
         try {
+            log("[start] starting tun2socks...")
             GostLibBridge.startVPN(tunFd!!.fd.toLong(), 1500L)
         } catch (e: Exception) {
             log("tun2socks start failed: ${e.message}")
@@ -173,7 +178,7 @@ class GostVpnService : VpnService() {
             GlobalVpnState.setConnected(addr)
             lastVpnConnectTime = System.currentTimeMillis()
             promoteToForeground(addr)  // update notification with actual listen address
-            log("VPN started, gost status: $status")
+            log("[start] VPN connected, addr: $addr")
             registerNetworkCallback()
             saveLastRunState(true)
             GostLibBridge.setMemoryLimit(true)
@@ -204,7 +209,9 @@ class GostVpnService : VpnService() {
         // during this time, preventing the user from starting a new connection while
         // the previous Go shutdown is still in progress.
         GostLibBridge.setMemoryLimit(false)
+        log("[stop] stopping tun2socks...")
         GostLibBridge.stopVPN()
+        log("[stop] stopping gost...")
         GostLibBridge.stop()
 
         if (updatePersistentState) {
@@ -217,7 +224,7 @@ class GostVpnService : VpnService() {
             }
             stopSelf()
             saveLastRunState(false)
-            log("VPN stopped")
+            log("[stop] VPN stopped")
         } else {
             // Reconnect path: startVpn() will re-register the receiver on success
             GlobalVpnState.setConnecting()
