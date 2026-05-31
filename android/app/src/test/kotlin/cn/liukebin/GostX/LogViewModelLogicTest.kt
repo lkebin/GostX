@@ -117,8 +117,10 @@ class LogViewModelLogicTest {
     }
 }
 
-// Compile-time check: startPolling and stopPolling must be public
-private fun _assertLogViewModelPollingApi(vm: cn.liukebin.GostX.ui.log.LogViewModel) {
+// Compile-time check: public polling and follow API
+private fun _assertLogViewModelApi(vm: cn.liukebin.GostX.ui.log.LogViewModel) {
     vm.startPolling()
     vm.stopPolling()
+    vm.setFollowing(true)
+    vm.setFollowing(false)
 }

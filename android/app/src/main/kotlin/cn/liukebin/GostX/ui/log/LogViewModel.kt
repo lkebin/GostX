@@ -88,12 +88,14 @@ class LogViewModel(
         }
     }
 
+    /** Starts periodic polling. New lines are always appended regardless of
+     *  [isFollowing]; [isFollowing] controls only whether the view auto-scrolls. */
     fun startPolling() {
         pollJob?.cancel()
         pollJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
                 delay(1000)
-                if (_isFollowing.value) appendNewLines()
+                appendNewLines()
             }
         }
     }
@@ -120,19 +122,20 @@ class LogViewModel(
         }
     }
 
-    /** Toggle live-tail mode. Resuming immediately reads all missed lines. */
-    fun toggleFollow() {
-        val nowFollowing = !_isFollowing.value
-        _isFollowing.value = nowFollowing
-        if (nowFollowing) {
-            viewModelScope.launch(Dispatchers.IO) { appendNewLines() }
-        }
+    /** Sets live-tail mode. When enabling, immediately reads missed lines so
+     *  the view is current without waiting for the next polling tick. */
+    fun setFollowing(value: Boolean) {
+        _isFollowing.value = value
+        if (value) viewModelScope.launch(Dispatchers.IO) { appendNewLines() }
     }
+
+    /** Toggles live-tail mode. */
+    fun toggleFollow() = setFollowing(!_isFollowing.value)
 
     /** Returns full file contents for clipboard copy. Does not depend on in-memory [lines]. */
     fun copyAll(): String = try { logFile.readText() } catch (_: Exception) { "" }
 
-    /** Deletes the log file and clears the displayed lines. */
+    /** Truncates the log file and clears the displayed lines. */
     fun clearLog() {
         viewModelScope.launch(Dispatchers.IO) {
             readMutex.withLock {
