@@ -65,3 +65,9 @@ class LogViewModelLogicTest {
         assertEquals(logFile.length(), offset)
     }
 }
+
+// Compile-time check: startPolling and stopPolling must be public
+private fun _assertLogViewModelPollingApi(vm: cn.liukebin.GostX.ui.log.LogViewModel) {
+    vm.startPolling()
+    vm.stopPolling()
+}
