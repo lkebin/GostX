@@ -117,10 +117,13 @@ class LogViewModel(
                 }
                 return
             }
+            val prevOffset = fileOffset
             val (newLines, newOffset) = readFileFrom(logFile, fileOffset)
+            val wasTruncated = newOffset < prevOffset
             fileOffset = newOffset
-            if (newLines.isNotEmpty()) {
-                _lines.value = (_lines.value + newLines).takeLast(2000)
+            when {
+                wasTruncated -> _lines.value = newLines.takeLast(2000)   // replace on truncation
+                newLines.isNotEmpty() -> _lines.value = (_lines.value + newLines).takeLast(2000)
             }
         }
     }

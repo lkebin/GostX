@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 // vpnLogCh buffers log messages from the gVisor transport handler.
@@ -27,7 +28,8 @@ var logDrainRunning atomic.Bool // true once drainLogToFile goroutine is running
 var logDrainCancel  context.CancelFunc // non-nil when goroutine is running; for test cleanup only
 
 func logVPN(format string, args ...any) {
-	msg := fmt.Sprintf(format, args...)
+	ts := time.Now().Format("15:04:05.000")
+	msg := ts + " " + fmt.Sprintf(format, args...)
 	select {
 	case vpnLogCh <- msg:
 	default:
