@@ -184,6 +184,7 @@ class GostVpnService : VpnService() {
         } catch (e: Exception) {
             log("VPN post-start error: ${e.message}")
             GlobalVpnState.setError("VPN 启动后错误: ${e.message}")
+            GostLibBridge.setMemoryLimit(false)
             closeTun()
             GostLibBridge.stopVPN()
             GostLibBridge.stop()
@@ -232,6 +233,7 @@ class GostVpnService : VpnService() {
 
     /** Polls the Go VPN log buffer every second and forwards entries to LogRepository. */
     private fun startVpnLogPolling() {
+        vpnLogJob?.cancel()
         vpnLogJob = scope.launch {
             while (isActive) {
                 delay(1000)
