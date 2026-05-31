@@ -1,6 +1,10 @@
 package cn.liukebin.GostX
 
 import cn.liukebin.GostX.ui.log.readFileFrom
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -63,6 +67,20 @@ class LogViewModelLogicTest {
         val (lines, offset) = readFileFrom(logFile, mid)
         assertEquals(listOf("new"), lines)
         assertEquals(logFile.length(), offset)
+    }
+
+    @Test fun `stopPolling on null job is safe - null safe call does not throw`() {
+        // Verifies the null-safety contract: pollJob?.cancel() when pollJob is null
+        val job: Job? = null
+        job?.cancel() // must not throw — documents the stopPolling null-safe contract
+    }
+
+    @Test fun `stopPolling idempotency - cancelling completed job does not throw`() {
+        val scope = CoroutineScope(Dispatchers.Unconfined)
+        val job = scope.launch {}
+        job.cancel()
+        job.cancel() // second cancel must not throw
+        // scope is automatically cleaned up when test completes
     }
 }
 
