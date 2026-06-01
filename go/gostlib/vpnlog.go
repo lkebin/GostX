@@ -135,6 +135,7 @@ func resetVPNStats() {
 // Must only be called from tests. Cancels any running drain goroutine and
 // waits for it to exit before resetting state, making the test repeatable.
 func resetLogDrainForTest() {
+	SetLoggingEnabled(true) // Enable logging for tests since default is false
 	if logDrainCancel != nil {
 		logDrainCancel()
 		// Wait for goroutine to exit (logDrainRunning goes false on exit)
