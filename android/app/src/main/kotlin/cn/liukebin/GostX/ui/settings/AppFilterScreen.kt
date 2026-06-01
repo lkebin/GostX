@@ -32,6 +32,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -178,19 +179,23 @@ private fun AppListItem(
 @Composable
 private fun AppIcon(packageName: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val painter: Painter? = remember(packageName) {
-        runCatching {
-            val d = context.packageManager.getApplicationIcon(packageName)
-            val w = d.intrinsicWidth.coerceAtLeast(1)
-            val h = d.intrinsicHeight.coerceAtLeast(1)
-            val bm = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-            d.setBounds(0, 0, w, h)
-            d.draw(Canvas(bm))
-            BitmapPainter(bm.asImageBitmap())
-        }.getOrNull()
+    val painter by produceState<Painter?>(initialValue = null, packageName) {
+        value = withContext(Dispatchers.IO) {
+            runCatching {
+                val d = context.packageManager.getApplicationIcon(packageName)
+                val w = d.intrinsicWidth.coerceAtLeast(1)
+                val h = d.intrinsicHeight.coerceAtLeast(1)
+                val bm = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+                d.setBounds(0, 0, w, h)
+                d.draw(Canvas(bm))
+                val imageBitmap = bm.asImageBitmap()
+                bm.recycle()
+                BitmapPainter(imageBitmap)
+            }.getOrNull()
+        }
     }
     if (painter != null) {
-        Image(painter = painter, contentDescription = null, modifier = modifier)
+        Image(painter = painter!!, contentDescription = null, modifier = modifier)
     } else {
         Icon(Icons.Default.Android, contentDescription = null, modifier = modifier)
     }
