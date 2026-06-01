@@ -6,6 +6,7 @@ sealed class Screen(val route: String) {
     object Home : Screen("home")
     object Logs : Screen("logs")
     object Settings : Screen("settings")
+    object AppFilter : Screen("appFilter")
     object ConfigEdit : Screen("config/{profileId}") {
         fun createRoute(profileId: String): String = "config/${Uri.encode(profileId)}"
     }
