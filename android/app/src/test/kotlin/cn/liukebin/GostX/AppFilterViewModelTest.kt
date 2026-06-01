@@ -8,8 +8,6 @@ import cn.liukebin.GostX.ui.settings.InstalledApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestCoroutineScheduler
-import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -21,7 +19,7 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AppFilterViewModelTest {
-    private lateinit var dispatcher: kotlinx.coroutines.test.TestDispatcher
+    private val dispatcher = StandardTestDispatcher()
     private lateinit var prefs: FakeSharedPreferences
     private lateinit var repo: ConfigRepository
 
@@ -32,18 +30,7 @@ class AppFilterViewModelTest {
     )
 
     @Before fun setup() {
-        dispatcher = kotlinx.coroutines.test.UnconfinedTestDispatcher()
         Dispatchers.setMain(dispatcher)
-        
-        // Redirect IO dispatcher to test dispatcher
-        try {
-            val ioField = Dispatchers::class.java.getDeclaredField("IO")
-            ioField.isAccessible = true
-            ioField.set(null, dispatcher)
-        } catch (e: Exception) {
-            // Fallback if reflection fails
-        }
-        
         prefs = FakeSharedPreferences()
         repo = ConfigRepository(prefs)
     }
