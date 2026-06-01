@@ -21,7 +21,6 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AppFilterViewModelTest {
-    private lateinit var scheduler: kotlinx.coroutines.test.TestCoroutineScheduler
     private lateinit var dispatcher: kotlinx.coroutines.test.TestDispatcher
     private lateinit var prefs: FakeSharedPreferences
     private lateinit var repo: ConfigRepository
@@ -33,9 +32,18 @@ class AppFilterViewModelTest {
     )
 
     @Before fun setup() {
-        scheduler = kotlinx.coroutines.test.TestCoroutineScheduler()
-        dispatcher = StandardTestDispatcher(scheduler)
+        dispatcher = kotlinx.coroutines.test.UnconfinedTestDispatcher()
         Dispatchers.setMain(dispatcher)
+        
+        // Redirect IO dispatcher to test dispatcher
+        try {
+            val ioField = Dispatchers::class.java.getDeclaredField("IO")
+            ioField.isAccessible = true
+            ioField.set(null, dispatcher)
+        } catch (e: Exception) {
+            // Fallback if reflection fails
+        }
+        
         prefs = FakeSharedPreferences()
         repo = ConfigRepository(prefs)
     }

@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cn.liukebin.GostX.data.AppFilterMode
 import cn.liukebin.GostX.data.ConfigRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class InstalledApp(
     val packageName: String,
@@ -45,7 +47,7 @@ class AppFilterViewModel(
 
     init {
         viewModelScope.launch {
-            val apps = appLoader()
+            val apps = withContext(Dispatchers.IO) { appLoader() }
             _uiState.update { it.copy(isLoading = false, apps = apps) }
         }
     }
