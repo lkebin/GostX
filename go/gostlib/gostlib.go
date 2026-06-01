@@ -4,9 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net"
+	"os"
+	runtimeDebug "runtime/debug"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/go-gost/core/service"
 	"github.com/go-gost/x/config"
@@ -233,7 +237,19 @@ func Stop() error {
 
 	cancel() // guaranteed non-nil: cancelFn is always set before running=true
 
-	serveWg.Wait()
+	// Wait for service goroutines with a timeout. Some service implementations
+	// wait for active connections to drain inside Close(), which can take
+	// arbitrarily long. The 5-second cap ensures Stop() always returns so the
+	// next Start() is never blocked indefinitely on stateCond.Wait().
+	waitDone := make(chan struct{})
+	go func() {
+		serveWg.Wait()
+		close(waitDone)
+	}()
+	select {
+	case <-waitDone:
+	case <-time.After(5 * time.Second):
+	}
 
 	mu.Lock()
 	stopping = false
@@ -313,8 +329,7 @@ func ValidateConfig(yamlConfig string) string {
 	return ""
 }
 
-
-// and VPN connection counters.
+// GetStatus returns the running state, service addresses, and VPN connection counters.
 func GetStatus() string {
 	mu.Lock()
 	defer mu.Unlock()
@@ -391,4 +406,28 @@ func injectInternalSocks5(cfg *config.Config) {
 		Handler:  &config.HandlerConfig{Type: "socks5"},
 		Listener: &config.ListenerConfig{Type: "tcp"},
 	})
+}
+
+// SetMemoryLimit configures the Go runtime GC for mobile background use.
+// enabled=true: aggressive GC (GOGC=10) + 30 MB soft heap limit to prevent
+// unbounded growth during high-traffic VPN sessions.
+// enabled=false: restore defaults so normal service mode is unaffected.
+// Call with enabled=true when VPN starts, false when it stops.
+func SetMemoryLimit(enabled bool) {
+	const limit = 30 * 1024 * 1024
+	if enabled {
+		runtimeDebug.SetGCPercent(10)
+		runtimeDebug.SetMemoryLimit(limit)
+	} else {
+		runtimeDebug.SetGCPercent(100)
+		runtimeDebug.SetMemoryLimit(math.MaxInt64)
+	}
+}
+
+// SetWorkDir sets the process working directory so that relative file paths
+// in gost configs (e.g. bypass.file.path: china_ip_list.txt) resolve against
+// the given directory. Should be called once at service creation time with
+// the app's external files directory.
+func SetWorkDir(path string) error {
+	return os.Chdir(path)
 }

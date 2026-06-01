@@ -24,9 +24,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.filter
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -48,16 +51,35 @@ fun LogScreen(
     val listState = rememberLazyListState()
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
+    DisposableEffect(Unit) {
         viewModel.loadInitial()
+        viewModel.startPolling()
+        onDispose { viewModel.stopPolling() }
     }
 
     // Auto-scroll to the latest line only when live-tail is active.
     // Also fires when isFollowing flips to true so the view jumps to bottom on resume.
     LaunchedEffect(lines.size, isFollowing) {
         if (isFollowing && lines.isNotEmpty()) {
-            listState.animateScrollToItem(lines.size - 1)
+            listState.scrollToItem(lines.size - 1)
         }
+    }
+
+    // Auto-pause follow when the user scrolls away from the bottom.
+    // Only fires on the true→false transition of isScrollInProgress (user scroll settle).
+    // scrollToItem (used for programmatic scrolling) is instant and always lands at
+    // the target, so it never triggers a false auto-pause.
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }
+            .filter { !it }
+            .collect {
+                if (!viewModel.isFollowing.value) return@collect
+                val info = listState.layoutInfo
+                val last = info.visibleItemsInfo.lastOrNull()?.index ?: return@collect
+                if (last < info.totalItemsCount - 1) {
+                    viewModel.setFollowing(false)
+                }
+            }
     }
 
     Scaffold(

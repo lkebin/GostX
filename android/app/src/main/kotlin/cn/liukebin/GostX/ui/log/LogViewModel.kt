@@ -1,11 +1,13 @@
 package cn.liukebin.GostX.ui.log
 
 import android.app.Application
+import androidx.annotation.MainThread
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import cn.liukebin.GostX.data.LogRepository
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -51,6 +53,7 @@ internal fun readFileFrom(file: File, offset: Long): Pair<List<String>, Long> {
 class LogViewModel(
     application: Application,
     private val logFile: File,
+    internal val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : AndroidViewModel(application) {
 
     companion object {
@@ -77,26 +80,32 @@ class LogViewModel(
     private val readMutex = Mutex()
     @Volatile private var pollJob: Job? = null
 
-    /** Call when the log screen enters composition to load existing content and start polling. */
+    /** Loads existing log file content into [lines]. Call before [startPolling]. */
     fun loadInitial() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             readMutex.withLock {
                 val (lines, offset) = readFileFrom(logFile, 0L)
                 _lines.value = lines.takeLast(2000)
                 fileOffset = offset
             }
-            startPolling()
         }
     }
 
-    private fun startPolling() {
+    /** Starts periodic polling. New lines are always appended regardless of
+     *  [isFollowing]; [isFollowing] controls only whether the view auto-scrolls. */
+    fun startPolling() {
         pollJob?.cancel()
-        pollJob = viewModelScope.launch(Dispatchers.IO) {
+        pollJob = viewModelScope.launch(ioDispatcher) {
             while (isActive) {
                 delay(1000)
-                if (_isFollowing.value) appendNewLines()
+                appendNewLines()
             }
         }
+    }
+
+    fun stopPolling() {
+        pollJob?.cancel()
+        pollJob = null
     }
 
     private suspend fun appendNewLines() {
@@ -108,29 +117,37 @@ class LogViewModel(
                 }
                 return
             }
+            val prevOffset = fileOffset
             val (newLines, newOffset) = readFileFrom(logFile, fileOffset)
+            val wasTruncated = newOffset < prevOffset
             fileOffset = newOffset
-            if (newLines.isNotEmpty()) {
-                _lines.value = (_lines.value + newLines).takeLast(2000)
+            when {
+                wasTruncated -> _lines.value = newLines.takeLast(2000)   // replace on truncation
+                newLines.isNotEmpty() -> _lines.value = (_lines.value + newLines).takeLast(2000)
             }
         }
     }
 
-    /** Toggle live-tail mode. Resuming immediately reads all missed lines. */
-    fun toggleFollow() {
-        val nowFollowing = !_isFollowing.value
-        _isFollowing.value = nowFollowing
-        if (nowFollowing) {
-            viewModelScope.launch(Dispatchers.IO) { appendNewLines() }
-        }
+    /** Sets live-tail mode.
+     *  - `true`: enables auto-scroll and immediately reads any missed lines.
+     *  - `false`: disables auto-scroll; polling continues so [lines] stays current.
+     */
+    @MainThread
+    fun setFollowing(value: Boolean) {
+        _isFollowing.value = value
+        if (value) viewModelScope.launch(ioDispatcher) { appendNewLines() }
     }
+
+    /** Toggles live-tail mode. */
+    @MainThread
+    fun toggleFollow() = setFollowing(!_isFollowing.value)
 
     /** Returns full file contents for clipboard copy. Does not depend on in-memory [lines]. */
     fun copyAll(): String = try { logFile.readText() } catch (_: Exception) { "" }
 
-    /** Deletes the log file and clears the displayed lines. */
+    /** Truncates the log file and clears the displayed lines. */
     fun clearLog() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             readMutex.withLock {
                 LogRepository.deleteLog()
                 _lines.value = emptyList()
