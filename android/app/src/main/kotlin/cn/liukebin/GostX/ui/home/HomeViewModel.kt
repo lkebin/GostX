@@ -44,6 +44,9 @@ class HomeViewModel(
     val vpnState = GlobalVpnState.state
         .stateIn(viewModelScope, SharingStarted.Eagerly, GlobalVpnState.state.value)
 
+    val loggingEnabled: StateFlow<Boolean> = repo.loggingEnabledFlow
+        .stateIn(viewModelScope, SharingStarted.Eagerly, repo.loggingEnabled)
+
     private val _batteryOptimizationNeeded = MutableStateFlow(false)
     val batteryOptimizationNeeded: StateFlow<Boolean> = _batteryOptimizationNeeded
 

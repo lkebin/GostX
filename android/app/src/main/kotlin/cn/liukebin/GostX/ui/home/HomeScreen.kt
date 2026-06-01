@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -65,6 +66,7 @@ fun HomeScreen(
     repo: ConfigRepository,
     onRequestVpnPermission: () -> Unit = {},
     onNavigateToLogs: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
     onNavigateToConfigEdit: (profileId: String) -> Unit = {},
     vm: HomeViewModel = viewModel(
         factory = remember(repo) {
@@ -84,6 +86,7 @@ fun HomeScreen(
     val vpnState by vm.vpnState.collectAsState()
     val homeState by vm.homeState.collectAsState()
     val batteryOptimizationNeeded by vm.batteryOptimizationNeeded.collectAsState()
+    val loggingEnabled by vm.loggingEnabled.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showAddDialog by remember { mutableStateOf(false) }
 
@@ -130,10 +133,18 @@ fun HomeScreen(
                     IconButton(onClick = { showAddDialog = true }) {
                         Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.profile_add))
                     }
-                    IconButton(onClick = onNavigateToLogs) {
+                    if (loggingEnabled) {
+                        IconButton(onClick = onNavigateToLogs) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.Article,
+                                contentDescription = stringResource(R.string.nav_log)
+                            )
+                        }
+                    }
+                    IconButton(onClick = onNavigateToSettings) {
                         Icon(
-                            Icons.AutoMirrored.Filled.Article,
-                            contentDescription = stringResource(R.string.nav_log)
+                            Icons.Filled.Settings,
+                            contentDescription = stringResource(R.string.nav_settings)
                         )
                     }
                 }
