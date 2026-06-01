@@ -54,6 +54,7 @@ Storage: `AppFilterMode` serialized as `"blacklist"` / `"whitelist"` string; pac
 ```kotlin
 val filterList = configRepo.appFilterList
 val filterMode = configRepo.appFilterMode
+val stalePackages = mutableSetOf<String>()
 
 when (filterMode) {
     AppFilterMode.BLACKLIST -> {
@@ -62,7 +63,8 @@ when (filterMode) {
         filterList.forEach { pkg ->
             try { builder.addDisallowedApplication(pkg) }
             catch (e: PackageManager.NameNotFoundException) {
-                log("Skipping uninstalled package in blacklist: $pkg")
+                log("Removing uninstalled package from blacklist: $pkg")
+                stalePackages += pkg
             }
         }
     }
@@ -72,10 +74,14 @@ when (filterMode) {
         filterList.forEach { pkg ->
             try { builder.addAllowedApplication(pkg) }
             catch (e: PackageManager.NameNotFoundException) {
-                log("Skipping uninstalled package in whitelist: $pkg")
+                log("Removing uninstalled package from whitelist: $pkg")
+                stalePackages += pkg
             }
         }
     }
+}
+if (stalePackages.isNotEmpty()) {
+    configRepo.appFilterList = filterList - stalePackages
 }
 ```
 
@@ -137,7 +143,7 @@ New section added to `SettingsScreen` below the existing logging toggle:
 
 | Scenario | Handling |
 |---|---|
-| Package in list has been uninstalled | Caught with `NameNotFoundException` per-package; logged and skipped; VPN continues starting |
+| Package in list has been uninstalled | Caught with `NameNotFoundException` per-package; automatically removed from `appFilterList` in `ConfigRepository`; VPN continues starting |
 | Whitelist mode with empty list | UI prevents saving; "完成" button disabled with explanatory prompt |
 | App list loading takes time | `AppFilterViewModel` shows loading state while fetching on IO dispatcher |
 | Settings changed while VPN is running | Settings take effect on next VPN start; "重启 VPN 后生效" hint shown in Settings |
