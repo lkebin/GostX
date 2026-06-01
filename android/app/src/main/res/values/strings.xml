@@ -57,6 +57,10 @@
     <string name="profile_name_duplicate">Name already exists</string>
     <string name="profile_name_invalid_char">Name may not contain commas</string>
     <string name="action_create">Create</string>
+    <!-- Battery optimization -->
+    <string name="battery_opt_message">For reliable VPN performance, exclude GostX from battery optimization.</string>
+    <string name="battery_opt_open_settings">Open Settings</string>
+    <string name="battery_opt_dismiss">Dismiss</string>
     <string name="vpn_start_label">Start VPN</string>
     <string name="vpn_stop_label">Stop VPN</string>
     <string name="vpn_loading_label">Loading</string>
