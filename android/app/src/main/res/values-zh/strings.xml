@@ -63,4 +63,18 @@
     <string name="vpn_loading_label">加载中</string>
     <string name="service_info_title">运行中的服务</string>
     <string name="profiles_title">配置文件</string>
+
+    <!-- Per-app proxy (settings entry) -->
+    <string name="settings_app_filter_label">分应用代理</string>
+    <string name="settings_app_filter_hint">重启 VPN 后生效</string>
+    <string name="settings_app_filter_manage">管理应用</string>
+    <string name="settings_app_filter_count">%d 个应用</string>
+    <string name="settings_app_filter_mode_blacklist">黑名单</string>
+    <string name="settings_app_filter_mode_whitelist">白名单</string>
+
+    <!-- App filter screen -->
+    <string name="app_filter_title">分应用代理</string>
+    <string name="app_filter_search_hint">搜索应用名…</string>
+    <string name="app_filter_action_done">完成</string>
+    <string name="app_filter_whitelist_empty_hint">白名单模式至少选择一个应用</string>
 </resources>
