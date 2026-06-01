@@ -8,6 +8,7 @@ import java.util.UUID
 
 private const val KEY_PROFILES = "config_profile_list"
 private const val KEY_ACTIVE = "config_active_profile"
+private const val KEY_LOGGING_ENABLED = "logging_enabled"
 const val DEFAULT_PROFILE_ID = "default"
 
 /**
@@ -76,6 +77,18 @@ class ConfigRepository(private val prefs: SharedPreferences) {
 
     private val _activeProfileIdFlow = MutableStateFlow(DEFAULT_PROFILE_ID)
     val activeProfileIdFlow: StateFlow<String> = _activeProfileIdFlow.asStateFlow()
+
+    private val _loggingEnabledFlow = MutableStateFlow(
+        prefs.getBoolean(KEY_LOGGING_ENABLED, false)
+    )
+    val loggingEnabledFlow: StateFlow<Boolean> = _loggingEnabledFlow.asStateFlow()
+
+    var loggingEnabled: Boolean
+        get() = _loggingEnabledFlow.value
+        set(value) {
+            prefs.edit().putBoolean(KEY_LOGGING_ENABLED, value).apply()
+            _loggingEnabledFlow.value = value
+        }
 
     init {
         _profilesFlow.value = loadProfilesFromPrefs()
