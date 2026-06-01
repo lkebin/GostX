@@ -32,6 +32,7 @@ import cn.liukebin.GostX.ui.Screen
 import cn.liukebin.GostX.ui.config.ConfigScreen
 import cn.liukebin.GostX.ui.home.HomeScreen
 import cn.liukebin.GostX.ui.log.LogScreen
+import cn.liukebin.GostX.ui.settings.SettingsScreen
 import cn.liukebin.GostX.service.GostVpnService
 import androidx.compose.foundation.isSystemInDarkTheme
 
@@ -94,12 +95,19 @@ fun GostXApp(
                         repo = configRepository,
                         onRequestVpnPermission = onRequestVpnPermission,
                         onNavigateToLogs = { navController.navigate(Screen.Logs.route) },
+                        onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                         onNavigateToConfigEdit = { profileId ->
                             navController.navigate(Screen.ConfigEdit.createRoute(profileId))
                         }
                     )
                 }
                 composable(Screen.Logs.route) { LogScreen(onBack = { navController.popBackStack() }) }
+                composable(Screen.Settings.route) {
+                    SettingsScreen(
+                        repo = configRepository,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
                 composable(
                     route = Screen.ConfigEdit.route,
                     arguments = listOf(navArgument("profileId") { type = NavType.StringType })

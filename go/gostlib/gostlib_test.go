@@ -3,7 +3,12 @@ package gostlib
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"net"
+	"os"
+	"path/filepath"
+	runtimeDebug "runtime/debug"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -106,6 +111,7 @@ func resetTestState(t *testing.T) {
 	vpnChainName = ""
 	vpnDNSServiceAddr = ""
 	mu.Unlock()
+	resetLogDrainForTest()
 }
 
 func waitForRunning(t *testing.T) {
@@ -399,5 +405,128 @@ func TestGetVPNDNSAddrNormalisesHost(t *testing.T) {
 	// GetVPNDNSAddr must still return the virtual IP.
 	if addr := GetVPNDNSAddr(); addr != vpnDNSVirtualAddr {
 		t.Fatalf("GetVPNDNSAddr() = %q, want %q", addr, vpnDNSVirtualAddr)
+	}
+}
+
+func TestSetWorkDir(t *testing.T) {
+	// NOTE: os.Chdir is process-global state; this test must NOT be run in parallel.
+	orig, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = os.Chdir(orig) }()
+
+	tmp, err := os.MkdirTemp("", "workdir_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmp)
+
+	if err := SetWorkDir(tmp); err != nil {
+		t.Fatalf("SetWorkDir(%q) failed: %v", tmp, err)
+	}
+
+	got, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Resolve symlinks: macOS /var -> /private/var
+	wantResolved, _ := filepath.EvalSymlinks(tmp)
+	gotResolved, _ := filepath.EvalSymlinks(got)
+	if wantResolved != gotResolved {
+		t.Errorf("after SetWorkDir: Getwd() = %q, want %q", gotResolved, wantResolved)
+	}
+}
+
+func TestSetMemoryLimit(t *testing.T) {
+	// Restore defaults after test completes.
+	defer runtimeDebug.SetGCPercent(100)
+	defer runtimeDebug.SetMemoryLimit(math.MaxInt64)
+
+	SetMemoryLimit(true)
+	// SetGCPercent returns the previous value — use it to read current state.
+	prev := runtimeDebug.SetGCPercent(10)
+	runtimeDebug.SetGCPercent(prev) // restore
+	if prev != 10 {
+		t.Errorf("SetMemoryLimit(true): GOGC = %d, want 10", prev)
+	}
+
+	SetMemoryLimit(false)
+	prev = runtimeDebug.SetGCPercent(100)
+	runtimeDebug.SetGCPercent(prev) // restore
+	if prev != 100 {
+		t.Errorf("SetMemoryLimit(false): GOGC = %d, want 100", prev)
+	}
+}
+
+func TestSetLogFile(t *testing.T) {
+	resetLogDrainForTest()
+	t.Cleanup(resetLogDrainForTest)
+
+	f, err := os.CreateTemp("", "vpnlog_test_*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := f.Name()
+	f.Close()
+	defer os.Remove(path)
+
+	if err := SetLogFile(path); err != nil {
+		t.Fatalf("SetLogFile: %v", err)
+	}
+
+	logVPN("hello %s", "world")
+	logVPN("second line")
+
+	// Wait up to 2s for drain goroutine to write
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		got, _ := os.ReadFile(path)
+		if strings.Count(string(got), "\n") >= 2 {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(strings.TrimRight(string(got), "\n"), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("expected 2 lines, got %d: %q", len(lines), string(got))
+	}
+	if !strings.HasSuffix(lines[0], "hello world") || !strings.HasSuffix(lines[1], "second line") {
+		t.Errorf("unexpected lines: %v", lines)
+	}
+}
+
+func TestSetLoggingEnabled(t *testing.T) {
+	resetLogDrainForTest()
+	t.Cleanup(func() {
+		SetLoggingEnabled(true) // restore default for other tests
+		resetLogDrainForTest()
+	})
+
+	// With logging disabled, logVPN should not enqueue anything.
+	SetLoggingEnabled(false)
+	logVPN("should not appear")
+	select {
+	case msg := <-vpnLogCh:
+		t.Fatalf("expected no message when logging disabled, got: %q", msg)
+	default:
+		// correct — channel empty
+	}
+
+	// With logging enabled, logVPN should enqueue.
+	SetLoggingEnabled(true)
+	logVPN("should appear")
+	select {
+	case msg := <-vpnLogCh:
+		if !strings.HasSuffix(msg, "should appear") {
+			t.Errorf("unexpected message: %q", msg)
+		}
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("expected message not received within 500ms")
 	}
 }

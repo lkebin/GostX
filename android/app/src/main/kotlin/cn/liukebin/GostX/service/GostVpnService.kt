@@ -22,11 +22,8 @@ import java.lang.reflect.InvocationTargetException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 internal fun shouldRestartVpnOnNetworkAvailable(
@@ -62,7 +59,6 @@ class GostVpnService : VpnService() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
     private var tunFd: ParcelFileDescriptor? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
-    private var vpnLogJob: Job? = null
     private lateinit var configRepo: ConfigRepository
     @Volatile private var reconnectInProgress = false
     // Timestamp (ms) of the last successful VPN connect. Suppresses onAvailable
@@ -77,6 +73,10 @@ class GostVpnService : VpnService() {
         NotificationHelper.createChannel(this)
         LogRepository.init(this)
         configRepo = ConfigRepository(getSharedPreferences("gostx_prefs", Context.MODE_PRIVATE))
+        val workDir = getExternalFilesDir(null)?.absolutePath
+            ?: filesDir.absolutePath.also { log("External storage unavailable, falling back to internal: $it") }
+        GostLibBridge.setWorkDir(workDir)
+            .onFailure { log("WARNING: setWorkDir($workDir) failed: ${it.message}") }
     }
 
     override fun onBind(intent: Intent?): IBinder? = super.onBind(intent)
@@ -119,10 +119,19 @@ class GostVpnService : VpnService() {
 
         val yaml = configRepo.getActiveConfig()
 
+        val loggingOn = configRepo.loggingEnabled
+        GostLibBridge.setLoggingEnabled(loggingOn)
+        if (loggingOn) {
+            GostLibBridge.setLogFile(LogRepository.getLogFile().absolutePath)
+                .onFailure { log("WARNING: setLogFile failed: ${it.message}") }
+        }
+
         val vpnDnsAddr: String
         try {
+            log("[start] loading config and starting gost...")
             GostLibBridge.startVPNMode(yaml)
             vpnDnsAddr = GostLibBridge.getVpnDnsAddr()
+            log("[start] gost ready")
         } catch (e: Exception) {
             log("gost start failed: ${e.message}")
             GlobalVpnState.setError("gost 启动失败: ${e.message}")
@@ -141,6 +150,7 @@ class GostVpnService : VpnService() {
             // routing loop that causes OOM crashes.
             .addDisallowedApplication(packageName)
 
+        log("[start] establishing VPN interface...")
         tunFd = builder.establish() ?: run {
             log("Failed to establish VPN interface")
             GlobalVpnState.setError("VPN 接口建立失败，请先授予 VPN 权限")
@@ -148,8 +158,10 @@ class GostVpnService : VpnService() {
             stopSelf()
             return
         }
+        log("[start] VPN interface ready")
 
         try {
+            log("[start] starting tun2socks...")
             GostLibBridge.startVPN(tunFd!!.fd.toLong(), 1500L)
         } catch (e: Exception) {
             log("tun2socks start failed: ${e.message}")
@@ -166,13 +178,14 @@ class GostVpnService : VpnService() {
             GlobalVpnState.setConnected(addr)
             lastVpnConnectTime = System.currentTimeMillis()
             promoteToForeground(addr)  // update notification with actual listen address
-            log("VPN started, gost status: $status")
+            log("[start] VPN connected, addr: $addr")
             registerNetworkCallback()
             saveLastRunState(true)
-            startVpnLogPolling()
+            GostLibBridge.setMemoryLimit(true)
         } catch (e: Exception) {
             log("VPN post-start error: ${e.message}")
             GlobalVpnState.setError("VPN 启动后错误: ${e.message}")
+            GostLibBridge.setMemoryLimit(false)
             closeTun()
             GostLibBridge.stopVPN()
             GostLibBridge.stop()
@@ -183,15 +196,22 @@ class GostVpnService : VpnService() {
     private fun stopVpn(updatePersistentState: Boolean = true) {
         if (updatePersistentState) GlobalVpnState.setStopping()
         unregisterNetworkCallback()
-        vpnLogJob?.cancel()
-        vpnLogJob = null
         // Close the ParcelFileDescriptor first: this immediately notifies Android's
         // ConnectivityService that the VPN session is ending, so the status-bar icon
         // disappears right away. The Go side still holds its dup'd fd and can finish
         // cleanly afterwards.
         closeTun()
+
+        // Go cleanup: Stop() has a 5-second timeout on serveWg.Wait(), so this
+        // call is guaranteed to return within 5 seconds. STOPPING loading is shown
+        // during this time, preventing the user from starting a new connection while
+        // the previous Go shutdown is still in progress.
+        GostLibBridge.setMemoryLimit(false)
+        log("[stop] stopping tun2socks...")
         GostLibBridge.stopVPN()
+        log("[stop] stopping gost...")
         GostLibBridge.stop()
+
         if (updatePersistentState) {
             GlobalVpnState.setStopped()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -202,11 +222,8 @@ class GostVpnService : VpnService() {
             }
             stopSelf()
             saveLastRunState(false)
-            log("VPN stopped")
+            log("[stop] VPN stopped")
         } else {
-            // Reconnect path: keep the foreground service running so Android does
-            // not consider the session ended. Status goes back to CONNECTING so
-            // the UI shows a brief reconnecting indicator without a full STOPPED flash.
             GlobalVpnState.setConnecting()
             log("VPN restarting after network change")
         }
@@ -219,21 +236,6 @@ class GostVpnService : VpnService() {
 
     private fun log(msg: String) = LogRepository.append(msg)
 
-    /** Polls the Go VPN log buffer every second and forwards entries to LogRepository. */
-    private fun startVpnLogPolling() {
-        vpnLogJob = scope.launch {
-            while (isActive) {
-                delay(1000)
-                val msgs = GostLibBridge.getVPNLog()
-                if (msgs.isNotEmpty()) {
-                    msgs.trimEnd('\n').split('\n').forEach { line ->
-                        if (line.isNotEmpty()) LogRepository.append(line)
-                    }
-                }
-            }
-        }
-    }
-
     private fun parseFirstAddress(statusJson: String): String {
         val match = Regex(""""addresses":\["([^"]+)"""").find(statusJson)
         return match?.groupValues?.get(1) ?: ""
@@ -245,6 +247,7 @@ class GostVpnService : VpnService() {
     }
 
     private fun registerNetworkCallback() {
+        unregisterNetworkCallback()
         val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val cb = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
@@ -343,9 +346,21 @@ internal object GostLibBridge {
 
     fun getStatus(): String = invoke("getStatus") as? String ?: ""
 
-    fun getVPNLog(): String = invoke("getVPNLog") as? String ?: ""
-
     fun getVpnDnsAddr(): String = invoke("getVPNDNSAddr") as? String ?: ""
 
     fun validateConfig(yaml: String): String = invoke("validateConfig", yaml) as? String ?: ""
+
+    fun setMemoryLimit(enabled: Boolean) {
+        runCatching { invoke("setMemoryLimit", enabled) }
+    }
+
+    fun setWorkDir(path: String): Result<Unit> =
+        runCatching { invoke("setWorkDir", path); Unit }
+
+    fun setLogFile(path: String): Result<Unit> =
+        runCatching { invoke("setLogFile", path); Unit }
+
+    fun setLoggingEnabled(enabled: Boolean) {
+        runCatching { invoke("setLoggingEnabled", enabled) }
+    }
 }
