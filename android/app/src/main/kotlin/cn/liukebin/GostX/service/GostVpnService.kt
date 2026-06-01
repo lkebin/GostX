@@ -71,6 +71,10 @@ class GostVpnService : VpnService() {
     @Volatile private var lastVpnConnectTime = 0L
     private val RECONNECT_COOLDOWN_MS = 30_000L
     private var serviceReceiver: BroadcastReceiver? = null
+    // Set to true when the device enters Doze; cleared on the first SCREEN_ON after
+    // Doze so we reconnect exactly once on real user wakeup, not on every
+    // intermediate maintenance-window exit.
+    @Volatile private var wasInDoze = false
 
     override fun onCreate() {
         super.onCreate()
@@ -202,7 +206,9 @@ class GostVpnService : VpnService() {
         // disappears right away. The Go side still holds its dup'd fd and can finish
         // cleanly afterwards.
         closeTun()
-        runCatching { unregisterServiceReceiver() }
+        // On full stop, remove the Doze/screen receiver. On reconnect path, keep it
+        // active so Doze-entry events during the stop→start window are not lost.
+        if (updatePersistentState) runCatching { unregisterServiceReceiver() }
 
         // Go cleanup: Stop() has a 5-second timeout on serveWg.Wait(), so this
         // call is guaranteed to return within 5 seconds. STOPPING loading is shown
@@ -253,12 +259,17 @@ class GostVpnService : VpnService() {
         unregisterServiceReceiver()
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                if (intent.action == PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED) {
-                    handleIdleModeChanged()
+                when (intent.action) {
+                    PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED -> handleIdleModeChanged()
+                    Intent.ACTION_SCREEN_ON -> handleScreenOn()
                 }
             }
         }
-        registerReceiver(receiver, IntentFilter(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED))
+        val filter = IntentFilter().apply {
+            addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
+            addAction(Intent.ACTION_SCREEN_ON)
+        }
+        registerReceiver(receiver, filter)
         serviceReceiver = receiver
     }
 
@@ -270,9 +281,39 @@ class GostVpnService : VpnService() {
     private fun handleIdleModeChanged() {
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
         if (pm.isDeviceIdleMode) {
+            // Entering Doze: stop network monitoring to avoid spurious reconnects
+            // while network access is restricted.
+            wasInDoze = true
             unregisterNetworkCallback()
         } else {
+            // Exiting Doze (including short maintenance windows): restore network
+            // monitoring for future changes. Reset lastVpnConnectTime to suppress
+            // the immediate onAvailable that fires when re-registering the callback —
+            // the existing tunnel is still valid during maintenance windows and
+            // reconnecting on restricted networks would leave the VPN broken.
+            lastVpnConnectTime = System.currentTimeMillis()
             registerNetworkCallback()
+        }
+    }
+
+    private fun handleScreenOn() {
+        // Only act on the first SCREEN_ON that follows a Doze period, not on
+        // every screen wake. This triggers the one reconnect we actually need:
+        // refreshing gost's upstream connections after the device wakes for real.
+        if (!wasInDoze) return
+        wasInDoze = false
+        if (GlobalVpnState.state.value.status == VpnStatus.CONNECTED && !reconnectInProgress) {
+            reconnectInProgress = true
+            scope.launch {
+                // Brief delay to let the network fully re-establish after screen-on.
+                kotlinx.coroutines.delay(2_000)
+                try {
+                    stopVpn(updatePersistentState = false)
+                    startVpn()
+                } finally {
+                    reconnectInProgress = false
+                }
+            }
         }
     }
 
