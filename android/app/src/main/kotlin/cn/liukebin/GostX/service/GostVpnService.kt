@@ -45,11 +45,16 @@ internal fun buildAppFilterConfig(
     selfPackage: String
 ): AppFilterConfig = when (mode) {
     AppFilterMode.BLACKLIST -> AppFilterConfig(
+        // Always exclude self: gost's outbound traffic must bypass the TUN
+        // interface to prevent the tun2socks→gost→tun2socks routing loop
+        // that causes OOM crashes.
         disallowed = filterList + selfPackage,
         allowed = emptySet()
     )
     AppFilterMode.WHITELIST -> AppFilterConfig(
         disallowed = emptySet(),
+        // Always exclude self from the whitelist: adding it would route gost's
+        // outbound traffic back through TUN, recreating the OOM routing loop.
         allowed = filterList - selfPackage
     )
 }
