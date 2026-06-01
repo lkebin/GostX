@@ -45,7 +45,7 @@ class AppFilterViewModel(
 
     init {
         viewModelScope.launch {
-            val apps = appLoader()
+            val apps = runCatching { appLoader() }.getOrDefault(emptyList())
             _uiState.update { it.copy(isLoading = false, apps = apps) }
         }
     }

@@ -132,4 +132,11 @@ class AppFilterViewModelTest {
         vm.save()
         assertTrue(repo.appFilterList.isEmpty())
     }
+
+    @Test fun `loading failure clears spinner and returns empty list`() = runTest(dispatcher) {
+        val vm = AppFilterViewModel(repo) { error("simulated failure") }
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.isLoading)
+        assertTrue(vm.uiState.value.apps.isEmpty())
+    }
 }
