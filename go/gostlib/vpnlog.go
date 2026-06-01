@@ -15,6 +15,10 @@ import (
 // Capacity 512 means we can hold ~512 messages before dropping.
 var vpnLogCh = make(chan string, 512)
 
+// loggingEnabled gates all logVPN output. False by default; call SetLoggingEnabled(true)
+// before starting VPN to activate logging.
+var loggingEnabled atomic.Bool
+
 // VPN connection counters; reset by resetVPNStats.
 var (
 	vpnTCPConns    int64 // total TCP sessions dispatched
@@ -28,6 +32,9 @@ var logDrainRunning atomic.Bool // true once drainLogToFile goroutine is running
 var logDrainCancel  context.CancelFunc // non-nil when goroutine is running; for test cleanup only
 
 func logVPN(format string, args ...any) {
+	if !loggingEnabled.Load() {
+		return
+	}
 	ts := time.Now().Format("15:04:05.000")
 	msg := ts + " " + fmt.Sprintf(format, args...)
 	select {
@@ -103,6 +110,10 @@ func GetVPNLog() string {
 		}
 	}
 }
+
+// SetLoggingEnabled enables or disables VPN log output. Must be called before
+// starting the VPN for the setting to take effect on that session.
+func SetLoggingEnabled(v bool) { loggingEnabled.Store(v) }
 
 func resetVPNStats() {
 	atomic.StoreInt64(&vpnTCPConns, 0)

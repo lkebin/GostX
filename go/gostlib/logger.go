@@ -42,7 +42,7 @@ func (h *vpnLogHook) Fire(entry *logrus.Entry) error {
 	for k, v := range entry.Data {
 		sb.WriteString(fmt.Sprintf(" %s=%v", k, v))
 	}
-	logVPN(sb.String())
+	logVPN("%s", sb.String())
 	return nil
 }
 

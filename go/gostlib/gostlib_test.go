@@ -500,3 +500,33 @@ func TestSetLogFile(t *testing.T) {
 		t.Errorf("unexpected lines: %v", lines)
 	}
 }
+
+func TestSetLoggingEnabled(t *testing.T) {
+	resetLogDrainForTest()
+	t.Cleanup(func() {
+		SetLoggingEnabled(true) // restore default for other tests
+		resetLogDrainForTest()
+	})
+
+	// With logging disabled, logVPN should not enqueue anything.
+	SetLoggingEnabled(false)
+	logVPN("should not appear")
+	select {
+	case msg := <-vpnLogCh:
+		t.Fatalf("expected no message when logging disabled, got: %q", msg)
+	default:
+		// correct — channel empty
+	}
+
+	// With logging enabled, logVPN should enqueue.
+	SetLoggingEnabled(true)
+	logVPN("should appear")
+	select {
+	case msg := <-vpnLogCh:
+		if !strings.HasSuffix(msg, "should appear") {
+			t.Errorf("unexpected message: %q", msg)
+		}
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("expected message not received within 500ms")
+	}
+}
