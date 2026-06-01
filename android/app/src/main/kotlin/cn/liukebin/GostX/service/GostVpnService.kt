@@ -2,6 +2,7 @@ package cn.liukebin.GostX.service
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.net.ConnectivityManager
 import android.net.Network
@@ -11,6 +12,7 @@ import android.net.VpnService
 import android.os.Build
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
+import cn.liukebin.GostX.data.AppFilterMode
 import cn.liukebin.GostX.data.ConfigRepository
 import cn.liukebin.GostX.data.GlobalVpnState
 import cn.liukebin.GostX.data.LogRepository
@@ -31,6 +33,26 @@ internal fun shouldRestartVpnOnNetworkAvailable(
     isVpnNetwork: Boolean,
     restartInProgress: Boolean
 ): Boolean = status == VpnStatus.CONNECTED && !isVpnNetwork && !restartInProgress
+
+internal data class AppFilterConfig(
+    val disallowed: Set<String>,
+    val allowed: Set<String>
+)
+
+internal fun buildAppFilterConfig(
+    mode: AppFilterMode,
+    filterList: Set<String>,
+    selfPackage: String
+): AppFilterConfig = when (mode) {
+    AppFilterMode.BLACKLIST -> AppFilterConfig(
+        disallowed = filterList + selfPackage,
+        allowed = emptySet()
+    )
+    AppFilterMode.WHITELIST -> AppFilterConfig(
+        disallowed = emptySet(),
+        allowed = filterList - selfPackage
+    )
+}
 
 class GostVpnService : VpnService() {
 
@@ -145,10 +167,32 @@ class GostVpnService : VpnService() {
             .addDnsServer(if (vpnDnsAddr.isNotEmpty()) vpnDnsAddr else "8.8.8.8")
             .setSession("GostX")
             .setBlocking(false)
-            // Exclude our own app from VPN routing so gost's outbound connections
-            // bypass the TUN interface, preventing the tun2socks→gost→tun2socks
-            // routing loop that causes OOM crashes.
-            .addDisallowedApplication(packageName)
+
+        val filterConfig = buildAppFilterConfig(
+            mode = configRepo.appFilterMode,
+            filterList = configRepo.appFilterList,
+            selfPackage = packageName
+        )
+        val stalePackages = mutableSetOf<String>()
+        filterConfig.disallowed.forEach { pkg ->
+            try {
+                builder.addDisallowedApplication(pkg)
+            } catch (e: PackageManager.NameNotFoundException) {
+                if (pkg != packageName) stalePackages += pkg
+                log("Skipping uninstalled package: $pkg")
+            }
+        }
+        filterConfig.allowed.forEach { pkg ->
+            try {
+                builder.addAllowedApplication(pkg)
+            } catch (e: PackageManager.NameNotFoundException) {
+                stalePackages += pkg
+                log("Removing uninstalled package from list: $pkg")
+            }
+        }
+        if (stalePackages.isNotEmpty()) {
+            configRepo.appFilterList = configRepo.appFilterList - stalePackages
+        }
 
         log("[start] establishing VPN interface...")
         tunFd = builder.establish() ?: run {
