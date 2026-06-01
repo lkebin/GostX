@@ -101,7 +101,12 @@ class HomeViewModel(
     fun toggleVpn(onVpnPermissionRequired: () -> Unit = {}) {
         val ctx = getApplication<Application>()
         when (resolveVpnToggleAction(vpnState.value.status, VpnService.prepare(ctx) == null)) {
-            VpnToggleAction.STOP -> startService(ctx, GostVpnService.ACTION_STOP)
+            VpnToggleAction.STOP -> {
+                // Set STOPPING immediately so the loading animation shows before the
+                // service receives the intent and calls setStopping() itself.
+                GlobalVpnState.setStopping()
+                startService(ctx, GostVpnService.ACTION_STOP)
+            }
             VpnToggleAction.START -> startService(ctx, GostVpnService.ACTION_START)
             VpnToggleAction.REQUEST_PERMISSION -> onVpnPermissionRequired()
         }
