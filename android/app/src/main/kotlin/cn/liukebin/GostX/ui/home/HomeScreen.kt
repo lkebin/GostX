@@ -123,7 +123,20 @@ fun HomeScreen(
         )
     }
 
-    val isTransitioning = vpnState.status == VpnStatus.CONNECTING || vpnState.status == VpnStatus.STOPPING
+    // stoppingLatch ensures loading shows for at least one full Compose frame even when
+    // the Go stop() call returns faster than a single frame (< 16 ms). It is set when
+    // the user taps the FAB and cleared once the service reports a stable final state.
+    var stoppingLatch by remember { mutableStateOf(false) }
+    LaunchedEffect(vpnState.status) {
+        when (vpnState.status) {
+            VpnStatus.STOPPED, VpnStatus.CONNECTED, VpnStatus.ERROR -> stoppingLatch = false
+            else -> {}
+        }
+    }
+
+    val isTransitioning = vpnState.status == VpnStatus.CONNECTING ||
+        vpnState.status == VpnStatus.STOPPING ||
+        stoppingLatch
 
     Scaffold(
         topBar = {
@@ -153,7 +166,10 @@ fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    if (!isTransitioning) vm.toggleVpn(onRequestVpnPermission)
+                    if (!isTransitioning) {
+                        stoppingLatch = true
+                        vm.toggleVpn(onRequestVpnPermission)
+                    }
                 },
                 shape = CircleShape,
                 containerColor = when (vpnState.status) {
