@@ -77,9 +77,6 @@ class GostVpnService : VpnService() {
             ?: filesDir.absolutePath.also { log("External storage unavailable, falling back to internal: $it") }
         GostLibBridge.setWorkDir(workDir)
             .onFailure { log("WARNING: setWorkDir($workDir) failed: ${it.message}") }
-        // SetLogFile uses sync.Once on the Go side — idempotent on service restart.
-        GostLibBridge.setLogFile(LogRepository.getLogFile().absolutePath)
-            .onFailure { log("WARNING: setLogFile failed: ${it.message}") }
     }
 
     override fun onBind(intent: Intent?): IBinder? = super.onBind(intent)
@@ -121,6 +118,13 @@ class GostVpnService : VpnService() {
         // startForeground already called synchronously in onStartCommand
 
         val yaml = configRepo.getActiveConfig()
+
+        val loggingOn = configRepo.loggingEnabled
+        GostLibBridge.setLoggingEnabled(loggingOn)
+        if (loggingOn) {
+            GostLibBridge.setLogFile(LogRepository.getLogFile().absolutePath)
+                .onFailure { log("WARNING: setLogFile failed: ${it.message}") }
+        }
 
         val vpnDnsAddr: String
         try {
@@ -355,4 +359,8 @@ internal object GostLibBridge {
 
     fun setLogFile(path: String): Result<Unit> =
         runCatching { invoke("setLogFile", path); Unit }
+
+    fun setLoggingEnabled(enabled: Boolean) {
+        runCatching { invoke("setLoggingEnabled", enabled) }
+    }
 }
