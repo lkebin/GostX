@@ -87,7 +87,7 @@ func (e *mixedEngine) handleTCPConn(conn net.Conn) {
 	localAddr := conn.LocalAddr().(*net.TCPAddr)
 	localPort := uint16(localAddr.Port)
 
-	src, dst, ok := e.natTable.ReverseLookup(localPort)
+	_, dst, ok := e.natTable.ReverseLookup(localPort)
 	if !ok {
 		logVPN("[tcp] no NAT entry for port %d", localPort)
 		return
@@ -223,7 +223,7 @@ func (e *mixedEngine) handleTCPResponse(data []byte, ihl int) {
 
 	srcPort := binary.BigEndian.Uint16(data[ihl : ihl+2])
 
-	origSrc, origDst, ok := e.natTable.ReverseLookup(srcPort)
+	_, origDst, ok := e.natTable.ReverseLookup(srcPort)
 	if !ok {
 		return
 	}
