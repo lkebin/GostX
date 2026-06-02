@@ -49,12 +49,34 @@ func (t *tunNATTable) CreateOrLookup(src, dst net.TCPAddr) uint16 {
 
 	key := natKey(src, dst)
 	if port, ok := t.byKey[key]; ok {
-		t.entries[port].lastUsed = time.Now()
-		return port
+		if entry := t.entries[port]; entry != nil {
+			entry.lastUsed = time.Now()
+			return port
+		}
+		// Stale byKey entry (should not happen) — clean up and reallocate.
+		delete(t.byKey, key)
 	}
 
+	// Probe forward from nextPort to find a free slot.
+	// Under normal GC load (30s sweep, 2min TTL) with 56k available ports,
+	// an empty slot is found within a few iterations. If every port is occupied
+	// (extreme load), we log a warning and reuse the probed port anyway.
 	port := t.nextPort
-	t.nextPort++
+	for {
+		if _, exists := t.entries[port]; !exists {
+			break
+		}
+		port++
+		if port > natPortMax {
+			port = natPortMin
+		}
+		if port == t.nextPort {
+			// Full circle — all ports in use; GC must catch up.
+			logVPN("[warn] NAT table exhausted, reusing port %d", port)
+			break
+		}
+	}
+	t.nextPort = port + 1
 	if t.nextPort > natPortMax {
 		t.nextPort = natPortMin
 	}
