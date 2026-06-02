@@ -71,7 +71,7 @@ var (
 	// vpnChainName is the gost chain name extracted from the tungo service in
 	// the user's config. StartVPN uses this to route gVisor TCP/UDP sessions
 	// directly through the chain, with no extra proxy listening port.
-	// Empty string means no tungo service found; legacy tun2socks path is used.
+	// Empty string means no tungo service found; StartVPNMode returns an error.
 	vpnChainName string
 
 	// vpnDNSServiceAddr is the normalised listen address of the first DNS service
@@ -80,10 +80,6 @@ var (
 )
 
 var stateCond = sync.NewCond(&mu)
-
-// VPNProxyAddr is the loopback SOCKS5 address auto-injected by StartVPNMode.
-// tun2socks must be configured to forward traffic to this address.
-const VPNProxyAddr = "127.0.0.1:10808"
 
 // vpnDNSVirtualAddr is the virtual IP advertised to Android as the DNS server
 // when a Gost DNS service is found in the config. It must fall within the VPN
@@ -162,13 +158,9 @@ func detectVPNDNSService(cfg *config.Config) string {
 
 // StartVPNMode starts gost for VPN mode.
 //
-// If the config contains a service with handler.type=tungo, that service is
+// The config must contain a service with handler.type=tungo — that service is
 // extracted and skipped (the gVisor stack in StartVPN handles it directly).
 // The chain named in that service is stored so StartVPN can route through it.
-//
-// If no tungo service is present the old behaviour applies: an internal SOCKS5
-// listener is injected at 127.0.0.1:10808 and StartVPN uses the tun2socks
-// engine to route traffic there (backward compatibility).
 func StartVPNMode(yamlConfig string) error {
 	cfg := &config.Config{}
 	if err := yaml.Unmarshal([]byte(yamlConfig), cfg); err != nil {
@@ -176,6 +168,9 @@ func StartVPNMode(yamlConfig string) error {
 	}
 
 	chainName, filtered := extractTungoService(cfg)
+	if chainName == "" {
+		return fmt.Errorf("config must contain a tungo service for VPN mode")
+	}
 
 	dnsServiceAddr := detectVPNDNSService(cfg)
 
@@ -183,12 +178,6 @@ func StartVPNMode(yamlConfig string) error {
 	vpnChainName = chainName
 	vpnDNSServiceAddr = dnsServiceAddr
 	mu.Unlock()
-
-	if chainName == "" {
-		// Legacy path: inject internal SOCKS5 so tun2socks has somewhere to
-		// send traffic.
-		injectInternalSocks5(filtered)
-	}
 
 	b, err := yaml.Marshal(filtered)
 	if err != nil {
@@ -391,21 +380,6 @@ func ensureServiceNames(cfg *config.Config) {
 			svc.Name = fmt.Sprintf("_gostx_service_%d", i)
 		}
 	}
-}
-
-func injectInternalSocks5(cfg *config.Config) {
-	for _, svc := range cfg.Services {
-		if svc != nil && svc.Addr == VPNProxyAddr {
-			return
-		}
-	}
-
-	cfg.Services = append(cfg.Services, &config.ServiceConfig{
-		Name:     "_gostx_vpn_internal",
-		Addr:     VPNProxyAddr,
-		Handler:  &config.HandlerConfig{Type: "socks5"},
-		Listener: &config.ListenerConfig{Type: "tcp"},
-	})
 }
 
 // SetMemoryLimit configures the Go runtime GC for mobile background use.

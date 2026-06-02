@@ -46,7 +46,7 @@ internal fun buildAppFilterConfig(
 ): AppFilterConfig = when (mode) {
     AppFilterMode.BLACKLIST -> AppFilterConfig(
         // Always exclude self: gost's outbound traffic must bypass the TUN
-        // interface to prevent the tun2socks→gost→tun2socks routing loop
+        // interface to prevent the VPN→gost routing loop
         // that causes OOM crashes.
         disallowed = filterList + selfPackage,
         allowed = emptySet()
@@ -210,11 +210,11 @@ class GostVpnService : VpnService() {
         log("[start] VPN interface ready")
 
         try {
-            log("[start] starting tun2socks...")
+            log("[start] starting VPN...")
             GostLibBridge.startVPN(tunFd!!.fd.toLong(), 1500L)
         } catch (e: Exception) {
-            log("tun2socks start failed: ${e.message}")
-            GlobalVpnState.setError("tun2socks 启动失败: ${e.message}")
+            log("VPN start failed: ${e.message}")
+            GlobalVpnState.setError("VPN 启动失败: ${e.message}")
             closeTun()
             GostLibBridge.stop()
             stopSelf()
@@ -256,7 +256,7 @@ class GostVpnService : VpnService() {
         // during this time, preventing the user from starting a new connection while
         // the previous Go shutdown is still in progress.
         GostLibBridge.setMemoryLimit(false)
-        log("[stop] stopping tun2socks...")
+        log("[stop] stopping VPN...")
         GostLibBridge.stopVPN()
         log("[stop] stopping gost...")
         GostLibBridge.stop()
