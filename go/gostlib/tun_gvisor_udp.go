@@ -75,42 +75,44 @@ func newUDPStack(mtu uint32, router *xchain.Router, dnsServiceAddr string) (*gVi
 }
 
 func (us *gVisorUDPStack) handleUDP(req *udp.ForwarderRequest) {
-	id := req.ID()
-	dst := net.JoinHostPort(id.LocalAddress.String(), fmt.Sprintf("%d", id.LocalPort))
-	n := atomic.AddInt64(&vpnUDPConns, 1)
-	logVPN("[udp#%d] dial %s", n, dst)
+	go func() {
+		id := req.ID()
+		dst := net.JoinHostPort(id.LocalAddress.String(), fmt.Sprintf("%d", id.LocalPort))
+		n := atomic.AddInt64(&vpnUDPConns, 1)
+		logVPN("[udp#%d] dial %s", n, dst)
 
-	var wq waiter.Queue
-	ep, err := req.CreateEndpoint(&wq)
-	if err != nil {
-		atomic.AddInt64(&vpnFailedConns, 1)
-		logVPN("[udp#%d] create endpoint failed: %v", n, err)
-		return
-	}
+		var wq waiter.Queue
+		ep, err := req.CreateEndpoint(&wq)
+		if err != nil {
+			atomic.AddInt64(&vpnFailedConns, 1)
+			logVPN("[udp#%d] create endpoint failed: %v", n, err)
+			return
+		}
 
-	conn := gonetUDPConn{ep: ep, wq: &wq}
+		conn := gonetUDPConn{ep: ep, wq: &wq}
 
-	var upstream net.Conn
-	var dialErr error
-	if us.dnsServiceAddr != "" &&
-		id.LocalAddress.String() == vpnDNSVirtualAddr &&
-		id.LocalPort == uint16(vpnDNSVirtualPort) {
-		upstream, dialErr = net.Dial("udp", us.dnsServiceAddr)
-	} else {
-		upstream, dialErr = us.router.Dial(context.Background(), "udp", dst)
-	}
-	if dialErr != nil {
-		atomic.AddInt64(&vpnFailedConns, 1)
-		logVPN("[udp#%d] dial failed: %v", n, dialErr)
-		ep.Close()
-		return
-	}
-	defer upstream.Close()
-	defer ep.Close()
+		var upstream net.Conn
+		var dialErr error
+		if us.dnsServiceAddr != "" &&
+			id.LocalAddress.String() == vpnDNSVirtualAddr &&
+			id.LocalPort == uint16(vpnDNSVirtualPort) {
+			upstream, dialErr = net.Dial("udp", us.dnsServiceAddr)
+		} else {
+			upstream, dialErr = us.router.Dial(context.Background(), "udp", dst)
+		}
+		if dialErr != nil {
+			atomic.AddInt64(&vpnFailedConns, 1)
+			logVPN("[udp#%d] dial failed: %v", n, dialErr)
+			ep.Close()
+			return
+		}
+		defer upstream.Close()
+		defer ep.Close()
 
-	logVPN("[udp#%d] relaying %s", n, dst)
-	relay(conn, upstream)
-	logVPN("[udp#%d] done %s", n, dst)
+		logVPN("[udp#%d] relaying %s", n, dst)
+		relay(conn, upstream)
+		logVPN("[udp#%d] done %s", n, dst)
+	}()
 }
 
 // gonetUDPConn wraps a gVisor UDP transport endpoint as a net.Conn.
