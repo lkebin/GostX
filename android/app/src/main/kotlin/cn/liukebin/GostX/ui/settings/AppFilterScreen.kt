@@ -188,9 +188,7 @@ private fun AppIcon(packageName: String, modifier: Modifier = Modifier) {
                 val bm = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
                 d.setBounds(0, 0, w, h)
                 d.draw(Canvas(bm))
-                val imageBitmap = bm.asImageBitmap()
-                bm.recycle()
-                BitmapPainter(imageBitmap)
+                BitmapPainter(bm.asImageBitmap())
             }.getOrNull()
         }
     }
