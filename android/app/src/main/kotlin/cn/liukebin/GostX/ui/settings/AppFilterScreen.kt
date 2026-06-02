@@ -68,7 +68,8 @@ fun AppFilterScreen(
                         withContext(Dispatchers.IO) {
                             app.packageManager
                                 .getInstalledApplications(PackageManager.GET_META_DATA)
-                                .filter { (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 }
+                                .filter { (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0
+                                        && it.packageName != app.packageName }
                                 .map { info ->
                                     InstalledApp(
                                         packageName = info.packageName,
