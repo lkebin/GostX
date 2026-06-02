@@ -1,6 +1,6 @@
 package cn.liukebin.GostX.ui.settings
 
-import android.content.pm.ApplicationInfo
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -66,14 +66,17 @@ fun AppFilterScreen(
                     val app = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]!!
                     return AppFilterViewModel(repo) {
                         withContext(Dispatchers.IO) {
-                            app.packageManager
-                                .getInstalledApplications(PackageManager.GET_META_DATA)
-                                .filter { (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0
-                                        && it.packageName != app.packageName }
+                            val pm = app.packageManager
+                            val launcherIntent = Intent(Intent.ACTION_MAIN)
+                                .addCategory(Intent.CATEGORY_LAUNCHER)
+                            pm.queryIntentActivities(launcherIntent, 0)
+                                .map { it.activityInfo.applicationInfo }
+                                .distinctBy { it.packageName }
+                                .filter { it.packageName != app.packageName }
                                 .map { info ->
                                     InstalledApp(
                                         packageName = info.packageName,
-                                        label = app.packageManager.getApplicationLabel(info).toString()
+                                        label = pm.getApplicationLabel(info).toString()
                                     )
                                 }
                                 .sortedBy { it.label.lowercase() }
