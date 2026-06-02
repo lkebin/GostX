@@ -9,7 +9,11 @@ import java.util.UUID
 private const val KEY_PROFILES = "config_profile_list"
 private const val KEY_ACTIVE = "config_active_profile"
 private const val KEY_LOGGING_ENABLED = "logging_enabled"
+private const val KEY_APP_FILTER_MODE = "app_filter_mode"
+private const val KEY_APP_FILTER_PACKAGES = "app_filter_packages"
 const val DEFAULT_PROFILE_ID = "default"
+
+enum class AppFilterMode { BLACKLIST, WHITELIST }
 
 /**
  * Represents a named VPN configuration profile.
@@ -88,6 +92,35 @@ class ConfigRepository(private val prefs: SharedPreferences) {
         set(value) {
             prefs.edit().putBoolean(KEY_LOGGING_ENABLED, value).apply()
             _loggingEnabledFlow.value = value
+        }
+
+    private val _appFilterModeFlow = MutableStateFlow(
+        when (prefs.getString(KEY_APP_FILTER_MODE, null)) {
+            "whitelist" -> AppFilterMode.WHITELIST
+            else -> AppFilterMode.BLACKLIST
+        }
+    )
+    val appFilterModeFlow: StateFlow<AppFilterMode> = _appFilterModeFlow.asStateFlow()
+
+    var appFilterMode: AppFilterMode
+        get() = _appFilterModeFlow.value
+        set(value) {
+            prefs.edit()
+                .putString(KEY_APP_FILTER_MODE, if (value == AppFilterMode.WHITELIST) "whitelist" else "blacklist")
+                .apply()
+            _appFilterModeFlow.value = value
+        }
+
+    private val _appFilterListFlow = MutableStateFlow<Set<String>>(
+        prefs.getStringSet(KEY_APP_FILTER_PACKAGES, emptySet())?.toSet() ?: emptySet()
+    )
+    val appFilterListFlow: StateFlow<Set<String>> = _appFilterListFlow.asStateFlow()
+
+    var appFilterList: Set<String>
+        get() = _appFilterListFlow.value
+        set(value) {
+            prefs.edit().putStringSet(KEY_APP_FILTER_PACKAGES, value.toMutableSet()).apply()
+            _appFilterListFlow.value = value
         }
 
     init {

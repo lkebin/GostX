@@ -1,5 +1,6 @@
 package cn.liukebin.GostX
 
+import cn.liukebin.GostX.data.AppFilterMode
 import cn.liukebin.GostX.data.ConfigProfile
 import cn.liukebin.GostX.data.ConfigRepository
 import cn.liukebin.GostX.data.DEFAULT_PROFILE_ID
@@ -176,5 +177,57 @@ class ConfigRepositoryTest {
 
         assertNull(prefs.getString("first", null))
         assertNull(prefs.getString("second", null))
+    }
+
+    @Test fun `appFilterMode defaults to BLACKLIST`() {
+        assertEquals(AppFilterMode.BLACKLIST, repo.appFilterMode)
+    }
+
+    @Test fun `appFilterMode can be set to WHITELIST and persists serialized string`() {
+        repo.appFilterMode = AppFilterMode.WHITELIST
+        assertEquals(AppFilterMode.WHITELIST, repo.appFilterMode)
+        assertEquals("whitelist", prefs.getString("app_filter_mode", null))
+    }
+
+    @Test fun `appFilterMode serializes BLACKLIST as string`() {
+        repo.appFilterMode = AppFilterMode.BLACKLIST
+        assertEquals("blacklist", prefs.getString("app_filter_mode", null))
+    }
+
+    @Test fun `appFilterModeFlow reflects current mode`() {
+        assertEquals(AppFilterMode.BLACKLIST, repo.appFilterModeFlow.value)
+        repo.appFilterMode = AppFilterMode.WHITELIST
+        assertEquals(AppFilterMode.WHITELIST, repo.appFilterModeFlow.value)
+    }
+
+    @Test fun `appFilterMode survives ConfigRepository recreation`() {
+        repo.appFilterMode = AppFilterMode.WHITELIST
+        assertEquals(AppFilterMode.WHITELIST, ConfigRepository(prefs).appFilterMode)
+    }
+
+    @Test fun `appFilterList defaults to empty set`() {
+        assertTrue(repo.appFilterList.isEmpty())
+    }
+
+    @Test fun `appFilterList can be saved and retrieved`() {
+        repo.appFilterList = setOf("com.example.app1", "com.example.app2")
+        assertEquals(setOf("com.example.app1", "com.example.app2"), repo.appFilterList)
+    }
+
+    @Test fun `appFilterListFlow reflects current list`() {
+        assertTrue(repo.appFilterListFlow.value.isEmpty())
+        repo.appFilterList = setOf("com.example.app")
+        assertEquals(setOf("com.example.app"), repo.appFilterListFlow.value)
+    }
+
+    @Test fun `appFilterList survives ConfigRepository recreation`() {
+        repo.appFilterList = setOf("com.example.app")
+        assertEquals(setOf("com.example.app"), ConfigRepository(prefs).appFilterList)
+    }
+
+    @Test fun `appFilterList setter removes packages when list is reduced`() {
+        repo.appFilterList = setOf("com.a", "com.b")
+        repo.appFilterList = setOf("com.a")
+        assertEquals(setOf("com.a"), repo.appFilterList)
     }
 }
