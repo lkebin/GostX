@@ -157,7 +157,7 @@ func (e *mixedEngine) dispatchPacket(data []byte) {
 	switch protocol {
 	case 6: // TCP
 		dstIP := net.IP(data[16:20])
-		if dstIP.Equal(net.IPv4(10, 0, 0, 0)) || dstIP[0] == 127 {
+		if dstIP[0] == 10 || dstIP[0] == 127 {
 			// dst is in VPN subnet or localhost -> likely a response from our NAT
 			e.handleTCPResponse(data, ihl)
 		} else {
@@ -321,6 +321,16 @@ func (e *mixedEngine) Close() {
 	e.udpStack.Close()
 	e.natTable.Close()
 
+	// Close the TUN fd to unblock the read loop in run().
+	e.closeTunFd()
+
 	e.listenerWg.Wait()
 	e.wg.Wait()
+}
+
+func (e *mixedEngine) closeTunFd() {
+	if e.tunFd >= 0 {
+		unix.Close(e.tunFd)
+		e.tunFd = -1
+	}
 }
