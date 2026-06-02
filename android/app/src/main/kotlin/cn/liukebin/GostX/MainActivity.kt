@@ -32,6 +32,7 @@ import cn.liukebin.GostX.ui.Screen
 import cn.liukebin.GostX.ui.config.ConfigScreen
 import cn.liukebin.GostX.ui.home.HomeScreen
 import cn.liukebin.GostX.ui.log.LogScreen
+import cn.liukebin.GostX.ui.settings.AppFilterScreen
 import cn.liukebin.GostX.ui.settings.SettingsScreen
 import cn.liukebin.GostX.service.GostVpnService
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -104,6 +105,13 @@ fun GostXApp(
                 composable(Screen.Logs.route) { LogScreen(onBack = { navController.popBackStack() }) }
                 composable(Screen.Settings.route) {
                     SettingsScreen(
+                        repo = configRepository,
+                        onNavigateToAppFilter = { navController.navigate(Screen.AppFilter.route) },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable(Screen.AppFilter.route) {
+                    AppFilterScreen(
                         repo = configRepository,
                         onBack = { navController.popBackStack() }
                     )
