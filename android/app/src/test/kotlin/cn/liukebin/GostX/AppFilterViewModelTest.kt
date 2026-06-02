@@ -24,9 +24,9 @@ class AppFilterViewModelTest {
     private lateinit var repo: ConfigRepository
 
     private val fakeApps = listOf(
-        InstalledApp("com.a", "App A"),
-        InstalledApp("com.b", "App B"),
-        InstalledApp("com.c", "Zcustom")
+        InstalledApp("com.a", "App A", hasLauncher = true),
+        InstalledApp("com.b", "App B", hasLauncher = true),
+        InstalledApp("com.c", "Zcustom", hasLauncher = false)
     )
 
     @Before fun setup() {
@@ -49,17 +49,30 @@ class AppFilterViewModelTest {
     // ── AppFilterUiState pure logic ──────────────────────────────────────
 
     @Test fun `filtered returns all apps when query is blank`() {
-        val state = AppFilterUiState(apps = fakeApps, query = "")
+        val state = AppFilterUiState(apps = fakeApps, query = "", showAll = true)
         assertEquals(fakeApps, state.filtered)
     }
 
+    @Test fun `filtered returns only launcher apps by default`() {
+        val state = AppFilterUiState(apps = fakeApps, query = "")
+        assertEquals(
+            listOf(InstalledApp("com.a", "App A", true), InstalledApp("com.b", "App B", true)),
+            state.filtered
+        )
+    }
+
+    @Test fun `filtered includes non-launcher apps when showAll is true`() {
+        val state = AppFilterUiState(apps = fakeApps, query = "", showAll = true)
+        assertTrue(state.filtered.any { it.packageName == "com.c" })
+    }
+
     @Test fun `filtered is case-insensitive on label`() {
-        val state = AppFilterUiState(apps = fakeApps, query = "app")
-        assertEquals(listOf(InstalledApp("com.a", "App A"), InstalledApp("com.b", "App B")), state.filtered)
+        val state = AppFilterUiState(apps = fakeApps, query = "app", showAll = true)
+        assertEquals(listOf(InstalledApp("com.a", "App A", true), InstalledApp("com.b", "App B", true)), state.filtered)
     }
 
     @Test fun `filtered returns empty when no match`() {
-        val state = AppFilterUiState(apps = fakeApps, query = "xyz")
+        val state = AppFilterUiState(apps = fakeApps, query = "xyz", showAll = true)
         assertTrue(state.filtered.isEmpty())
     }
 
@@ -131,6 +144,16 @@ class AppFilterViewModelTest {
         val vm = buildVm()
         vm.save()
         assertTrue(repo.appFilterList.isEmpty())
+    }
+
+    @Test fun `toggleShowAll flips showAll state`() = runTest(dispatcher) {
+        val vm = buildVm()
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.showAll)
+        vm.toggleShowAll()
+        assertTrue(vm.uiState.value.showAll)
+        vm.toggleShowAll()
+        assertFalse(vm.uiState.value.showAll)
     }
 
     @Test fun `loading failure clears spinner and returns empty list`() = runTest(dispatcher) {

@@ -26,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -69,17 +70,22 @@ fun AppFilterScreen(
                             val pm = app.packageManager
                             val launcherIntent = Intent(Intent.ACTION_MAIN)
                                 .addCategory(Intent.CATEGORY_LAUNCHER)
-                            pm.queryIntentActivities(launcherIntent, 0)
-                                .map { it.activityInfo.applicationInfo }
-                                .distinctBy { it.packageName }
+                            val launcherPackages = pm.queryIntentActivities(launcherIntent, 0)
+                                .map { it.activityInfo.packageName }
+                                .toSet()
+                            pm.getInstalledPackages(0)
                                 .filter { it.packageName != app.packageName }
-                                .map { info ->
+                                .map { pkg ->
+                                    val label = runCatching {
+                                        pm.getApplicationLabel(pkg.applicationInfo).toString()
+                                    }.getOrDefault(pkg.packageName)
                                     InstalledApp(
-                                        packageName = info.packageName,
-                                        label = pm.getApplicationLabel(info).toString()
+                                        packageName = pkg.packageName,
+                                        label = label,
+                                        hasLauncher = pkg.packageName in launcherPackages
                                     )
                                 }
-                                .sortedBy { it.label.lowercase() }
+                                .sortedWith(compareBy({ !it.hasLauncher }, { it.label.lowercase() }))
                         }
                     } as T
                 }
@@ -129,6 +135,23 @@ fun AppFilterScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.app_filter_show_all),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                Switch(
+                    checked = uiState.showAll,
+                    onCheckedChange = { vm.toggleShowAll() }
                 )
             }
 

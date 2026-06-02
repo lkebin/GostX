@@ -86,4 +86,5 @@
     <string name="app_filter_search_hint">搜索应用名…</string>
     <string name="app_filter_action_done">完成</string>
     <string name="app_filter_whitelist_empty_hint">白名单模式至少选择一个应用</string>
+    <string name="app_filter_show_all">Show all apps</string>
 </resources>

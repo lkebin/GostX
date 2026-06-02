@@ -12,7 +12,8 @@ import kotlinx.coroutines.launch
 
 data class InstalledApp(
     val packageName: String,
-    val label: String
+    val label: String,
+    val hasLauncher: Boolean = true
 )
 
 data class AppFilterUiState(
@@ -20,11 +21,15 @@ data class AppFilterUiState(
     val apps: List<InstalledApp> = emptyList(),
     val selected: Set<String> = emptySet(),
     val query: String = "",
-    val isWhitelistMode: Boolean = false
+    val isWhitelistMode: Boolean = false,
+    val showAll: Boolean = false
 ) {
     val filtered: List<InstalledApp>
-        get() = if (query.isBlank()) apps
-                else apps.filter { it.label.contains(query, ignoreCase = true) }
+        get() {
+            val visible = if (showAll) apps else apps.filter { it.hasLauncher }
+            return if (query.isBlank()) visible
+                   else visible.filter { it.label.contains(query, ignoreCase = true) }
+        }
 
     val canSave: Boolean
         get() = !isWhitelistMode || selected.isNotEmpty()
@@ -62,6 +67,10 @@ class AppFilterViewModel(
                 state.selected + packageName
             state.copy(selected = newSelected)
         }
+    }
+
+    fun toggleShowAll() {
+        _uiState.update { it.copy(showAll = !it.showAll) }
     }
 
     fun save() {
