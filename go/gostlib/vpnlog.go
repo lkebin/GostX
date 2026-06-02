@@ -23,6 +23,7 @@ var loggingEnabled atomic.Bool
 var (
 	vpnTCPConns    int64 // total TCP sessions dispatched
 	vpnUDPConns    int64 // total UDP sessions dispatched
+	vpnICMPConns   int64 // total ICMP Echo Requests handled
 	vpnFailedConns int64 // sessions where router.Dial failed
 )
 
