@@ -60,6 +60,58 @@ services:
       metadata:
         mode: udp`
 
+const testVPNSocks5YAML = `
+services:
+  - name: _test_tungo
+    handler:
+      type: tungo
+  - name: test-socks5
+    addr: 127.0.0.1:19080
+    handler:
+      type: socks5
+    listener:
+      type: tcp`
+
+// testVPNDNSYAML includes a tungo service (for StartVPNMode) + socks5 + dns.
+const testVPNDNSYAML = `
+services:
+  - name: _test_tungo
+    handler:
+      type: tungo
+  - name: test-socks5
+    addr: 127.0.0.1:19080
+    handler:
+      type: socks5
+    listener:
+      type: tcp
+  - name: test-dns
+    addr: 127.0.0.1:15353
+    handler:
+      type: dns
+      metadata:
+        dns: udp://8.8.8.8
+    listener:
+      type: dns
+      metadata:
+        mode: udp`
+
+// testVPNDNSYAMLNoHost is like testVPNDNSYAML but with an unqualified DNS addr.
+const testVPNDNSYAMLNoHost = `
+services:
+  - name: _test_tungo
+    handler:
+      type: tungo
+  - name: test-dns
+    addr: :15353
+    handler:
+      type: dns
+      metadata:
+        dns: udp://8.8.8.8
+    listener:
+      type: dns
+      metadata:
+        mode: udp`
+
 type fakeService struct {
 	addr          net.Addr
 	serveStarted  chan struct{}
@@ -186,38 +238,6 @@ func TestInvalidYAML(t *testing.T) {
 	err := Start("not: valid: yaml: [[")
 	if err == nil {
 		t.Fatal("Start() should return error for invalid YAML")
-	}
-}
-
-func TestStartVPNModeInjectsService(t *testing.T) {
-	resetTestState(t)
-
-	if err := StartVPNMode(testYAML); err != nil {
-		t.Fatalf("StartVPNMode() failed: %v", err)
-	}
-	defer Stop()
-	waitForRunning(t)
-
-	if !IsRunning() {
-		t.Fatal("IsRunning() should be true after StartVPNMode()")
-	}
-
-	conn, err := net.DialTimeout("tcp", "127.0.0.1:10808", time.Second)
-	if err != nil {
-		t.Fatalf("internal SOCKS5 listener not reachable: %v", err)
-	}
-	defer conn.Close()
-
-	if _, err := conn.Write([]byte{0x05, 0x01, 0x00}); err != nil {
-		t.Fatalf("failed to write SOCKS5 greeting: %v", err)
-	}
-
-	resp := make([]byte, 2)
-	if _, err := conn.Read(resp); err != nil {
-		t.Fatalf("failed to read SOCKS5 greeting response: %v", err)
-	}
-	if resp[0] != 0x05 || resp[1] != 0x00 {
-		t.Fatalf("unexpected SOCKS5 greeting response: %v", resp)
 	}
 }
 
@@ -363,7 +383,7 @@ func TestNormalizeDNSAddr(t *testing.T) {
 
 func TestGetVPNDNSAddrNoService(t *testing.T) {
 	resetTestState(t)
-	if err := StartVPNMode(testYAML); err != nil {
+	if err := StartVPNMode(testVPNSocks5YAML); err != nil {
 		t.Fatalf("StartVPNMode() failed: %v", err)
 	}
 	defer Stop()
@@ -376,7 +396,7 @@ func TestGetVPNDNSAddrNoService(t *testing.T) {
 
 func TestGetVPNDNSAddrWithService(t *testing.T) {
 	resetTestState(t)
-	if err := StartVPNMode(testDNSYAML); err != nil {
+	if err := StartVPNMode(testVPNDNSYAML); err != nil {
 		t.Fatalf("StartVPNMode() failed: %v", err)
 	}
 	defer Stop()
@@ -389,7 +409,7 @@ func TestGetVPNDNSAddrWithService(t *testing.T) {
 
 func TestGetVPNDNSAddrNormalisesHost(t *testing.T) {
 	resetTestState(t)
-	if err := StartVPNMode(testDNSYAMLNoHost); err != nil {
+	if err := StartVPNMode(testVPNDNSYAMLNoHost); err != nil {
 		t.Fatalf("StartVPNMode() failed: %v", err)
 	}
 	defer Stop()

@@ -20,12 +20,9 @@ import (
 	xchain "github.com/go-gost/x/chain"
 	"github.com/go-gost/x/registry"
 
-	// gVisor userspace TCP/UDP stack (shared by both paths)
+	// gVisor stack creation
 	"github.com/xjasonlyu/tun2socks/v2/core"
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
-
-	// tun2socks engine (legacy path only – backward compat with old configs)
-	"github.com/xjasonlyu/tun2socks/v2/engine"
 )
 
 var (
@@ -35,20 +32,13 @@ var (
 	// tungo (gVisor) path state
 	tunStack *stack.Stack
 	tunDupFd int // dup'd fd owned by the gVisor endpoint; closed on StopVPN
-
-	// legacy tun2socks engine path
-	tunUseLegacy bool
 )
 
 // StartVPN starts VPN packet routing.
 //
-// If StartVPNMode detected a tungo service in the config, the gVisor userspace
-// stack is used: TCP/UDP sessions are dispatched directly through the gost
-// chain router – no extra proxy port is required.
-//
-// Otherwise the legacy tun2socks engine is used (routes through the injected
-// SOCKS5 listener at 127.0.0.1:10808) for backward compatibility with configs
-// that pre-date the tungo service type.
+// The gVisor userspace stack routes TCP/UDP sessions directly through the
+// gost chain router – no extra proxy port is required. StartVPNMode must have
+// been called successfully (with a tungo service in the config) beforehand.
 //
 // Call StartVPNMode() successfully before calling StartVPN().
 func StartVPN(fd int, mtu int) error {
@@ -70,15 +60,12 @@ func StartVPN(fd int, mtu int) error {
 	dnsServiceAddr := vpnDNSServiceAddr
 	mu.Unlock()
 
-	if chainName != "" {
-		return startVPNGVisor(fd, mtu, chainName, dnsServiceAddr)
-	}
-	return startVPNLegacy(fd, mtu)
+	return startVPNGVisor(fd, mtu, chainName, dnsServiceAddr)
 }
 
 // startVPNGVisor creates a gVisor userspace network stack directly on the
 // Android VPN fd. Each TCP/UDP session is routed through the named gost chain
-// via a gostTransportHandler – no SOCKS5 port is opened.
+// via a gostTransportHandler.
 func startVPNGVisor(fd, mtu int, chainName, dnsServiceAddr string) error {
 	// Dup the fd so the gVisor endpoint owns an independent copy. Android's
 	// ParcelFileDescriptor manages the original fd; closing the dup on StopVPN
@@ -124,34 +111,11 @@ func startVPNGVisor(fd, mtu int, chainName, dnsServiceAddr string) error {
 
 	tunStack = gvStack
 	tunDupFd = dupFd
-	tunUseLegacy = false
 	tunRunning = true
 	return nil
 }
 
-// startVPNLegacy uses the tun2socks engine for configs that do not contain a
-// tungo service (backward compatibility).
-func startVPNLegacy(fd, mtu int) error {
-	// Dup so tun2socks FD.Close() only closes its own copy.
-	tunFd := fd
-	if dup, err := unix.Dup(fd); err == nil {
-		tunFd = dup
-	}
-
-	engine.Insert(&engine.Key{
-		Device:   fmt.Sprintf("fd://%d", tunFd),
-		Proxy:    "socks5://" + VPNProxyAddr,
-		LogLevel: "error",
-		MTU:      mtu,
-	})
-	engine.Start()
-
-	tunUseLegacy = true
-	tunRunning = true
-	return nil
-}
-
-// StopVPN stops the active VPN stack (gVisor or legacy tun2socks).
+// StopVPN stops the active gVisor VPN stack.
 // Safe to call when not running.
 func StopVPN() error {
 	tunMu.Lock()
@@ -161,21 +125,17 @@ func StopVPN() error {
 		return nil
 	}
 
-	if tunUseLegacy {
-		engine.Stop()
-	} else {
-		// Close the dup'd fd first so the fdbased inbound-dispatch goroutine
-		// unblocks and exits. Then close the stack. We intentionally skip
-		// tunStack.Wait(): it can block indefinitely waiting for TCP endpoint
-		// goroutines to drain. The dup'd fd is closed, the stack is destroyed,
-		// and all remaining goroutines will encounter errors and exit on their own.
-		if tunDupFd >= 0 {
-			unix.Close(tunDupFd)
-			tunDupFd = -1
-		}
-		tunStack.Close()
-		tunStack = nil
+	// Close the dup'd fd first so the fdbased inbound-dispatch goroutine
+	// unblocks and exits. Then close the stack. We intentionally skip
+	// tunStack.Wait(): it can block indefinitely waiting for TCP endpoint
+	// goroutines to drain. The dup'd fd is closed, the stack is destroyed,
+	// and all remaining goroutines will encounter errors and exit on their own.
+	if tunDupFd >= 0 {
+		unix.Close(tunDupFd)
+		tunDupFd = -1
 	}
+	tunStack.Close()
+	tunStack = nil
 
 	resetVPNStats()
 
@@ -184,8 +144,7 @@ func StopVPN() error {
 }
 
 // gostTransportHandler implements adapter.TransportHandler.
-// It routes every gVisor TCP/UDP session through a gost chain Router,
-// eliminating the need for a separate SOCKS5 proxy listening port.
+// It routes every gVisor TCP/UDP session through a gost chain Router.
 type gostTransportHandler struct {
 	router         *xchain.Router
 	dnsServiceAddr string // loopback address of the Gost DNS service, e.g. "127.0.0.1:5353"
