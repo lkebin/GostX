@@ -465,10 +465,10 @@ func TestSetMemoryLimit(t *testing.T) {
 
 	SetMemoryLimit(true)
 	// SetGCPercent returns the previous value — use it to read current state.
-	prev := runtimeDebug.SetGCPercent(10)
+	prev := runtimeDebug.SetGCPercent(50)
 	runtimeDebug.SetGCPercent(prev) // restore
-	if prev != 10 {
-		t.Errorf("SetMemoryLimit(true): GOGC = %d, want 10", prev)
+	if prev != 50 {
+		t.Errorf("SetMemoryLimit(true): GOGC = %d, want 50", prev)
 	}
 
 	SetMemoryLimit(false)

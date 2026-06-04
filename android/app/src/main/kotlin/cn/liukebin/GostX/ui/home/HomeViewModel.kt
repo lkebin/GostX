@@ -80,10 +80,17 @@ class HomeViewModel(
         )
     }
 
+    private val refreshTrigger = MutableStateFlow(0)
+
+    fun refresh() {
+        refreshTrigger.value++
+    }
+
     val homeState: StateFlow<HomeUiState> = combine(
+        refreshTrigger,
         repo.profilesFlow,
         repo.activeProfileIdFlow
-    ) { profiles, activeId -> HomeUiState(profiles = profiles, activeProfileId = activeId) }
+    ) { _, profiles, activeId -> HomeUiState(profiles = profiles, activeProfileId = activeId) }
         .stateIn(
             viewModelScope,
             SharingStarted.Eagerly,
