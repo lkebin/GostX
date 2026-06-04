@@ -390,7 +390,7 @@ func ensureServiceNames(cfg *config.Config) {
 func SetMemoryLimit(enabled bool) {
 	const limit = 30 * 1024 * 1024
 	if enabled {
-		runtimeDebug.SetGCPercent(10)
+		runtimeDebug.SetGCPercent(50)
 		runtimeDebug.SetMemoryLimit(limit)
 	} else {
 		runtimeDebug.SetGCPercent(100)

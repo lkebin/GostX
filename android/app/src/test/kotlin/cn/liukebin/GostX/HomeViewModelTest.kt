@@ -108,4 +108,16 @@ class HomeViewModelTest {
         assertEquals(before + 1, viewModel.homeState.value.profiles.size)
         assertTrue(viewModel.homeState.value.profiles.any { it.name == "LateProfile" })
     }
+
+    @Test
+    fun `homeState reflects renamed profile`() = runTest(dispatcher) {
+        val secondId = repo.addProfile("Second")!!
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        repo.renameProfile(secondId, "Renamed")
+        advanceUntilIdle()
+
+        assertEquals("Renamed", viewModel.homeState.value.profiles.find { it.id == secondId }?.name)
+    }
 }
