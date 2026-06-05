@@ -1,11 +1,11 @@
-package cn.liukebin.GostX
+package cn.liukebin.gostx
 
-import cn.liukebin.GostX.data.ConfigRepository
-import cn.liukebin.GostX.data.DEFAULT_PROFILE_ID
-import cn.liukebin.GostX.data.GlobalVpnState
-import cn.liukebin.GostX.data.VpnState
-import cn.liukebin.GostX.data.VpnStatus
-import cn.liukebin.GostX.ui.config.ConfigViewModel
+import cn.liukebin.gostx.data.ConfigRepository
+import cn.liukebin.gostx.data.DEFAULT_PROFILE_ID
+import cn.liukebin.gostx.data.GlobalVpnState
+import cn.liukebin.gostx.data.VpnState
+import cn.liukebin.gostx.data.VpnStatus
+import cn.liukebin.gostx.ui.config.ConfigViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect

@@ -1,4 +1,4 @@
-package cn.liukebin.GostX.data
+package cn.liukebin.gostx.data
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

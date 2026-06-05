@@ -1,9 +1,9 @@
-package cn.liukebin.GostX
+package cn.liukebin.gostx
 
 import android.app.Application
-import cn.liukebin.GostX.data.LogRepository
-import cn.liukebin.GostX.ui.log.LogViewModel
-import cn.liukebin.GostX.ui.log.readFileFrom
+import cn.liukebin.gostx.data.LogRepository
+import cn.liukebin.gostx.ui.log.LogViewModel
+import cn.liukebin.gostx.ui.log.readFileFrom
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -226,7 +226,7 @@ class LogViewModelLogicTest {
 }
 
 // Compile-time check: public polling and follow API
-private fun _assertLogViewModelApi(vm: cn.liukebin.GostX.ui.log.LogViewModel) {
+private fun _assertLogViewModelApi(vm: cn.liukebin.gostx.ui.log.LogViewModel) {
     vm.startPolling()
     vm.stopPolling()
     vm.setFollowing(true)

@@ -1,11 +1,11 @@
-package cn.liukebin.GostX.ui.config
+package cn.liukebin.gostx.ui.config
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cn.liukebin.GostX.data.ConfigRepository
-import cn.liukebin.GostX.data.GlobalVpnState
-import cn.liukebin.GostX.data.VpnStatus
-import cn.liukebin.GostX.service.GostLibBridge
+import cn.liukebin.gostx.data.ConfigRepository
+import cn.liukebin.gostx.data.GlobalVpnState
+import cn.liukebin.gostx.data.VpnStatus
+import cn.liukebin.gostx.service.GostLibBridge
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow

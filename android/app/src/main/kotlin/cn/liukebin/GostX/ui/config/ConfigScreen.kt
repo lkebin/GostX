@@ -1,4 +1,4 @@
-package cn.liukebin.GostX.ui.config
+package cn.liukebin.gostx.ui.config
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -38,8 +38,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cn.liukebin.GostX.R
-import cn.liukebin.GostX.data.ConfigRepository
+import cn.liukebin.gostx.R
+import cn.liukebin.gostx.data.ConfigRepository
 
 @Composable
 private fun RenameProfileDialog(

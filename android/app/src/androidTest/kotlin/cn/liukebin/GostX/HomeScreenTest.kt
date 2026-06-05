@@ -1,12 +1,12 @@
-package cn.liukebin.GostX
+package cn.liukebin.gostx
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import cn.liukebin.GostX.data.GlobalVpnState
-import cn.liukebin.GostX.data.VpnState
-import cn.liukebin.GostX.data.VpnStatus
-import cn.liukebin.GostX.ui.home.HomeScreen
+import cn.liukebin.gostx.data.GlobalVpnState
+import cn.liukebin.gostx.data.VpnState
+import cn.liukebin.gostx.data.VpnStatus
+import cn.liukebin.gostx.ui.home.HomeScreen
 import org.junit.Rule
 import org.junit.Test
 

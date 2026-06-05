@@ -1,7 +1,7 @@
-package cn.liukebin.GostX
+package cn.liukebin.gostx
 
-import cn.liukebin.GostX.data.VpnStatus
-import cn.liukebin.GostX.service.shouldRestartVpnOnNetworkAvailable
+import cn.liukebin.gostx.data.VpnStatus
+import cn.liukebin.gostx.service.shouldRestartVpnOnNetworkAvailable
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test

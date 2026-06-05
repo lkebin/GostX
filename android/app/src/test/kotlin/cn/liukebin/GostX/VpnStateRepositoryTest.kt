@@ -1,8 +1,8 @@
-package cn.liukebin.GostX
+package cn.liukebin.gostx
 
-import cn.liukebin.GostX.data.VpnState
-import cn.liukebin.GostX.data.VpnStateRepository
-import cn.liukebin.GostX.data.VpnStatus
+import cn.liukebin.gostx.data.VpnState
+import cn.liukebin.gostx.data.VpnStateRepository
+import cn.liukebin.gostx.data.VpnStatus
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*

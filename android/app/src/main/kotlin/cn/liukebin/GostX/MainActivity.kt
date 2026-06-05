@@ -1,4 +1,4 @@
-package cn.liukebin.GostX
+package cn.liukebin.gostx
 
 import android.app.Activity
 import android.content.Context
@@ -26,15 +26,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import cn.liukebin.GostX.data.ConfigRepository
-import cn.liukebin.GostX.data.GlobalVpnState
-import cn.liukebin.GostX.ui.Screen
-import cn.liukebin.GostX.ui.config.ConfigScreen
-import cn.liukebin.GostX.ui.home.HomeScreen
-import cn.liukebin.GostX.ui.log.LogScreen
-import cn.liukebin.GostX.ui.settings.AppFilterScreen
-import cn.liukebin.GostX.ui.settings.SettingsScreen
-import cn.liukebin.GostX.service.GostVpnService
+import cn.liukebin.gostx.data.ConfigRepository
+import cn.liukebin.gostx.data.GlobalVpnState
+import cn.liukebin.gostx.ui.Screen
+import cn.liukebin.gostx.ui.config.ConfigScreen
+import cn.liukebin.gostx.ui.home.HomeScreen
+import cn.liukebin.gostx.ui.log.LogScreen
+import cn.liukebin.gostx.ui.settings.AppFilterScreen
+import cn.liukebin.gostx.ui.settings.SettingsScreen
+import cn.liukebin.gostx.service.GostVpnService
 import androidx.compose.foundation.isSystemInDarkTheme
 
 class MainActivity : ComponentActivity() {

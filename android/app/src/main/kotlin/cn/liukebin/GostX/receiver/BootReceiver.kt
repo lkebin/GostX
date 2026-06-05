@@ -1,9 +1,9 @@
-package cn.liukebin.GostX.receiver
+package cn.liukebin.gostx.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import cn.liukebin.GostX.service.GostVpnService
+import cn.liukebin.gostx.service.GostVpnService
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
