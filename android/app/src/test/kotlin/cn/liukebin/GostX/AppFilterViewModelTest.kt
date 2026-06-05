@@ -1,10 +1,10 @@
-package cn.liukebin.GostX
+package cn.liukebin.gostx
 
-import cn.liukebin.GostX.data.AppFilterMode
-import cn.liukebin.GostX.data.ConfigRepository
-import cn.liukebin.GostX.ui.settings.AppFilterUiState
-import cn.liukebin.GostX.ui.settings.AppFilterViewModel
-import cn.liukebin.GostX.ui.settings.InstalledApp
+import cn.liukebin.gostx.data.AppFilterMode
+import cn.liukebin.gostx.data.ConfigRepository
+import cn.liukebin.gostx.ui.settings.AppFilterUiState
+import cn.liukebin.gostx.ui.settings.AppFilterViewModel
+import cn.liukebin.gostx.ui.settings.InstalledApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher

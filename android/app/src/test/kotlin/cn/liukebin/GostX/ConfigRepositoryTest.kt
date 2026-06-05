@@ -1,10 +1,10 @@
-package cn.liukebin.GostX
+package cn.liukebin.gostx
 
-import cn.liukebin.GostX.data.AppFilterMode
-import cn.liukebin.GostX.data.ConfigProfile
-import cn.liukebin.GostX.data.ConfigRepository
-import cn.liukebin.GostX.data.DEFAULT_PROFILE_ID
-import cn.liukebin.GostX.data.DEFAULT_YAML
+import cn.liukebin.gostx.data.AppFilterMode
+import cn.liukebin.gostx.data.ConfigProfile
+import cn.liukebin.gostx.data.ConfigRepository
+import cn.liukebin.gostx.data.DEFAULT_PROFILE_ID
+import cn.liukebin.gostx.data.DEFAULT_YAML
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test

@@ -1,9 +1,9 @@
-package cn.liukebin.GostX
+package cn.liukebin.gostx
 
-import cn.liukebin.GostX.data.VpnStatus
-import cn.liukebin.GostX.ui.home.VpnToggleAction
-import cn.liukebin.GostX.ui.home.canSetActiveProfile
-import cn.liukebin.GostX.ui.home.resolveVpnToggleAction
+import cn.liukebin.gostx.data.VpnStatus
+import cn.liukebin.gostx.ui.home.VpnToggleAction
+import cn.liukebin.gostx.ui.home.canSetActiveProfile
+import cn.liukebin.gostx.ui.home.resolveVpnToggleAction
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

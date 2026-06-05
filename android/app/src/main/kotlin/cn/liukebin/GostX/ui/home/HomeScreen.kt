@@ -1,4 +1,4 @@
-package cn.liukebin.GostX.ui.home
+package cn.liukebin.gostx.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -56,10 +56,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import cn.liukebin.GostX.R
-import cn.liukebin.GostX.data.ConfigProfile
-import cn.liukebin.GostX.data.ConfigRepository
-import cn.liukebin.GostX.data.VpnStatus
+import cn.liukebin.gostx.R
+import cn.liukebin.gostx.data.ConfigProfile
+import cn.liukebin.gostx.data.ConfigRepository
+import cn.liukebin.gostx.data.VpnStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

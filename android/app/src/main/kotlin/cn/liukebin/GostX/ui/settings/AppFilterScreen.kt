@@ -1,4 +1,4 @@
-package cn.liukebin.GostX.ui.settings
+package cn.liukebin.gostx.ui.settings
 
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -46,8 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cn.liukebin.GostX.R
-import cn.liukebin.GostX.data.ConfigRepository
+import cn.liukebin.gostx.R
+import cn.liukebin.gostx.data.ConfigRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

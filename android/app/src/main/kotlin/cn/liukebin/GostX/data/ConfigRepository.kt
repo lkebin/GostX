@@ -1,4 +1,4 @@
-package cn.liukebin.GostX.data
+package cn.liukebin.gostx.data
 
 import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -1,4 +1,4 @@
-package cn.liukebin.GostX.ui.home
+package cn.liukebin.gostx.ui.home
 
 import android.app.Application
 import android.content.Context
@@ -9,11 +9,11 @@ import android.os.PowerManager
 import android.provider.Settings
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import cn.liukebin.GostX.data.ConfigProfile
-import cn.liukebin.GostX.data.ConfigRepository
-import cn.liukebin.GostX.data.GlobalVpnState
-import cn.liukebin.GostX.data.VpnStatus
-import cn.liukebin.GostX.service.GostVpnService
+import cn.liukebin.gostx.data.ConfigProfile
+import cn.liukebin.gostx.data.ConfigRepository
+import cn.liukebin.gostx.data.GlobalVpnState
+import cn.liukebin.gostx.data.VpnStatus
+import cn.liukebin.gostx.service.GostVpnService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

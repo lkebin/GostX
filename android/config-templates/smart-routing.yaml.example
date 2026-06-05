@@ -13,8 +13,8 @@
 # ⚠️  使用前必须先运行脚本下载数据文件：
 #   scripts/update_lists.sh
 #   然后通过 ADB 推送到设备：
-#   adb push gfwlist_domains.txt /data/user/0/cn.liukebin.GostX/files/
-#   adb push china_ip_list.txt   /data/user/0/cn.liukebin.GostX/files/
+#   adb push gfwlist_domains.txt /data/user/0/cn.liukebin.gostx/files/
+#   adb push china_ip_list.txt   /data/user/0/cn.liukebin.gostx/files/
 
 services:
   - name: vpn
@@ -48,7 +48,7 @@ bypasses:
   # gfwlist 域名列表（由 update_lists.sh 生成）
   - name: gfwlist
     file:
-      path: /data/user/0/cn.liukebin.GostX/files/gfwlist_domains.txt
+      path: /data/user/0/cn.liukebin.gostx/files/gfwlist_domains.txt
     reload: 24h   # 每 24 小时自动重载
 
   # 直连规则：私有 IP、IPv6、中国大陆 IP
@@ -60,7 +60,7 @@ bypasses:
       - 192.168.0.0/16   # RFC 1918
       - ::/0             # 所有 IPv6 直连
     file:
-      path: /data/user/0/cn.liukebin.GostX/files/china_ip_list.txt
+      path: /data/user/0/cn.liukebin.gostx/files/china_ip_list.txt
     reload: 24h   # 每 24 小时自动重载
 
 chains:

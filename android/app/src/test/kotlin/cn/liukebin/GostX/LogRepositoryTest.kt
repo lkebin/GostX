@@ -1,6 +1,6 @@
-package cn.liukebin.GostX
+package cn.liukebin.gostx
 
-import cn.liukebin.GostX.data.LogRepository
+import cn.liukebin.gostx.data.LogRepository
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before

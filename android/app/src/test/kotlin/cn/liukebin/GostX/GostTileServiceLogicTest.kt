@@ -1,12 +1,12 @@
-package cn.liukebin.GostX
+package cn.liukebin.gostx
 
 import android.os.Build
 import android.service.quicksettings.Tile
-import cn.liukebin.GostX.R
-import cn.liukebin.GostX.data.VpnStatus
-import cn.liukebin.GostX.tile.canSetTileSubtitle
-import cn.liukebin.GostX.tile.resolveTileState
-import cn.liukebin.GostX.tile.resolveTileSubtitleRes
+import cn.liukebin.gostx.R
+import cn.liukebin.gostx.data.VpnStatus
+import cn.liukebin.gostx.tile.canSetTileSubtitle
+import cn.liukebin.gostx.tile.resolveTileState
+import cn.liukebin.gostx.tile.resolveTileSubtitleRes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

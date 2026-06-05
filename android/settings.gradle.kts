@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "GostX"
+rootProject.name = "gostx"
 include(":app")

@@ -1,4 +1,4 @@
-package cn.liukebin.GostX.notification
+package cn.liukebin.gostx.notification
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -7,9 +7,9 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
-import cn.liukebin.GostX.MainActivity
-import cn.liukebin.GostX.R
-import cn.liukebin.GostX.service.GostVpnService
+import cn.liukebin.gostx.MainActivity
+import cn.liukebin.gostx.R
+import cn.liukebin.gostx.service.GostVpnService
 
 const val CHANNEL_ID = "gostx_vpn"
 const val NOTIFICATION_ID = 1

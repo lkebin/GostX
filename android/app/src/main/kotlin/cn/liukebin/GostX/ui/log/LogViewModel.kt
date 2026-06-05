@@ -1,4 +1,4 @@
-package cn.liukebin.GostX.ui.log
+package cn.liukebin.gostx.ui.log
 
 import android.app.Application
 import androidx.annotation.MainThread
@@ -6,7 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import cn.liukebin.GostX.data.LogRepository
+import cn.liukebin.gostx.data.LogRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

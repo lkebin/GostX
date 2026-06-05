@@ -1,12 +1,13 @@
-package cn.liukebin.GostX.tile
+package cn.liukebin.gostx.tile
 
+import android.net.VpnService
 import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import cn.liukebin.GostX.R
-import cn.liukebin.GostX.data.GlobalVpnState
-import cn.liukebin.GostX.data.VpnStatus
-import cn.liukebin.GostX.service.GostVpnService
+import cn.liukebin.gostx.R
+import cn.liukebin.gostx.data.GlobalVpnState
+import cn.liukebin.gostx.data.VpnStatus
+import cn.liukebin.gostx.service.GostVpnService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -54,7 +55,15 @@ class GostTileService : TileService() {
         super.onClick()
         when (GlobalVpnState.state.value.status) {
             VpnStatus.CONNECTED -> GostVpnService.stop(applicationContext)
-            VpnStatus.STOPPED -> GostVpnService.start(applicationContext)
+            VpnStatus.STOPPED -> {
+                val intent = VpnService.prepare(applicationContext)
+                if (intent != null) {
+                    @Suppress("DEPRECATION")
+                    startActivityAndCollapse(intent)
+                } else {
+                    GostVpnService.start(applicationContext)
+                }
+            }
             else -> {}
         }
     }

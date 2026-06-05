@@ -1,4 +1,4 @@
-package cn.liukebin.GostX.ui.log
+package cn.liukebin.gostx.ui.log
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -38,7 +38,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cn.liukebin.GostX.R
+import cn.liukebin.gostx.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

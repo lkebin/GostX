@@ -1,4 +1,4 @@
-package cn.liukebin.GostX.ui
+package cn.liukebin.gostx.ui
 
 import android.net.Uri
 

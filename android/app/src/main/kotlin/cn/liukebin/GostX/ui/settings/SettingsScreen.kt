@@ -1,4 +1,4 @@
-package cn.liukebin.GostX.ui.settings
+package cn.liukebin.gostx.ui.settings
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,9 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cn.liukebin.GostX.R
-import cn.liukebin.GostX.data.AppFilterMode
-import cn.liukebin.GostX.data.ConfigRepository
+import cn.liukebin.gostx.R
+import cn.liukebin.gostx.data.AppFilterMode
+import cn.liukebin.gostx.data.ConfigRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

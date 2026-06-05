@@ -1,4 +1,4 @@
-package cn.liukebin.GostX
+package cn.liukebin.gostx
 
 import android.content.SharedPreferences
 

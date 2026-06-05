@@ -1,13 +1,13 @@
-package cn.liukebin.GostX
+package cn.liukebin.gostx
 
-import cn.liukebin.GostX.data.AppFilterMode
-import cn.liukebin.GostX.service.AppFilterConfig
-import cn.liukebin.GostX.service.buildAppFilterConfig
+import cn.liukebin.gostx.data.AppFilterMode
+import cn.liukebin.gostx.service.AppFilterConfig
+import cn.liukebin.gostx.service.buildAppFilterConfig
 import org.junit.Assert.*
 import org.junit.Test
 
 class AppFilterConfigTest {
-    private val SELF = "cn.liukebin.GostX"
+    private val SELF = "cn.liukebin.gostx"
 
     @Test fun `blacklist disallows user packages and self`() {
         val cfg = buildAppFilterConfig(AppFilterMode.BLACKLIST, setOf("com.a", "com.b"), SELF)

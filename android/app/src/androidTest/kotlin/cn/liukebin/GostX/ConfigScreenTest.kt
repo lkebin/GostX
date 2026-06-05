@@ -1,12 +1,12 @@
-package cn.liukebin.GostX
+package cn.liukebin.gostx
 
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.platform.app.InstrumentationRegistry
-import cn.liukebin.GostX.data.ConfigRepository
-import cn.liukebin.GostX.ui.config.ConfigScreen
+import cn.liukebin.gostx.data.ConfigRepository
+import cn.liukebin.gostx.ui.config.ConfigScreen
 import org.junit.Rule
 import org.junit.Test
 

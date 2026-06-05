@@ -7,8 +7,8 @@
 # 输出目录默认为 ~/Downloads/gost-lists
 #
 # 生成文件后，推送到 Android 设备：
-#   adb push <输出目录>/gfwlist_domains.txt /data/user/0/cn.liukebin.GostX/files/
-#   adb push <输出目录>/china_ip_list.txt   /data/user/0/cn.liukebin.GostX/files/
+#   adb push <输出目录>/gfwlist_domains.txt /data/user/0/cn.liukebin.gostx/files/
+#   adb push <输出目录>/china_ip_list.txt   /data/user/0/cn.liukebin.gostx/files/
 
 set -eo pipefail
 
@@ -54,5 +54,5 @@ echo ""
 echo "✅ 完成！"
 echo ""
 echo "推送到 Android 设备（需要 ADB）："
-echo "  adb push \"$OUTPUT_DIR/gfwlist_domains.txt\" /data/user/0/cn.liukebin.GostX/files/"
-echo "  adb push \"$OUTPUT_DIR/china_ip_list.txt\"   /data/user/0/cn.liukebin.GostX/files/"
+echo "  adb push \"$OUTPUT_DIR/gfwlist_domains.txt\" /data/user/0/cn.liukebin.gostx/files/"
+echo "  adb push \"$OUTPUT_DIR/china_ip_list.txt\"   /data/user/0/cn.liukebin.gostx/files/"

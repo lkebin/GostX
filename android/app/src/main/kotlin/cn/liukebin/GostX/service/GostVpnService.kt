@@ -1,4 +1,4 @@
-package cn.liukebin.GostX.service
+package cn.liukebin.gostx.service
 
 import android.content.Context
 import android.content.Intent
@@ -12,13 +12,13 @@ import android.net.VpnService
 import android.os.Build
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
-import cn.liukebin.GostX.data.AppFilterMode
-import cn.liukebin.GostX.data.ConfigRepository
-import cn.liukebin.GostX.data.GlobalVpnState
-import cn.liukebin.GostX.data.LogRepository
-import cn.liukebin.GostX.data.VpnStatus
-import cn.liukebin.GostX.notification.NOTIFICATION_ID
-import cn.liukebin.GostX.notification.NotificationHelper
+import cn.liukebin.gostx.data.AppFilterMode
+import cn.liukebin.gostx.data.ConfigRepository
+import cn.liukebin.gostx.data.GlobalVpnState
+import cn.liukebin.gostx.data.LogRepository
+import cn.liukebin.gostx.data.VpnStatus
+import cn.liukebin.gostx.notification.NOTIFICATION_ID
+import cn.liukebin.gostx.notification.NotificationHelper
 import java.lang.NoSuchMethodException
 import java.lang.reflect.InvocationTargetException
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -45,16 +45,11 @@ internal fun buildAppFilterConfig(
     selfPackage: String
 ): AppFilterConfig = when (mode) {
     AppFilterMode.BLACKLIST -> AppFilterConfig(
-        // Always exclude self: gost's outbound traffic must bypass the TUN
-        // interface to prevent the VPN→gost routing loop
-        // that causes OOM crashes.
         disallowed = filterList + selfPackage,
         allowed = emptySet()
     )
     AppFilterMode.WHITELIST -> AppFilterConfig(
         disallowed = emptySet(),
-        // Always exclude self from the whitelist: adding it would route gost's
-        // outbound traffic back through TUN, recreating the OOM routing loop.
         allowed = filterList - selfPackage
     )
 }
@@ -62,8 +57,8 @@ internal fun buildAppFilterConfig(
 class GostVpnService : VpnService() {
 
     companion object {
-        const val ACTION_START = "cn.liukebin.GostX.START_VPN"
-        const val ACTION_STOP = "cn.liukebin.GostX.STOP_VPN"
+        const val ACTION_START = "cn.liukebin.gostx.START_VPN"
+        const val ACTION_STOP = "cn.liukebin.gostx.STOP_VPN"
 
         fun start(context: Context) {
             context.startForegroundService(Intent(context, GostVpnService::class.java).apply {
@@ -170,7 +165,7 @@ class GostVpnService : VpnService() {
             .addAddress("10.0.0.2", 24)
             .addRoute("0.0.0.0", 0)
             .addDnsServer(if (vpnDnsAddr.isNotEmpty()) vpnDnsAddr else "8.8.8.8")
-            .setSession("GostX")
+            .setSession("gostx")
             .setBlocking(false)
 
         val filterConfig = buildAppFilterConfig(

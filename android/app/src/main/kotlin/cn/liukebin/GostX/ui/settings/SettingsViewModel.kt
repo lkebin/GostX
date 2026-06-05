@@ -1,8 +1,8 @@
-package cn.liukebin.GostX.ui.settings
+package cn.liukebin.gostx.ui.settings
 
 import androidx.lifecycle.ViewModel
-import cn.liukebin.GostX.data.AppFilterMode
-import cn.liukebin.GostX.data.ConfigRepository
+import cn.liukebin.gostx.data.AppFilterMode
+import cn.liukebin.gostx.data.ConfigRepository
 import kotlinx.coroutines.flow.StateFlow
 
 class SettingsViewModel(private val repo: ConfigRepository) : ViewModel() {
