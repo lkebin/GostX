@@ -179,12 +179,6 @@ fun ConfigScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { vm.save() }) {
-                        Icon(Icons.Filled.Save, contentDescription = stringResource(R.string.action_save))
-                    }
-                    IconButton(onClick = { showRenameDialog = true }) {
-                        Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.profile_rename))
-                    }
                     IconButton(
                         onClick = { showDeleteConfirm = true },
                         enabled = state.canDelete
@@ -193,6 +187,12 @@ fun ConfigScreen(
                             Icons.Filled.Delete,
                             contentDescription = stringResource(R.string.action_delete)
                         )
+                    }
+                    IconButton(onClick = { showRenameDialog = true }) {
+                        Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.profile_rename))
+                    }
+                    IconButton(onClick = { vm.save() }) {
+                        Icon(Icons.Filled.Save, contentDescription = stringResource(R.string.action_save))
                     }
                 }
             )
