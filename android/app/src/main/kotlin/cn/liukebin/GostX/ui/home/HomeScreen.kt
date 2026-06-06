@@ -20,10 +20,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -138,18 +136,18 @@ fun HomeScreen(
             TopAppBar(
                 title = { Text("GostX") },
                 actions = {
-                    FilledTonalIconButton(onClick = { showAddDialog = true }) {
+                    IconButton(onClick = { showAddDialog = true }) {
                         Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.profile_add))
                     }
                     if (loggingEnabled) {
-                        FilledTonalIconButton(onClick = onNavigateToLogs) {
+                        IconButton(onClick = onNavigateToLogs) {
                             Icon(
                                 Icons.AutoMirrored.Filled.Article,
                                 contentDescription = stringResource(R.string.nav_log)
                             )
                         }
                     }
-                    FilledTonalIconButton(onClick = onNavigateToSettings) {
+                    IconButton(onClick = onNavigateToSettings) {
                         Icon(
                             Icons.Filled.Settings,
                             contentDescription = stringResource(R.string.nav_settings)
@@ -205,9 +203,9 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(homeState.profiles, key = { it.id }) { profile ->
-                    ElevatedCard(
+                    Card(
                         shape = MaterialTheme.shapes.medium,
-                        colors = CardDefaults.elevatedCardColors(
+                        colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                         ),
                         modifier = Modifier.fillMaxWidth()
