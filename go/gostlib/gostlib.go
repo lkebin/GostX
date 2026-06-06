@@ -7,6 +7,7 @@ import (
 	"math"
 	"net"
 	"os"
+	"runtime"
 	runtimeDebug "runtime/debug"
 	"sync"
 	"sync/atomic"
@@ -94,7 +95,7 @@ const (
 // Cross-service references in YAML (e.g., relay handler → named service) are not supported.
 
 // Start starts gost v3 with the given YAML configuration string.
-func Start(yamlConfig string) error {
+func Start(yamlConfig string) (err error) {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -105,19 +106,30 @@ func Start(yamlConfig string) error {
 		return fmt.Errorf("gost is already running; call Stop() first")
 	}
 
+	logVPN("[debug] Start: unmarshal config")
 	cfg := &config.Config{}
 	if err := yaml.Unmarshal([]byte(yamlConfig), cfg); err != nil {
 		return fmt.Errorf("invalid YAML config: %w", err)
 	}
+	logVPN("[debug] Start: services=%d chains=%d hops=%d bypasses=%d",
+		len(cfg.Services), len(cfg.Chains), len(cfg.Hops), len(cfg.Bypasses))
 	ensureServiceNames(cfg)
 	loadCfg := *cfg
 	loadCfg.Services = nil
+	logVPN("[debug] Start: calling loader.Load")
 	if err := loader.Load(&loadCfg); err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
+	logVPN("[debug] Start: loader.Load done")
 	// loader.Load() calls corelogger.SetDefault() with a *logrusLogger.
 	// Attach our hook now so gost internal logs also appear in the app UI.
 	installLogrusHook()
+	logVPN("[debug] Start: starting services")
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("panic in service startup: %v", r)
+		}
+	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	svcs, err := startServices(ctx, cfg)
@@ -129,6 +141,7 @@ func Start(yamlConfig string) error {
 	cancelFn = cancel
 	services = svcs
 	running = true
+	logVPN("[debug] Start: done")
 	return nil
 }
 
@@ -161,7 +174,15 @@ func detectVPNDNSService(cfg *config.Config) string {
 // The config must contain a service with handler.type=tungo — that service is
 // extracted and skipped (the gVisor stack in StartVPN handles it directly).
 // The chain named in that service is stored so StartVPN can route through it.
-func StartVPNMode(yamlConfig string) error {
+func StartVPNMode(yamlConfig string) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			buf := make([]byte, 4096)
+			n := runtime.Stack(buf, false)
+			err = fmt.Errorf("panic in StartVPNMode: %v\n%s", r, buf[:n])
+		}
+	}()
+
 	cfg := &config.Config{}
 	if err := yaml.Unmarshal([]byte(yamlConfig), cfg); err != nil {
 		return fmt.Errorf("invalid YAML config: %w", err)
@@ -369,6 +390,11 @@ func launchServices(ctx context.Context, svcs []service.Service) {
 		serveWg.Add(1)
 		go func(s service.Service) {
 			defer serveWg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					logVPN("panic in service goroutine: %v", r)
+				}
+			}()
 			_ = s.Serve()
 		}(svc)
 	}
