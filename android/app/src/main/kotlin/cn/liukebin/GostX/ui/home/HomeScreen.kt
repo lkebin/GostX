@@ -136,9 +136,6 @@ fun HomeScreen(
             TopAppBar(
                 title = { Text("GostX") },
                 actions = {
-                    IconButton(onClick = { showAddDialog = true }) {
-                        Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.profile_add))
-                    }
                     if (loggingEnabled) {
                         IconButton(onClick = onNavigateToLogs) {
                             Icon(
@@ -146,6 +143,9 @@ fun HomeScreen(
                                 contentDescription = stringResource(R.string.nav_log)
                             )
                         }
+                    }
+                    IconButton(onClick = { showAddDialog = true }) {
+                        Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.profile_add))
                     }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
