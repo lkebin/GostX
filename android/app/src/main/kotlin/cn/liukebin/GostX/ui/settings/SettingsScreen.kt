@@ -8,9 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -80,90 +79,70 @@ fun SettingsScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Logging toggle card
-            Card(
-                shape = MaterialTheme.shapes.medium,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                modifier = Modifier.fillMaxWidth()
+            // Logging toggle
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.settings_logging_label),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Text(
-                            text = stringResource(R.string.settings_logging_restart_hint),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Spacer(modifier = Modifier.padding(end = 8.dp))
-                    Switch(
-                        checked = loggingEnabled,
-                        onCheckedChange = { vm.setLoggingEnabled(it) }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.settings_logging_label),
+                        style = MaterialTheme.typography.bodyLarge
                     )
+                    Text(
+                        text = stringResource(R.string.settings_logging_restart_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.padding(end = 8.dp))
+                Switch(
+                    checked = loggingEnabled,
+                    onCheckedChange = { vm.setLoggingEnabled(it) }
+                )
+            }
+
+            HorizontalDivider()
+
+            // Per-app proxy section
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.settings_app_filter_label),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_app_filter_count, appFilterList.size),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_app_filter_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                TextButton(onClick = onNavigateToAppFilter) {
+                    Text(stringResource(R.string.settings_app_filter_manage))
                 }
             }
 
-            // Per-app proxy card
-            Card(
-                shape = MaterialTheme.shapes.medium,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.settings_app_filter_label),
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                            Text(
-                                text = stringResource(R.string.settings_app_filter_count, appFilterList.size),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = stringResource(R.string.settings_app_filter_hint),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        TextButton(onClick = onNavigateToAppFilter) {
-                            Text(stringResource(R.string.settings_app_filter_manage))
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.padding(vertical = 8.dp))
-
-                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                        SegmentedButton(
-                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                            onClick = { vm.setAppFilterMode(AppFilterMode.BLACKLIST) },
-                            selected = appFilterMode == AppFilterMode.BLACKLIST,
-                            label = { Text(stringResource(R.string.settings_app_filter_mode_blacklist)) }
-                        )
-                        SegmentedButton(
-                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                            onClick = { vm.setAppFilterMode(AppFilterMode.WHITELIST) },
-                            selected = appFilterMode == AppFilterMode.WHITELIST,
-                            label = { Text(stringResource(R.string.settings_app_filter_mode_whitelist)) }
-                        )
-                    }
-                }
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                SegmentedButton(
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                    onClick = { vm.setAppFilterMode(AppFilterMode.BLACKLIST) },
+                    selected = appFilterMode == AppFilterMode.BLACKLIST,
+                    label = { Text(stringResource(R.string.settings_app_filter_mode_blacklist)) }
+                )
+                SegmentedButton(
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                    onClick = { vm.setAppFilterMode(AppFilterMode.WHITELIST) },
+                    selected = appFilterMode == AppFilterMode.WHITELIST,
+                    label = { Text(stringResource(R.string.settings_app_filter_mode_whitelist)) }
+                )
             }
         }
     }
