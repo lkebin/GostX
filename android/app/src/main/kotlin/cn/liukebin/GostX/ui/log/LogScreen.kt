@@ -112,17 +112,17 @@ fun LogScreen(
                 )
             }
         } else {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                items(lines) { line ->
-                    SelectionContainer {
+            SelectionContainer {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(horizontal = 16.dp),
+                    contentPadding = PaddingValues(vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    items(lines) { line ->
                         Text(
                             line,
                             fontFamily = FontFamily.Monospace,
