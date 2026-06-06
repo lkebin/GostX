@@ -21,6 +21,7 @@ type vpnLogHook struct{}
 
 func (h *vpnLogHook) Levels() []logrus.Level {
 	return []logrus.Level{
+		logrus.DebugLevel,
 		logrus.InfoLevel,
 		logrus.WarnLevel,
 		logrus.ErrorLevel,

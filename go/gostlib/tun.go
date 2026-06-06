@@ -153,6 +153,11 @@ type gostTransportHandler struct {
 func (h *gostTransportHandler) HandleTCP(conn adapter.TCPConn) {
 	go func() {
 		defer conn.Close()
+		defer func() {
+			if r := recover(); r != nil {
+				logVPN("[tcp] panic: %v", r)
+			}
+		}()
 
 		id := conn.ID()
 		dst := net.JoinHostPort(id.LocalAddress.String(), strconv.Itoa(int(id.LocalPort)))
@@ -184,6 +189,11 @@ func (h *gostTransportHandler) HandleTCP(conn adapter.TCPConn) {
 func (h *gostTransportHandler) HandleUDP(conn adapter.UDPConn) {
 	go func() {
 		defer conn.Close()
+		defer func() {
+			if r := recover(); r != nil {
+				logVPN("[udp] panic: %v", r)
+			}
+		}()
 
 		id := conn.ID()
 		dst := net.JoinHostPort(id.LocalAddress.String(), strconv.Itoa(int(id.LocalPort)))
