@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.FilterAlt
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -104,7 +105,14 @@ fun SettingsScreen(
                 icon = Icons.Outlined.FilterAlt,
                 title = stringResource(R.string.settings_app_filter_label),
                 description = stringResource(R.string.settings_app_filter_hint),
-                onClick = onNavigateToAppFilter
+                onClick = onNavigateToAppFilter,
+                trailing = {
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = stringResource(R.string.nav_config),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             )
 
             Row(
