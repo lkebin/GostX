@@ -121,6 +121,8 @@ fun ConfigScreen(
             showSaved = true
             kotlinx.coroutines.delay(2000)
             showSaved = false
+        } else {
+            showSaved = false
         }
     }
 
