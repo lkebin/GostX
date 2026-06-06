@@ -163,8 +163,16 @@ fun HomeScreen(
                 },
                 modifier = Modifier.size(72.dp),
                 shape = CircleShape,
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                containerColor = when (vpnState.status) {
+                    VpnStatus.CONNECTED -> MaterialTheme.colorScheme.primary
+                    VpnStatus.ERROR -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.primaryContainer
+                },
+                contentColor = when (vpnState.status) {
+                    VpnStatus.CONNECTED -> MaterialTheme.colorScheme.onPrimary
+                    VpnStatus.ERROR -> MaterialTheme.colorScheme.onError
+                    else -> MaterialTheme.colorScheme.onPrimaryContainer
+                }
             ) {
                 if (isTransitioning) {
                     CircularProgressIndicator(
