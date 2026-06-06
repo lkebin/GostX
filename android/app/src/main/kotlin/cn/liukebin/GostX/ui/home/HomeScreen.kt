@@ -20,10 +20,11 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -33,7 +34,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -138,18 +138,18 @@ fun HomeScreen(
             TopAppBar(
                 title = { Text("GostX") },
                 actions = {
-                    IconButton(onClick = { showAddDialog = true }) {
+                    FilledTonalIconButton(onClick = { showAddDialog = true }) {
                         Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.profile_add))
                     }
                     if (loggingEnabled) {
-                        IconButton(onClick = onNavigateToLogs) {
+                        FilledTonalIconButton(onClick = onNavigateToLogs) {
                             Icon(
                                 Icons.AutoMirrored.Filled.Article,
                                 contentDescription = stringResource(R.string.nav_log)
                             )
                         }
                     }
-                    IconButton(onClick = onNavigateToSettings) {
+                    FilledTonalIconButton(onClick = onNavigateToSettings) {
                         Icon(
                             Icons.Filled.Settings,
                             contentDescription = stringResource(R.string.nav_settings)
@@ -165,11 +165,8 @@ fun HomeScreen(
                 },
                 modifier = Modifier.size(72.dp),
                 shape = CircleShape,
-                containerColor = when (vpnState.status) {
-                    VpnStatus.CONNECTED -> MaterialTheme.colorScheme.primary
-                    VpnStatus.ERROR -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.primaryContainer
-                }
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ) {
                 if (isTransitioning) {
                     CircularProgressIndicator(
@@ -204,13 +201,17 @@ fun HomeScreen(
                     onDismiss = { vm.dismissBatteryOptimizationPrompt() }
                 )
             }
-            Surface(
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                modifier = Modifier.fillMaxWidth()
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                LazyColumn {
-                    items(homeState.profiles, key = { it.id }) { profile ->
+                items(homeState.profiles, key = { it.id }) { profile ->
+                    ElevatedCard(
+                        shape = MaterialTheme.shapes.medium,
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         ProfileListItem(
                             profile = profile,
                             isActive = profile.id == homeState.activeProfileId,
@@ -218,9 +219,6 @@ fun HomeScreen(
                             onActivate = { vm.setActiveProfile(profile.id) },
                             onEdit = { onNavigateToConfigEdit(profile.id) }
                         )
-                        if (profile.id != homeState.profiles.last().id) {
-                            HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
-                        }
                     }
                 }
             }
