@@ -1,5 +1,8 @@
 package cn.liukebin.gostx.ui.config
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -103,6 +106,7 @@ fun ConfigScreen(
     val state by vm.uiState.collectAsState()
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
+    var showSaved by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         vm.navBack.collect { onBack() }
@@ -110,6 +114,14 @@ fun ConfigScreen(
 
     LaunchedEffect(state.canDelete) {
         if (!state.canDelete) showDeleteConfirm = false
+    }
+
+    LaunchedEffect(state.isSaved) {
+        if (state.isSaved) {
+            showSaved = true
+            kotlinx.coroutines.delay(2000)
+            showSaved = false
+        }
     }
 
     if (state.validationError != null) {
@@ -198,15 +210,22 @@ fun ConfigScreen(
                     .fillMaxWidth()
                     .weight(1f),
                 textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp),
+                minLines = 10,
             )
 
-            if (state.isSaved) {
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    stringResource(R.string.config_saved),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodySmall
-                )
+            AnimatedVisibility(
+                visible = showSaved,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Column {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        stringResource(R.string.config_saved),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
         }
     }
