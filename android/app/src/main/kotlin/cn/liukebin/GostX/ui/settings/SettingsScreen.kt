@@ -1,5 +1,6 @@
 package cn.liukebin.gostx.ui.settings
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -7,10 +8,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -62,7 +64,7 @@ fun SettingsScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    FilledTonalIconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.nav_back)
@@ -75,72 +77,93 @@ fun SettingsScreen(
         Column(
             modifier = Modifier
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Logging toggle
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+            // Logging toggle card
+            ElevatedCard(
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.settings_logging_label),
-                        style = MaterialTheme.typography.bodyLarge
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.settings_logging_label),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = stringResource(R.string.settings_logging_restart_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(modifier = Modifier.padding(end = 8.dp))
+                    Switch(
+                        checked = loggingEnabled,
+                        onCheckedChange = { vm.setLoggingEnabled(it) }
                     )
-                    Text(
-                        text = stringResource(R.string.settings_logging_restart_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Spacer(modifier = Modifier.padding(end = 8.dp))
-                Switch(
-                    checked = loggingEnabled,
-                    onCheckedChange = { vm.setLoggingEnabled(it) }
-                )
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-            // Per-app proxy section
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.settings_app_filter_label),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        text = stringResource(R.string.settings_app_filter_count, appFilterList.size),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = stringResource(R.string.settings_app_filter_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                TextButton(onClick = onNavigateToAppFilter) {
-                    Text(stringResource(R.string.settings_app_filter_manage))
                 }
             }
 
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                    onClick = { vm.setAppFilterMode(AppFilterMode.BLACKLIST) },
-                    selected = appFilterMode == AppFilterMode.BLACKLIST,
-                    label = { Text(stringResource(R.string.settings_app_filter_mode_blacklist)) }
-                )
-                SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                    onClick = { vm.setAppFilterMode(AppFilterMode.WHITELIST) },
-                    selected = appFilterMode == AppFilterMode.WHITELIST,
-                    label = { Text(stringResource(R.string.settings_app_filter_mode_whitelist)) }
-                )
+            // Per-app proxy card
+            ElevatedCard(
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.settings_app_filter_label),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Text(
+                                text = stringResource(R.string.settings_app_filter_count, appFilterList.size),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = stringResource(R.string.settings_app_filter_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        TextButton(onClick = onNavigateToAppFilter) {
+                            Text(stringResource(R.string.settings_app_filter_manage))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.padding(vertical = 8.dp))
+
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        SegmentedButton(
+                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                            onClick = { vm.setAppFilterMode(AppFilterMode.BLACKLIST) },
+                            selected = appFilterMode == AppFilterMode.BLACKLIST,
+                            label = { Text(stringResource(R.string.settings_app_filter_mode_blacklist)) }
+                        )
+                        SegmentedButton(
+                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                            onClick = { vm.setAppFilterMode(AppFilterMode.WHITELIST) },
+                            selected = appFilterMode == AppFilterMode.WHITELIST,
+                            label = { Text(stringResource(R.string.settings_app_filter_mode_whitelist)) }
+                        )
+                    }
+                }
             }
         }
     }
