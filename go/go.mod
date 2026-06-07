@@ -86,12 +86,6 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )
 
-// Monolithic google.golang.org/genproto is in the module graph (via spf13/viper → go-gost/x)
-// but its zip is too large to download in restricted network environments.
-// We replace it with a local stub; actual googleapis/rpc packages are served by the
-// split module google.golang.org/genproto/googleapis/rpc which has the correct longer prefix.
-replace google.golang.org/genproto => ./fakepkg/google.golang.org/genproto
-
-replace github.com/go-gost/x => /Users/kbliu/Workspace/src/gost-x
-
 tool golang.org/x/mobile/cmd/gobind
+
+replace github.com/go-gost/x => github.com/lkebin/go-gost-x v0.0.0-20260607122541-f945e53fd2cb
