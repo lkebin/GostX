@@ -87,4 +87,24 @@
     <string name="app_filter_action_done">完成</string>
     <string name="app_filter_whitelist_empty_hint">白名单模式至少选择一个应用</string>
     <string name="app_filter_show_all">Show all apps</string>
+
+    <!-- File management -->
+    <string name="file_manage_title">文件管理</string>
+    <string name="file_manage_empty">暂无文件，点击右下角导入</string>
+    <string name="file_import">导入</string>
+    <string name="file_rename">重命名</string>
+    <string name="file_rename_title">重命名文件</string>
+    <string name="file_delete">删除</string>
+    <string name="file_delete_confirm_title">删除文件</string>
+    <string name="file_delete_confirm_message">确定要删除 \"%s\" 吗？</string>
+    <string name="file_copy_path">复制路径</string>
+    <string name="file_copy_path_done">已复制到剪贴板</string>
+    <string name="file_name_label">文件名</string>
+    <string name="file_name_exists">文件名已存在</string>
+    <string name="file_name_invalid">文件名不能为空或包含非法字符</string>
+    <string name="file_import_failed_not_found">导入失败：找不到文件</string>
+    <string name="file_import_failed">导入失败：%s</string>
+    <string name="file_overwrite_title">文件已存在</string>
+    <string name="file_overwrite_message">文件 \"%s\" 已存在，覆盖？</string>
+    <string name="file_overwrite_confirm">覆盖</string>
 </resources>
