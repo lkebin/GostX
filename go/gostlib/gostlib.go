@@ -11,13 +11,13 @@ import (
 	runtimeDebug "runtime/debug"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/go-gost/core/service"
 	"github.com/go-gost/x/config"
 	"github.com/go-gost/x/config/loader"
 	serviceparser "github.com/go-gost/x/config/parsing/service"
 	"github.com/go-gost/x/registry"
+	"github.com/sirupsen/logrus"
 
 	_ "github.com/go-gost/x/connector/direct"
 	_ "github.com/go-gost/x/connector/http"
@@ -70,9 +70,9 @@ var (
 	serveWg  sync.WaitGroup
 
 	// vpnChainName is the gost chain name extracted from the tungo service in
-	// the user's config. StartVPN uses this to route gVisor TCP/UDP sessions
+	// the user's config. StartTun uses this to route gVisor TCP/UDP sessions
 	// directly through the chain, with no extra proxy listening port.
-	// Empty string means no tungo service found; StartVPNMode returns an error.
+	// Empty string means no tungo service found; StartGost returns an error.
 	vpnChainName string
 
 	// vpnDNSServiceAddr is the normalised listen address of the first DNS service
@@ -103,28 +103,28 @@ func Start(yamlConfig string) (err error) {
 		stateCond.Wait()
 	}
 	if running {
-		return fmt.Errorf("gost is already running; call Stop() first")
+		return fmt.Errorf("gost is already running; call StopGost() first")
 	}
 
-	logVPN("[debug] Start: unmarshal config")
+	logrus.Debug("Start: unmarshal config")
 	cfg := &config.Config{}
 	if err := yaml.Unmarshal([]byte(yamlConfig), cfg); err != nil {
 		return fmt.Errorf("invalid YAML config: %w", err)
 	}
-	logVPN("[debug] Start: services=%d chains=%d hops=%d bypasses=%d",
+	logrus.Debugf("Start: services=%d chains=%d hops=%d bypasses=%d",
 		len(cfg.Services), len(cfg.Chains), len(cfg.Hops), len(cfg.Bypasses))
 	ensureServiceNames(cfg)
 	loadCfg := *cfg
 	loadCfg.Services = nil
-	logVPN("[debug] Start: calling loader.Load")
+	logrus.Debug("Start: calling loader.Load")
 	if err := loader.Load(&loadCfg); err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
-	logVPN("[debug] Start: loader.Load done")
+	logrus.Debug("Start: loader.Load done")
 	// loader.Load() calls corelogger.SetDefault() with a *logrusLogger.
 	// Attach our hook now so gost internal logs also appear in the app UI.
 	installLogrusHook()
-	logVPN("[debug] Start: starting services")
+	logrus.Debug("Start: starting services")
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("panic in service startup: %v", r)
@@ -141,7 +141,7 @@ func Start(yamlConfig string) (err error) {
 	cancelFn = cancel
 	services = svcs
 	running = true
-	logVPN("[debug] Start: done")
+	logrus.Debug("Start: done")
 	return nil
 }
 
@@ -169,17 +169,16 @@ func detectVPNDNSService(cfg *config.Config) string {
 	return ""
 }
 
-// StartVPNMode starts gost for VPN mode.
-//
-// The config must contain a service with handler.type=tungo — that service is
-// extracted and skipped (the gVisor stack in StartVPN handles it directly).
-// The chain named in that service is stored so StartVPN can route through it.
-func StartVPNMode(yamlConfig string) (err error) {
+// StartGost parses the YAML config, loads chains/hops/bypasses into the gost
+// registry, and starts service listeners (DNS, proxy, etc.). For VPN mode the
+// config must also contain a tungo service — its chain name is stored so
+// StartTun can route gVisor traffic through it later.
+func StartGost(yamlConfig string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			buf := make([]byte, 4096)
 			n := runtime.Stack(buf, false)
-			err = fmt.Errorf("panic in StartVPNMode: %v\n%s", r, buf[:n])
+			err = fmt.Errorf("panic in StartGost: %v\n%s", r, buf[:n])
 		}
 	}()
 
@@ -208,7 +207,7 @@ func StartVPNMode(yamlConfig string) (err error) {
 }
 
 // extractTungoService scans cfg for a service whose handler type is "tungo",
-// removes it from the services list (we handle it via gVisor in StartVPN),
+// removes it from the services list (we handle it via gVisor in StartTun),
 // and returns its chain name plus the filtered config.
 func extractTungoService(cfg *config.Config) (chainName string, filtered *config.Config) {
 	filtered = new(config.Config)
@@ -228,7 +227,7 @@ func extractTungoService(cfg *config.Config) (chainName string, filtered *config
 }
 
 // Stop stops all running gost services.
-func Stop() error {
+func StopGost() error {
 	mu.Lock()
 	if !running {
 		for stopping {
@@ -240,6 +239,7 @@ func Stop() error {
 
 	stopping = true
 	running = false
+	svcs := services // save before nil'ing; Close them below to free ports
 	services = nil
 	cancel := cancelFn
 	cancelFn = nil
@@ -247,18 +247,12 @@ func Stop() error {
 
 	cancel() // guaranteed non-nil: cancelFn is always set before running=true
 
-	// Wait for service goroutines with a timeout. Some service implementations
-	// wait for active connections to drain inside Close(), which can take
-	// arbitrarily long. The 5-second cap ensures Stop() always returns so the
-	// next Start() is never blocked indefinitely on stateCond.Wait().
-	waitDone := make(chan struct{})
-	go func() {
-		serveWg.Wait()
-		close(waitDone)
-	}()
-	select {
-	case <-waitDone:
-	case <-time.After(5 * time.Second):
+	// Close services synchronously so the DNS UDP port is freed before the
+	// next Start() can try to bind to it. The context-cancellation goroutines
+	// in launchServices also call Close() — service implementations must be
+	// idempotent on Close().
+	for _, s := range svcs {
+		_ = s.Close()
 	}
 
 	mu.Lock()
@@ -354,9 +348,9 @@ func GetStatus() string {
 	b, _ := json.Marshal(map[string]any{
 		"running":     running,
 		"addresses":   addrs,
-		"tcpConns":    atomic.LoadInt64(&vpnTCPConns),
-		"udpConns":    atomic.LoadInt64(&vpnUDPConns),
-		"failedConns": atomic.LoadInt64(&vpnFailedConns),
+		"tcpConns":    atomic.LoadInt64(&tcpConns),
+		"udpConns":    atomic.LoadInt64(&udpConns),
+		"failedConns": atomic.LoadInt64(&failedConns),
 	})
 	return string(b)
 }
@@ -392,7 +386,7 @@ func launchServices(ctx context.Context, svcs []service.Service) {
 			defer serveWg.Done()
 			defer func() {
 				if r := recover(); r != nil {
-					logVPN("panic in service goroutine: %v", r)
+					logrus.Errorf("panic in service goroutine: %v", r)
 				}
 			}()
 			_ = s.Serve()

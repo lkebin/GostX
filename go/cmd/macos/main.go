@@ -29,7 +29,7 @@ func gostRunYaml(yaml *C.char, fd *C.long) C.int {
 
 //export gostStop
 func gostStop() C.int {
-	gostlib.Stop()
+	gostlib.StopGost()
 	return 0
 }
 

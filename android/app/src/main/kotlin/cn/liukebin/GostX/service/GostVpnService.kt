@@ -21,6 +21,7 @@ import cn.liukebin.gostx.notification.NOTIFICATION_ID
 import cn.liukebin.gostx.notification.NotificationHelper
 import java.lang.NoSuchMethodException
 import java.lang.reflect.InvocationTargetException
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,25 +35,16 @@ internal fun shouldRestartVpnOnNetworkAvailable(
     restartInProgress: Boolean
 ): Boolean = status == VpnStatus.CONNECTED && !isVpnNetwork && !restartInProgress
 
-internal data class AppFilterConfig(
-    val disallowed: Set<String>,
-    val allowed: Set<String>
-)
+// Reject a new ACTION_START when the VPN is already connected or connecting.
+// Prevents overlapping startVpn() coroutines from a double-tap on the start button.
+internal fun shouldAcceptStartAction(status: VpnStatus): Boolean =
+    status != VpnStatus.CONNECTED && status != VpnStatus.CONNECTING
 
-internal fun buildAppFilterConfig(
-    mode: AppFilterMode,
-    filterList: Set<String>,
-    selfPackage: String
-): AppFilterConfig = when (mode) {
-    AppFilterMode.BLACKLIST -> AppFilterConfig(
-        disallowed = filterList + selfPackage,
-        allowed = emptySet()
-    )
-    AppFilterMode.WHITELIST -> AppFilterConfig(
-        disallowed = emptySet(),
-        allowed = filterList - selfPackage
-    )
-}
+// After stopVpn(updatePersistentState=false) the state is CONNECTING. If a
+// concurrent manual stop changed it to anything else, the network restart
+// must abort — otherwise it would resurrect the VPN after the user stopped it.
+internal fun shouldProceedWithRestart(status: VpnStatus): Boolean =
+    status == VpnStatus.CONNECTING
 
 class GostVpnService : VpnService() {
 
@@ -82,7 +74,8 @@ class GostVpnService : VpnService() {
     private var tunFd: ParcelFileDescriptor? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private lateinit var configRepo: ConfigRepository
-    @Volatile private var reconnectInProgress = false
+    private val reconnectInProgress = AtomicBoolean(false)
+    private val startInProgress = AtomicBoolean(false)
     // Timestamp (ms) of the last successful VPN connect. Suppresses onAvailable
     // restarts for RECONNECT_COOLDOWN_MS after each connect because Android fires
     // onAvailable for all existing non-VPN networks whenever VPN routing changes,
@@ -111,9 +104,15 @@ class GostVpnService : VpnService() {
             promoteToForeground("")
         }
         when (intent?.action) {
-            ACTION_START -> scope.launch {
-                LogRepository.deleteLog()
-                startVpn()
+            ACTION_START -> {
+                if (!shouldAcceptStartAction(GlobalVpnState.state.value.status)) {
+                    log("Ignoring duplicate START: status=${GlobalVpnState.state.value.status}")
+                    return START_STICKY
+                }
+                scope.launch {
+                    LogRepository.deleteLog()
+                    startVpn()
+                }
             }
             ACTION_STOP -> scope.launch {
                 stopVpn()
@@ -136,104 +135,123 @@ class GostVpnService : VpnService() {
     }
 
     private fun startVpn() {
-        GlobalVpnState.setConnecting()
-        // startForeground already called synchronously in onStartCommand
-
-        val yaml = configRepo.getActiveConfig()
-
-        val loggingOn = configRepo.loggingEnabled
-        GostLibBridge.setLoggingEnabled(loggingOn)
-        if (loggingOn) {
-            GostLibBridge.setLogFile(LogRepository.getLogFile().absolutePath)
-                .onFailure { log("WARNING: setLogFile failed: ${it.message}") }
-        }
-
-        val vpnDnsAddr: String
-        try {
-            log("[start] loading config and starting gost...")
-            GostLibBridge.startVPNMode(yaml)
-            vpnDnsAddr = GostLibBridge.getVpnDnsAddr()
-            log("[start] gost ready")
-        } catch (e: Exception) {
-            log("gost start failed: ${e.message}")
-            GlobalVpnState.setError("gost 启动失败: ${e.message}")
-            stopSelf()
+        if (!startInProgress.compareAndSet(false, true)) {
+            log("startVpn already in progress, ignoring")
             return
         }
-        val builder = Builder()
-            .setMtu(1500)
-            .addAddress("10.0.0.2", 24)
-            .addRoute("0.0.0.0", 0)
-            .addDnsServer(if (vpnDnsAddr.isNotEmpty()) vpnDnsAddr else "8.8.8.8")
-            .setSession("gostx")
-            .setBlocking(false)
+        try {
+            GlobalVpnState.setConnecting()
+            // startForeground already called synchronously in onStartCommand
 
-        val filterConfig = buildAppFilterConfig(
-            mode = configRepo.appFilterMode,
-            filterList = configRepo.appFilterList,
-            selfPackage = packageName
-        )
-        val stalePackages = mutableSetOf<String>()
-        filterConfig.disallowed.forEach { pkg ->
-            try {
-                builder.addDisallowedApplication(pkg)
-            } catch (e: PackageManager.NameNotFoundException) {
-                if (pkg != packageName) stalePackages += pkg
-                log("Skipping uninstalled package: $pkg")
+            val yaml = configRepo.getActiveConfig()
+
+            val logLevel = configRepo.logLevel
+            GostLibBridge.setLogLevel(logLevel)
+            if (logLevel != "off") {
+                GostLibBridge.setLogFile(LogRepository.getLogFile().absolutePath)
+                    .onFailure { log("WARNING: setLogFile failed: ${it.message}") }
             }
-        }
-        filterConfig.allowed.forEach { pkg ->
+
+            val vpnDnsAddr: String
             try {
-                builder.addAllowedApplication(pkg)
-            } catch (e: PackageManager.NameNotFoundException) {
-                stalePackages += pkg
-                log("Removing uninstalled package from list: $pkg")
+                log("[start] loading config and starting gost...")
+                GostLibBridge.startGost(yaml)
+                vpnDnsAddr = GostLibBridge.getVpnDnsAddr()
+                log("[start] gost ready")
+            } catch (e: Exception) {
+                log("gost start failed: ${e.message}")
+                GlobalVpnState.setError("gost 启动失败: ${e.message}")
+                stopSelf()
+                return
             }
-        }
-        if (stalePackages.isNotEmpty()) {
-            configRepo.appFilterList = configRepo.appFilterList - stalePackages
-        }
+            val builder = Builder()
+                .setMtu(1500)
+                .addAddress("10.0.0.2", 24)
+                .addRoute("0.0.0.0", 0)
+                .addDnsServer(if (vpnDnsAddr.isNotEmpty()) vpnDnsAddr else "8.8.8.8")
+                .setSession("gostx")
+                .setBlocking(false)
 
-        log("[start] establishing VPN interface...")
-        tunFd = builder.establish() ?: run {
-            log("Failed to establish VPN interface")
-            GlobalVpnState.setError("VPN 接口建立失败，请先授予 VPN 权限")
-            GostLibBridge.stop()
-            stopSelf()
-            return
-        }
-        log("[start] VPN interface ready")
+            // Android VPN API forbids mixing addDisallowedApplication and
+            // addAllowedApplication on the same builder. Handle three cases:
+            //
+            // 1. App filter OFF      → disallow self only (so gost can reach proxy)
+            // 2. BLACKLIST           → disallow self + user-selected packages
+            // 3. WHITELIST           → allow only user-selected packages (excludes self)
+            val stalePackages = mutableSetOf<String>()
+            when {
+                !configRepo.appFilterEnabled -> {
+                    try { builder.addDisallowedApplication(packageName) }
+                        catch (_: PackageManager.NameNotFoundException) {}
+                }
+                configRepo.appFilterMode == AppFilterMode.BLACKLIST -> {
+                    try { builder.addDisallowedApplication(packageName) }
+                        catch (_: PackageManager.NameNotFoundException) {}
+                    configRepo.appFilterList.forEach { pkg ->
+                        if (pkg == packageName) return@forEach
+                        try { builder.addDisallowedApplication(pkg) }
+                            catch (_: PackageManager.NameNotFoundException) {
+                                stalePackages += pkg
+                            }
+                    }
+                }
+                configRepo.appFilterMode == AppFilterMode.WHITELIST -> {
+                    configRepo.appFilterList.forEach { pkg ->
+                        if (pkg == packageName) return@forEach
+                        try { builder.addAllowedApplication(pkg) }
+                            catch (_: PackageManager.NameNotFoundException) {
+                                stalePackages += pkg
+                            }
+                    }
+                }
+            }
+            if (stalePackages.isNotEmpty()) {
+                configRepo.appFilterList = configRepo.appFilterList - stalePackages
+            }
 
-        try {
-            log("[start] starting VPN...")
-            GostLibBridge.startVPN(tunFd!!.fd.toLong(), 1500L)
-        } catch (e: Exception) {
-            log("VPN start failed: ${e.message}")
-            GlobalVpnState.setError("VPN 启动失败: ${e.message}")
-            closeTun()
-            GostLibBridge.stop()
-            stopSelf()
-            return
-        }
+            log("[start] establishing VPN interface...")
+            tunFd = builder.establish() ?: run {
+                log("Failed to establish VPN interface")
+                GlobalVpnState.setError("VPN 接口建立失败，请先授予 VPN 权限")
+                GostLibBridge.stopGost()
+                stopSelf()
+                return
+            }
+            log("[start] VPN interface ready")
 
-        try {
-            val status = GostLibBridge.getStatus()
-            val addr = parseFirstAddress(status)
-            GlobalVpnState.setConnected(addr)
-            lastVpnConnectTime = System.currentTimeMillis()
-            promoteToForeground(addr)  // update notification with actual listen address
-            log("[start] VPN connected, addr: $addr")
-            registerNetworkCallback()
-            saveLastRunState(true)
-            GostLibBridge.setMemoryLimit(true)
-        } catch (e: Exception) {
-            log("VPN post-start error: ${e.message}")
-            GlobalVpnState.setError("VPN 启动后错误: ${e.message}")
-            GostLibBridge.setMemoryLimit(false)
-            closeTun()
-            GostLibBridge.stopVPN()
-            GostLibBridge.stop()
-            stopSelf()
+            try {
+                log("[start] starting VPN...")
+                GostLibBridge.startTun(tunFd!!.fd.toLong(), 1500L)
+            } catch (e: Exception) {
+                log("VPN start failed: ${e.message}")
+                GlobalVpnState.setError("VPN 启动失败: ${e.message}")
+                closeTun()
+                GostLibBridge.stopGost()
+                stopSelf()
+                return
+            }
+
+            try {
+                val status = GostLibBridge.getStatus()
+                val addr = parseFirstAddress(status)
+                GlobalVpnState.setConnected(addr)
+                lastVpnConnectTime = System.currentTimeMillis()
+                promoteToForeground(addr)  // update notification with actual listen address
+                log("[start] VPN connected, addr: $addr")
+                registerNetworkCallback()
+                saveLastRunState(true)
+                GostLibBridge.setMemoryLimit(true)
+            } catch (e: Exception) {
+                log("VPN post-start error: ${e.message}")
+                GlobalVpnState.setError("VPN 启动后错误: ${e.message}")
+                GostLibBridge.setMemoryLimit(false)
+                closeTun()
+                GostLibBridge.stopTun()
+                GostLibBridge.stopGost()
+                stopSelf()
+            }
+        } finally {
+            startInProgress.set(false)
         }
     }
 
@@ -252,9 +270,9 @@ class GostVpnService : VpnService() {
         // the previous Go shutdown is still in progress.
         GostLibBridge.setMemoryLimit(false)
         log("[stop] stopping VPN...")
-        GostLibBridge.stopVPN()
+        GostLibBridge.stopTun()
         log("[stop] stopping gost...")
-        GostLibBridge.stop()
+        GostLibBridge.stopGost()
 
         if (updatePersistentState) {
             GlobalVpnState.setStopped()
@@ -306,15 +324,18 @@ class GostVpnService : VpnService() {
                 if (cooldownExpired && shouldRestartVpnOnNetworkAvailable(
                         status = GlobalVpnState.state.value.status,
                         isVpnNetwork = isVpnNetwork,
-                        restartInProgress = reconnectInProgress
-                    )) {
-                    reconnectInProgress = true
+                        restartInProgress = reconnectInProgress.get()
+                    ) && reconnectInProgress.compareAndSet(false, true)) {
                     scope.launch {
                         try {
                             stopVpn(updatePersistentState = false)
+                            if (!shouldProceedWithRestart(GlobalVpnState.state.value.status)) {
+                                log("Aborting restart: state changed to ${GlobalVpnState.state.value.status}")
+                                return@launch
+                            }
                             startVpn()
                         } finally {
-                            reconnectInProgress = false
+                            reconnectInProgress.set(false)
                         }
                     }
                 }
@@ -338,6 +359,13 @@ class GostVpnService : VpnService() {
     }
 
     override fun onDestroy() {
+        // Release all Go resources synchronously. When the service is destroyed
+        // without going through stopVpn() (e.g. coroutine exception → stopSelf()),
+        // the Go DNS listener and gVisor stack would otherwise continue holding
+        // their ports, causing "address already in use" on the next Start().
+        closeTun()
+        GostLibBridge.stopTun()
+        GostLibBridge.stopGost()
         scope.cancel()
         super.onDestroy()
     }
@@ -372,20 +400,20 @@ internal object GostLibBridge {
         }
     }
 
-    fun startVPNMode(yaml: String) {
-        invoke("startVPNMode", yaml)
+    fun startGost(yaml: String) {
+        invoke("startGost", yaml)
     }
 
-    fun startVPN(fd: Long, mtu: Long) {
-        invoke("startVPN", fd, mtu)
+    fun startTun(fd: Long, mtu: Long) {
+        invoke("startTun", fd, mtu)
     }
 
-    fun stopVPN() {
-        runCatching { invoke("stopVPN") }
+    fun stopTun() {
+        runCatching { invoke("stopTun") }
     }
 
-    fun stop() {
-        runCatching { invoke("stop") }
+    fun stopGost() {
+        runCatching { invoke("stopGost") }
     }
 
     fun getStatus(): String = invoke("getStatus") as? String ?: ""
@@ -406,5 +434,9 @@ internal object GostLibBridge {
 
     fun setLoggingEnabled(enabled: Boolean) {
         runCatching { invoke("setLoggingEnabled", enabled) }
+    }
+
+    fun setLogLevel(level: String) {
+        runCatching { invoke("setLogLevel", level) }
     }
 }

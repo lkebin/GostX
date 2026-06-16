@@ -72,6 +72,12 @@
     <string name="settings_title">设置</string>
     <string name="settings_logging_label">日志记录</string>
     <string name="settings_logging_restart_hint">关闭后需重启 VPN 生效</string>
+    <string name="settings_log_level_label">日志级别</string>
+    <string name="settings_log_level_error">错误</string>
+    <string name="settings_log_level_warn">警告</string>
+    <string name="settings_log_level_info">信息</string>
+    <string name="settings_log_level_debug">调试</string>
+    <string name="settings_log_level_trace">追踪</string>
 
     <!-- Per-app proxy (settings entry) -->
     <string name="settings_app_filter_label">分应用代理</string>

@@ -19,6 +19,7 @@ import (
 	gostchain "github.com/go-gost/core/chain"
 	xchain "github.com/go-gost/x/chain"
 	"github.com/go-gost/x/registry"
+	"github.com/sirupsen/logrus"
 
 	// gVisor stack creation
 	"github.com/xjasonlyu/tun2socks/v2/core"
@@ -31,22 +32,23 @@ var (
 
 	// tungo (gVisor) path state
 	tunStack *stack.Stack
-	tunDupFd int // dup'd fd owned by the gVisor endpoint; closed on StopVPN
+	tunDupFd int // dup'd fd owned by the gVisor endpoint; closed on StopTun
+
+	// Connection counters; read by GetStatus().
+	tcpConns    int64
+	udpConns    int64
+	failedConns int64
 )
 
-// StartVPN starts VPN packet routing.
-//
-// The gVisor userspace stack routes TCP/UDP sessions directly through the
-// gost chain router – no extra proxy port is required. StartVPNMode must have
-// been called successfully (with a tungo service in the config) beforehand.
-//
-// Call StartVPNMode() successfully before calling StartVPN().
-func StartVPN(fd int, mtu int) error {
+// StartTun creates a gVisor userspace network stack on the given TUN file
+// descriptor, routing TCP/UDP sessions through the gost chain. StartGost must
+// have been called first to parse the config and start service listeners.
+func StartTun(fd int, mtu int) error {
 	tunMu.Lock()
 	defer tunMu.Unlock()
 
 	if tunRunning {
-		return fmt.Errorf("VPN already running; call StopVPN() first")
+		return fmt.Errorf("TUN already running; call StopTun() first")
 	}
 	if fd < 0 {
 		return fmt.Errorf("invalid TUN file descriptor: %d", fd)
@@ -68,24 +70,24 @@ func StartVPN(fd int, mtu int) error {
 // via a gostTransportHandler.
 func startVPNGVisor(fd, mtu int, chainName, dnsServiceAddr string) error {
 	// Dup the fd so the gVisor endpoint owns an independent copy. Android's
-	// ParcelFileDescriptor manages the original fd; closing the dup on StopVPN
+	// ParcelFileDescriptor manages the original fd; closing the dup on StopTun
 	// does not affect the original.
 	dupFd, err := unix.Dup(fd)
 	if err != nil {
 		return fmt.Errorf("dup TUN fd: %w", err)
 	}
 
-	// Resolve the chain from gost's registry (populated by loader.Load in StartVPNMode).
+	// Resolve the chain from gost's registry (populated by loader.Load in StartGost).
 	var chainer gostchain.Chainer
 	if chainName != "" {
 		chainer = registry.ChainRegistry().Get(chainName)
 		if chainer == nil {
-			logVPN("[warn] chain %q not found in registry – traffic will route directly", chainName)
+			logrus.Warnf("chain %q not found in registry – traffic will route directly", chainName)
 		} else {
-			logVPN("[info] chain %q found, gVisor stack starting (fd=%d mtu=%d)", chainName, fd, mtu)
+			logrus.Infof("chain %q found, gVisor stack starting (fd=%d mtu=%d)", chainName, fd, mtu)
 		}
 	} else {
-		logVPN("[info] no chain name – gVisor stack will route directly (fd=%d mtu=%d)", fd, mtu)
+		logrus.Infof("no chain name – gVisor stack will route directly (fd=%d mtu=%d)", fd, mtu)
 	}
 	router := xchain.NewRouter(gostchain.ChainRouterOption(chainer))
 
@@ -115,9 +117,9 @@ func startVPNGVisor(fd, mtu int, chainName, dnsServiceAddr string) error {
 	return nil
 }
 
-// StopVPN stops the active gVisor VPN stack.
+// StopTun stops the active gVisor stack and releases the dup'd TUN fd.
 // Safe to call when not running.
-func StopVPN() error {
+func StopTun() error {
 	tunMu.Lock()
 	defer tunMu.Unlock()
 
@@ -137,7 +139,8 @@ func StopVPN() error {
 	tunStack.Close()
 	tunStack = nil
 
-	resetVPNStats()
+	resetConnCounters()
+	drainStaleLogs()
 
 	tunRunning = false
 	return nil
@@ -155,14 +158,14 @@ func (h *gostTransportHandler) HandleTCP(conn adapter.TCPConn) {
 		defer conn.Close()
 		defer func() {
 			if r := recover(); r != nil {
-				logVPN("[tcp] panic: %v", r)
+				logrus.Errorf("[tcp] panic: %v", r)
 			}
 		}()
 
 		id := conn.ID()
 		dst := net.JoinHostPort(id.LocalAddress.String(), strconv.Itoa(int(id.LocalPort)))
-		n := atomic.AddInt64(&vpnTCPConns, 1)
-		logVPN("[tcp#%d] dial %s", n, dst)
+		n := atomic.AddInt64(&tcpConns, 1)
+		logrus.Infof("[tcp#%d] dial %s", n, dst)
 
 		var upstream net.Conn
 		var err error
@@ -174,15 +177,15 @@ func (h *gostTransportHandler) HandleTCP(conn adapter.TCPConn) {
 			upstream, err = h.router.Dial(context.Background(), "tcp", dst)
 		}
 		if err != nil {
-			atomic.AddInt64(&vpnFailedConns, 1)
-			logVPN("[tcp#%d] dial %s failed: %v", n, dst, err)
+			atomic.AddInt64(&failedConns, 1)
+			logrus.Errorf("[tcp#%d] dial %s failed: %v", n, dst, err)
 			return
 		}
 		defer upstream.Close()
-		logVPN("[tcp#%d] relaying %s", n, dst)
+		logrus.Infof("[tcp#%d] relaying %s", n, dst)
 
 		relay(conn, upstream)
-		logVPN("[tcp#%d] done %s", n, dst)
+		logrus.Infof("[tcp#%d] done %s", n, dst)
 	}()
 }
 
@@ -191,14 +194,14 @@ func (h *gostTransportHandler) HandleUDP(conn adapter.UDPConn) {
 		defer conn.Close()
 		defer func() {
 			if r := recover(); r != nil {
-				logVPN("[udp] panic: %v", r)
+				logrus.Errorf("[udp] panic: %v", r)
 			}
 		}()
 
 		id := conn.ID()
 		dst := net.JoinHostPort(id.LocalAddress.String(), strconv.Itoa(int(id.LocalPort)))
-		n := atomic.AddInt64(&vpnUDPConns, 1)
-		logVPN("[udp#%d] dial %s", n, dst)
+		n := atomic.AddInt64(&udpConns, 1)
+		logrus.Infof("[udp#%d] dial %s", n, dst)
 
 		var upstream net.Conn
 		var err error
@@ -210,12 +213,12 @@ func (h *gostTransportHandler) HandleUDP(conn adapter.UDPConn) {
 			upstream, err = h.router.Dial(context.Background(), "udp", dst)
 		}
 		if err != nil {
-			atomic.AddInt64(&vpnFailedConns, 1)
-			logVPN("[udp#%d] dial %s failed: %v", n, dst, err)
+			atomic.AddInt64(&failedConns, 1)
+			logrus.Errorf("[udp#%d] dial %s failed: %v", n, dst, err)
 			return
 		}
 		defer upstream.Close()
-		logVPN("[udp#%d] relaying %s", n, dst)
+		logrus.Infof("[udp#%d] relaying %s", n, dst)
 
 		relay(conn, upstream)
 	}()
@@ -248,4 +251,11 @@ func closeWrite(c net.Conn) {
 	if hc, ok := c.(halfCloser); ok {
 		_ = hc.CloseWrite()
 	}
+}
+
+// resetConnCounters zeros the VPN connection counters for a new session.
+func resetConnCounters() {
+	atomic.StoreInt64(&tcpConns, 0)
+	atomic.StoreInt64(&udpConns, 0)
+	atomic.StoreInt64(&failedConns, 0)
 }
