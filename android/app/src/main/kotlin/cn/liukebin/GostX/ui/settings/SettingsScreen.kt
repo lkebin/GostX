@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.FilterAlt
+import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -47,6 +48,7 @@ import cn.liukebin.gostx.data.ConfigRepository
 fun SettingsScreen(
     repo: ConfigRepository,
     onNavigateToAppFilter: () -> Unit = {},
+    onNavigateToFileManage: () -> Unit = {},
     onBack: () -> Unit = {},
     vm: SettingsViewModel = viewModel(
         factory = remember(repo) {
@@ -145,6 +147,21 @@ fun SettingsScreen(
                     label = { Text(stringResource(R.string.settings_app_filter_mode_whitelist)) }
                 )
             }
+
+            HorizontalDivider()
+
+            SettingItem(
+                icon = Icons.Outlined.FolderOpen,
+                title = stringResource(R.string.file_manage_title),
+                onClick = onNavigateToFileManage,
+                trailing = {
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = stringResource(R.string.nav_config),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            )
         }
     }
 }

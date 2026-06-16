@@ -33,6 +33,7 @@ import cn.liukebin.gostx.ui.config.ConfigScreen
 import cn.liukebin.gostx.ui.home.HomeScreen
 import cn.liukebin.gostx.ui.log.LogScreen
 import cn.liukebin.gostx.ui.settings.AppFilterScreen
+import cn.liukebin.gostx.ui.filemanage.FileManageScreen
 import cn.liukebin.gostx.ui.settings.SettingsScreen
 import cn.liukebin.gostx.service.GostVpnService
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -107,12 +108,18 @@ fun GostXApp(
                     SettingsScreen(
                         repo = configRepository,
                         onNavigateToAppFilter = { navController.navigate(Screen.AppFilter.route) },
+                        onNavigateToFileManage = { navController.navigate(Screen.FileManage.route) },
                         onBack = { navController.popBackStack() }
                     )
                 }
                 composable(Screen.AppFilter.route) {
                     AppFilterScreen(
                         repo = configRepository,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable(Screen.FileManage.route) {
+                    FileManageScreen(
                         onBack = { navController.popBackStack() }
                     )
                 }
