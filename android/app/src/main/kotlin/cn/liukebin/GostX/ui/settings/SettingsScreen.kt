@@ -15,22 +15,27 @@ import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.FilterAlt
 import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -63,8 +68,16 @@ fun SettingsScreen(
     )
 ) {
     val loggingEnabled by vm.loggingEnabled.collectAsState()
+    val logLevel by vm.logLevel.collectAsState()
+    val appFilterEnabled by vm.appFilterEnabled.collectAsState()
     val appFilterMode by vm.appFilterMode.collectAsState()
     val appFilterList by vm.appFilterList.collectAsState()
+
+    var showLogLevelDialog by remember { mutableStateOf(false) }
+
+    val logLevelOptions = remember {
+        listOf("error", "warn", "info", "debug", "trace")
+    }
 
     Scaffold(
         topBar = {
@@ -86,69 +99,82 @@ fun SettingsScreen(
                 .padding(paddingValues)
                 .padding(vertical = 8.dp)
         ) {
-            // Logging toggle
-            SettingItem(
+            DualTargetSwitchItem(
                 icon = Icons.AutoMirrored.Filled.Article,
                 title = stringResource(R.string.settings_logging_label),
                 description = stringResource(R.string.settings_logging_restart_hint),
-                onClick = { vm.setLoggingEnabled(!loggingEnabled) },
-                trailing = {
-                    Switch(
-                        checked = loggingEnabled,
-                        onCheckedChange = { vm.setLoggingEnabled(it) }
-                    )
-                }
+                checked = loggingEnabled,
+                onCheckedChange = { vm.setLoggingEnabled(it) },
+                onTextClick = if (loggingEnabled) {
+                    { showLogLevelDialog = true }
+                } else null
             )
 
-            HorizontalDivider()
+            if (loggingEnabled) {
+                SettingItem(
+                    icon = null,
+                    title = stringResource(R.string.settings_log_level_label),
+                    description = logLevelLabel(logLevel),
+                    onClick = { showLogLevelDialog = true },
+                    trailing = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                )
+            }
 
-            // Per-app proxy section
-            SettingItem(
+            HorizontalDivider(modifier = Modifier.padding(top = 16.dp))
+
+            DualTargetSwitchItem(
                 icon = Icons.Outlined.FilterAlt,
                 title = stringResource(R.string.settings_app_filter_label),
                 description = stringResource(R.string.settings_app_filter_hint),
-                onClick = onNavigateToAppFilter,
-                trailing = {
-                    Icon(
-                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = stringResource(R.string.nav_config),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                checked = appFilterEnabled,
+                onCheckedChange = { vm.setAppFilterEnabled(it) },
+                onTextClick = if (appFilterEnabled) onNavigateToAppFilter else null
             )
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 72.dp, end = 16.dp, bottom = 12.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.settings_app_filter_count, appFilterList.size),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            if (appFilterEnabled) {
+                SettingItem(
+                    icon = null,
+                    title = stringResource(R.string.settings_app_filter_manage),
+                    description = stringResource(R.string.settings_app_filter_count, appFilterList.size),
+                    onClick = onNavigateToAppFilter,
+                    trailing = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = stringResource(R.string.nav_config),
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 )
+
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                        onClick = { vm.setAppFilterMode(AppFilterMode.BLACKLIST) },
+                        selected = appFilterMode == AppFilterMode.BLACKLIST,
+                        label = { Text(stringResource(R.string.settings_app_filter_mode_blacklist)) }
+                    )
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                        onClick = { vm.setAppFilterMode(AppFilterMode.WHITELIST) },
+                        selected = appFilterMode == AppFilterMode.WHITELIST,
+                        label = { Text(stringResource(R.string.settings_app_filter_mode_whitelist)) }
+                    )
+                }
             }
 
-            SingleChoiceSegmentedButtonRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            ) {
-                SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                    onClick = { vm.setAppFilterMode(AppFilterMode.BLACKLIST) },
-                    selected = appFilterMode == AppFilterMode.BLACKLIST,
-                    label = { Text(stringResource(R.string.settings_app_filter_mode_blacklist)) }
-                )
-                SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                    onClick = { vm.setAppFilterMode(AppFilterMode.WHITELIST) },
-                    selected = appFilterMode == AppFilterMode.WHITELIST,
-                    label = { Text(stringResource(R.string.settings_app_filter_mode_whitelist)) }
-                )
-            }
-
-            HorizontalDivider()
+            HorizontalDivider(modifier = Modifier.padding(top = 16.dp))
 
             SettingItem(
                 icon = Icons.Outlined.FolderOpen,
@@ -164,11 +190,118 @@ fun SettingsScreen(
             )
         }
     }
+
+    // Log level radio dialog — Settings guidelines prefer radio dialogs over dropdowns
+    if (showLogLevelDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogLevelDialog = false },
+            title = { Text(stringResource(R.string.settings_log_level_label)) },
+            text = {
+                Column {
+                    logLevelOptions.forEach { level ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    vm.setLogLevel(level)
+                                    showLogLevelDialog = false
+                                }
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = logLevel == level,
+                                onClick = {
+                                    vm.setLogLevel(level)
+                                    showLogLevelDialog = false
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = logLevelLabel(level),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showLogLevelDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun logLevelLabel(level: String): String = when (level) {
+    "error" -> stringResource(R.string.settings_log_level_error)
+    "warn" -> stringResource(R.string.settings_log_level_warn)
+    "info" -> stringResource(R.string.settings_log_level_info)
+    "debug" -> stringResource(R.string.settings_log_level_debug)
+    "trace" -> stringResource(R.string.settings_log_level_trace)
+    else -> level
+}
+
+// Dual-target switch: left text area navigates (or shows dialog), right switch toggles.
+// Follows Android Settings guidelines for switches with sub-options.
+@Composable
+private fun DualTargetSwitchItem(
+    icon: ImageVector,
+    title: String,
+    description: String? = null,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    onTextClick: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Spacer(modifier = Modifier.width(16.dp))
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(24.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .then(
+                    if (onTextClick != null) Modifier.clickable(onClick = onTextClick)
+                    else Modifier
+                )
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium
+            )
+            if (description != null) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+    }
 }
 
 @Composable
 private fun SettingItem(
-    icon: ImageVector,
+    icon: ImageVector? = null,
     title: String,
     description: String? = null,
     onClick: () -> Unit,
@@ -178,27 +311,30 @@ private fun SettingItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+            .padding(vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(if (icon != null) 16.dp else 56.dp))
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+        }
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleMedium
             )
             if (description != null) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline
                 )
             }
         }
@@ -206,5 +342,6 @@ private fun SettingItem(
             Spacer(modifier = Modifier.width(8.dp))
             trailing()
         }
+        Spacer(modifier = Modifier.width(16.dp))
     }
 }

@@ -72,7 +72,7 @@ services:
     listener:
       type: tcp`
 
-// testVPNDNSYAML includes a tungo service (for StartVPNMode) + socks5 + dns.
+// testVPNDNSYAML includes a tungo service (for StartGost) + socks5 + dns.
 const testVPNDNSYAML = `
 services:
   - name: _test_tungo
@@ -154,7 +154,7 @@ func (s *fakeService) Close() error {
 
 func resetTestState(t *testing.T) {
 	t.Helper()
-	_ = Stop()
+	_ = StopGost()
 	mu.Lock()
 	services = nil
 	running = false
@@ -190,12 +190,12 @@ func TestStartStop(t *testing.T) {
 		t.Fatal("IsRunning() should be true after Start()")
 	}
 
-	if err := Stop(); err != nil {
-		t.Fatalf("Stop() failed: %v", err)
+	if err := StopGost(); err != nil {
+		t.Fatalf("StopGost() failed: %v", err)
 	}
 
 	if IsRunning() {
-		t.Fatal("IsRunning() should be false after Stop()")
+		t.Fatal("IsRunning() should be false after StopGost()")
 	}
 }
 
@@ -205,7 +205,7 @@ func TestDoubleStart(t *testing.T) {
 	if err := Start(testYAML); err != nil {
 		t.Fatalf("first Start() failed unexpectedly: %v", err)
 	}
-	defer Stop()
+	defer StopGost()
 
 	err := Start(testYAML)
 	if err == nil {
@@ -219,7 +219,7 @@ func TestGetStatus(t *testing.T) {
 	if err := Start(testYAML); err != nil {
 		t.Fatalf("Start() failed: %v", err)
 	}
-	defer Stop()
+	defer StopGost()
 	waitForRunning(t)
 
 	raw := GetStatus()
@@ -249,17 +249,17 @@ func TestStopThenRestart(t *testing.T) {
 	}
 	waitForRunning(t)
 
-	if err := Stop(); err != nil {
-		t.Fatalf("first Stop() failed: %v", err)
+	if err := StopGost(); err != nil {
+		t.Fatalf("first StopGost() failed: %v", err)
 	}
 	if IsRunning() {
-		t.Fatal("IsRunning() should be false after Stop()")
+		t.Fatal("IsRunning() should be false after StopGost()")
 	}
 
 	if err := Start(testYAML); err != nil {
 		t.Fatalf("second Start() failed: %v", err)
 	}
-	defer Stop()
+	defer StopGost()
 	waitForRunning(t)
 }
 
@@ -281,7 +281,7 @@ func TestStartWaitsForStopToFinish(t *testing.T) {
 
 	stopErrCh := make(chan error, 1)
 	go func() {
-		stopErrCh <- Stop()
+		stopErrCh <- StopGost()
 	}()
 
 	<-fake.closeObserved
@@ -293,7 +293,7 @@ func TestStartWaitsForStopToFinish(t *testing.T) {
 
 	select {
 	case err := <-startErrCh:
-		t.Fatalf("Start() returned before Stop() completed: %v", err)
+		t.Fatalf("Start() returned before StopGost() completed: %v", err)
 	default:
 	}
 
@@ -302,21 +302,21 @@ func TestStartWaitsForStopToFinish(t *testing.T) {
 	select {
 	case err := <-stopErrCh:
 		if err != nil {
-			t.Fatalf("Stop() failed: %v", err)
+			t.Fatalf("StopGost() failed: %v", err)
 		}
 	case <-time.After(time.Second):
-		t.Fatal("Stop() did not return after fake service exited")
+		t.Fatal("StopGost() did not return after fake service exited")
 	}
 
 	select {
 	case err := <-startErrCh:
 		if err != nil {
-			t.Fatalf("Start() failed after Stop() completed: %v", err)
+			t.Fatalf("Start() failed after StopGost() completed: %v", err)
 		}
 	case <-time.After(time.Second):
-		t.Fatal("Start() did not resume after Stop() completed")
+		t.Fatal("Start() did not resume after StopGost() completed")
 	}
-	defer Stop()
+	defer StopGost()
 	waitForRunning(t)
 }
 
@@ -339,14 +339,14 @@ func TestStopWaitsForServeToExit(t *testing.T) {
 	errCh := make(chan error, 1)
 	done := make(chan struct{})
 	go func() {
-		errCh <- Stop()
+		errCh <- StopGost()
 		close(done)
 	}()
 
 	<-fake.closeObserved
 	select {
 	case <-done:
-		t.Fatal("Stop() returned before Serve() exited")
+		t.Fatal("StopGost() returned before Serve() exited")
 	default:
 	}
 
@@ -355,10 +355,10 @@ func TestStopWaitsForServeToExit(t *testing.T) {
 	select {
 	case err := <-errCh:
 		if err != nil {
-			t.Fatalf("Stop() failed: %v", err)
+			t.Fatalf("StopGost() failed: %v", err)
 		}
 	case <-time.After(time.Second):
-		t.Fatal("Stop() did not return after Serve() exited")
+		t.Fatal("StopGost() did not return after Serve() exited")
 	}
 
 	if got := fake.closeCount.Load(); got != 1 {
@@ -383,10 +383,10 @@ func TestNormalizeDNSAddr(t *testing.T) {
 
 func TestGetVPNDNSAddrNoService(t *testing.T) {
 	resetTestState(t)
-	if err := StartVPNMode(testVPNSocks5YAML); err != nil {
-		t.Fatalf("StartVPNMode() failed: %v", err)
+	if err := StartGost(testVPNSocks5YAML); err != nil {
+		t.Fatalf("StartGost() failed: %v", err)
 	}
-	defer Stop()
+	defer StopGost()
 	waitForRunning(t)
 
 	if got := GetVPNDNSAddr(); got != "" {
@@ -396,10 +396,10 @@ func TestGetVPNDNSAddrNoService(t *testing.T) {
 
 func TestGetVPNDNSAddrWithService(t *testing.T) {
 	resetTestState(t)
-	if err := StartVPNMode(testVPNDNSYAML); err != nil {
-		t.Fatalf("StartVPNMode() failed: %v", err)
+	if err := StartGost(testVPNDNSYAML); err != nil {
+		t.Fatalf("StartGost() failed: %v", err)
 	}
-	defer Stop()
+	defer StopGost()
 	waitForRunning(t)
 
 	if got := GetVPNDNSAddr(); got != vpnDNSVirtualAddr {
@@ -409,10 +409,10 @@ func TestGetVPNDNSAddrWithService(t *testing.T) {
 
 func TestGetVPNDNSAddrNormalisesHost(t *testing.T) {
 	resetTestState(t)
-	if err := StartVPNMode(testVPNDNSYAMLNoHost); err != nil {
-		t.Fatalf("StartVPNMode() failed: %v", err)
+	if err := StartGost(testVPNDNSYAMLNoHost); err != nil {
+		t.Fatalf("StartGost() failed: %v", err)
 	}
-	defer Stop()
+	defer StopGost()
 	waitForRunning(t)
 
 	// Service addr was ":15353"; vpnDNSServiceAddr must be "127.0.0.1:15353".
@@ -495,8 +495,8 @@ func TestSetLogFile(t *testing.T) {
 		t.Fatalf("SetLogFile: %v", err)
 	}
 
-	logVPN("hello %s", "world")
-	logVPN("second line")
+	enqueueLog("hello %s", "world")
+	enqueueLog("second line")
 
 	// Wait up to 2s for drain goroutine to write
 	deadline := time.Now().Add(2 * time.Second)
@@ -528,25 +528,92 @@ func TestSetLoggingEnabled(t *testing.T) {
 		resetLogDrainForTest()
 	})
 
-	// With logging disabled, logVPN should not enqueue anything.
+	// With logging disabled, enqueueLog should not enqueue anything.
 	SetLoggingEnabled(false)
-	logVPN("should not appear")
+	enqueueLog("should not appear")
 	select {
-	case msg := <-vpnLogCh:
+	case msg := <-logCh:
 		t.Fatalf("expected no message when logging disabled, got: %q", msg)
 	default:
 		// correct — channel empty
 	}
 
-	// With logging enabled, logVPN should enqueue.
+	// With logging enabled, enqueueLog should enqueue.
 	SetLoggingEnabled(true)
-	logVPN("should appear")
+	enqueueLog("should appear")
 	select {
-	case msg := <-vpnLogCh:
+	case msg := <-logCh:
 		if !strings.HasSuffix(msg, "should appear") {
 			t.Errorf("unexpected message: %q", msg)
 		}
 	case <-time.After(500 * time.Millisecond):
 		t.Fatal("expected message not received within 500ms")
+	}
+}
+
+func TestSetLogLevelValidation(t *testing.T) {
+	SetLogLevel("info")
+	if got := getLogLevel(); got != "info" {
+		t.Fatalf("expected 'info', got %q", got)
+	}
+
+	SetLogLevel("bogus")
+	if got := getLogLevel(); got != "info" {
+		t.Fatalf("level changed after invalid input: %q", got)
+	}
+
+	SetLogLevel("off")
+	if got := getLogLevel(); got != "off" {
+		t.Fatalf("expected 'off', got %q", got)
+	}
+
+	SetLogLevel("error")
+	if got := getLogLevel(); got != "error" {
+		t.Fatalf("expected 'error', got %q", got)
+	}
+}
+
+func TestSetLogLevelGatesLogging(t *testing.T) {
+	resetLogDrainForTest()
+	t.Cleanup(func() {
+		SetLogLevel("info")
+		resetLogDrainForTest()
+	})
+
+	SetLogLevel("off")
+	enqueueLog("should not appear")
+	select {
+	case msg := <-logCh:
+		t.Fatalf("expected no message when level=off, got: %q", msg)
+	default:
+	}
+
+	SetLogLevel("error")
+	enqueueLog("should appear")
+	select {
+	case msg := <-logCh:
+		if !strings.HasSuffix(msg, "should appear") {
+			t.Errorf("unexpected message: %q", msg)
+		}
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("expected message when level=error")
+	}
+}
+
+func TestResetConnCounters(t *testing.T) {
+	atomic.StoreInt64(&tcpConns, 42)
+	atomic.StoreInt64(&udpConns, 7)
+	atomic.StoreInt64(&failedConns, 3)
+
+	resetConnCounters()
+
+	if got := atomic.LoadInt64(&tcpConns); got != 0 {
+		t.Errorf("tcpConns = %d, want 0", got)
+	}
+	if got := atomic.LoadInt64(&udpConns); got != 0 {
+		t.Errorf("udpConns = %d, want 0", got)
+	}
+	if got := atomic.LoadInt64(&failedConns); got != 0 {
+		t.Errorf("failedConns = %d, want 0", got)
 	}
 }

@@ -9,6 +9,8 @@ import java.util.UUID
 private const val KEY_PROFILES = "config_profile_list"
 private const val KEY_ACTIVE = "config_active_profile"
 private const val KEY_LOGGING_ENABLED = "logging_enabled"
+private const val KEY_LOG_LEVEL = "log_level"
+private const val KEY_APP_FILTER_ENABLED = "app_filter_enabled"
 private const val KEY_APP_FILTER_MODE = "app_filter_mode"
 private const val KEY_APP_FILTER_PACKAGES = "app_filter_packages"
 const val DEFAULT_PROFILE_ID = "default"
@@ -82,16 +84,48 @@ class ConfigRepository(private val prefs: SharedPreferences) {
     private val _activeProfileIdFlow = MutableStateFlow(DEFAULT_PROFILE_ID)
     val activeProfileIdFlow: StateFlow<String> = _activeProfileIdFlow.asStateFlow()
 
-    private val _loggingEnabledFlow = MutableStateFlow(
-        prefs.getBoolean(KEY_LOGGING_ENABLED, false)
-    )
+    // Backward compat: migrate from old boolean logging_enabled to log_level string.
+    private val initialLogLevel: String = run {
+        val existing = prefs.getString(KEY_LOG_LEVEL, null)
+        if (existing != null) return@run existing
+        val wasEnabled = prefs.getBoolean(KEY_LOGGING_ENABLED, false)
+        if (wasEnabled) "info" else "off"
+    }
+
+    private val _logLevelFlow = MutableStateFlow(initialLogLevel)
+    val logLevelFlow: StateFlow<String> = _logLevelFlow.asStateFlow()
+
+    private var lastNonOffLevel = if (initialLogLevel != "off") initialLogLevel else "info"
+
+    var logLevel: String
+        get() = _logLevelFlow.value
+        set(value) {
+            prefs.edit().putString(KEY_LOG_LEVEL, value).apply()
+            _logLevelFlow.value = value
+            if (value != "off") lastNonOffLevel = value
+        }
+
+    // Derived from logLevel for backward compat with existing consumers.
+    private val _loggingEnabledFlow = MutableStateFlow(initialLogLevel != "off")
     val loggingEnabledFlow: StateFlow<Boolean> = _loggingEnabledFlow.asStateFlow()
 
     var loggingEnabled: Boolean
-        get() = _loggingEnabledFlow.value
+        get() = logLevel != "off"
         set(value) {
-            prefs.edit().putBoolean(KEY_LOGGING_ENABLED, value).apply()
+            logLevel = if (value) lastNonOffLevel else "off"
             _loggingEnabledFlow.value = value
+        }
+
+    private val _appFilterEnabledFlow = MutableStateFlow(
+        prefs.getBoolean(KEY_APP_FILTER_ENABLED, true)
+    )
+    val appFilterEnabledFlow: StateFlow<Boolean> = _appFilterEnabledFlow.asStateFlow()
+
+    var appFilterEnabled: Boolean
+        get() = _appFilterEnabledFlow.value
+        set(value) {
+            prefs.edit().putBoolean(KEY_APP_FILTER_ENABLED, value).apply()
+            _appFilterEnabledFlow.value = value
         }
 
     private val _appFilterModeFlow = MutableStateFlow(
