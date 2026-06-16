@@ -10,4 +10,5 @@ sealed class Screen(val route: String) {
     object ConfigEdit : Screen("config/{profileId}") {
         fun createRoute(profileId: String): String = "config/${Uri.encode(profileId)}"
     }
+    object FileManage : Screen("fileManage")
 }
