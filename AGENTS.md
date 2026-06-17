@@ -81,3 +81,10 @@ DNS queries to `10.0.0.3:53` (the virtual DNS address) are intercepted by the tr
 ### Superpowers
 
 - DO NOT help me submit code in git
+
+## Multilingual (i18n)
+
+- Default strings in `android/app/src/main/res/values/strings.xml` must be **English** — concise, matching the existing style (e.g. "Running", "No logs", "Log level")
+- Chinese translations live in `android/app/src/main/res/values-zh/strings.xml`
+- **Every key must exist in both files** — the two files must have identical `name="..."` sets
+- When adding a new string resource, add it to both files at the same time
