@@ -15,7 +15,10 @@ android {
         versionName = runCatching {
             Runtime.getRuntime().exec(arrayOf("git", "describe", "--tags", "--exact-match"))
                 .inputStream.bufferedReader().readText().trim()
-        }.getOrDefault("dev")
+        }.getOrElse {
+            Runtime.getRuntime().exec(arrayOf("git", "rev-parse", "--abbrev-ref", "HEAD"))
+                .inputStream.bufferedReader().readText().trim()
+        }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
