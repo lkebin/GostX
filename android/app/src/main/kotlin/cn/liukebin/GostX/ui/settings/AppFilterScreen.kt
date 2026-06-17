@@ -77,7 +77,7 @@ fun AppFilterScreen(
                                 .filter { it.packageName != app.packageName }
                                 .map { pkg ->
                                     val label = runCatching {
-                                        pm.getApplicationLabel(pkg.applicationInfo).toString()
+                                        pkg.applicationInfo?.let { pm.getApplicationLabel(it).toString() }
                                     }.getOrDefault(pkg.packageName)
                                     InstalledApp(
                                         packageName = pkg.packageName,
