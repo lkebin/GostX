@@ -31,8 +31,8 @@
     <string name="log_copy">复制</string>
     <string name="log_clear">清空</string>
     <string name="log_empty">暂无日志</string>
-    <string name="log_follow_on">开启动态载入</string>
-    <string name="log_follow_off">暂停动态载入</string>
+    <string name="log_follow_on">恢复实时滚动</string>
+    <string name="log_follow_off">暂停实时滚动</string>
 
     <!-- Notification -->
     <string name="notification_title">GostX 运行中</string>
@@ -63,6 +63,26 @@
     <string name="vpn_loading_label">加载中</string>
     <string name="service_info_title">运行中的服务</string>
     <string name="profiles_title">配置文件</string>
+
+    <!-- Settings screen -->
+    <string name="nav_settings">设置</string>
+    <string name="settings_title">设置</string>
+    <string name="settings_logging_label">日志记录</string>
+    <string name="settings_logging_restart_hint">关闭后需重启 VPN 生效</string>
+    <string name="settings_log_level_label">日志级别</string>
+    <string name="settings_log_level_error">错误</string>
+    <string name="settings_log_level_warn">警告</string>
+    <string name="settings_log_level_info">信息</string>
+    <string name="settings_log_level_debug">调试</string>
+    <string name="settings_log_level_trace">追踪</string>
+    <string name="settings_log_max_size_label">日志文件大小上限</string>
+    <string name="settings_log_max_size_kb">%d KB</string>
+    <string name="settings_log_max_size_mb">%d MB</string>
+
+    <!-- Battery optimization -->
+    <string name="battery_opt_message">为了 VPN 稳定运行，请将 GostX 从电池优化中排除。</string>
+    <string name="battery_opt_open_settings">打开设置</string>
+    <string name="battery_opt_dismiss">忽略</string>
 
     <!-- Per-app proxy (settings entry) -->
     <string name="settings_app_filter_label">分应用代理</string>
