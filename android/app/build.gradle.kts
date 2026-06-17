@@ -11,7 +11,7 @@ android {
         applicationId = "cn.liukebin.gostx"
         minSdk = 26
         targetSdk = 35
-        versionCode = (System.currentTimeMillis() / 60000).toInt()
+        versionCode = java.text.SimpleDateFormat("yyMMddHHmm").format(java.util.Date()).toInt()
         versionName = "0.1.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
