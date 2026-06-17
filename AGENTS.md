@@ -5,14 +5,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build & Test
 
 ```bash
-# macOS build (Debug)
-make macos         # builds Go lib → universal binary → Xcode project
+# Android debug build
+make android         # builds gostlib.aar via gomobile → Gradle assembleDebug
 
-# Android build
-make android       # builds gostlib.aar via gomobile → Gradle assembleDebug
+# Android release build (AAB + APK)
+make android-release # builds gostlib.aar → Gradle assembleRelease bundleRelease
 
 # Clean
-make clean         # cleans Go + Xcode + Gradle
+make clean           # cleans Go + Gradle
 
 # Go tests
 cd go && go test ./gostlib/...
@@ -24,16 +24,16 @@ cd android && ./gradlew test
 cd android && ./gradlew connectedAndroidTest
 ```
 
-Building the macOS target requires Xcode. Building Android requires `gomobile` and the Android NDK.
+Building Android requires `gomobile` and the Android NDK.
 
 ## Architecture
 
-**GostX** is a dual-platform (macOS + Android) VPN proxy app built on [gost v3](https://github.com/go-gost/x). The core proxy engine is written in Go and compiled as a C library (macOS) or AAR (Android) that the native UIs call into.
+**GostX** is an Android VPN proxy app built on [gost v3](https://github.com/go-gost/x). The core proxy engine is written in Go and compiled as an AAR (Android Archive) that the native UI calls into.
 
 ### Go layer (`go/`)
 
-- **`go/cmd/macos/`** — CGo entry point. Exports `gostRunYaml`, `gostStop`, `gostInfo` for the macOS app. `main.go` is thin; real logic lives in `gostlib`.
-- **`go/gostlib/`** — Shared Go library used by both platforms:
+- **`go/lib/`** — Go library build support. Real logic lives in `gostlib`.
+- **`go/gostlib/`** — Shared Go library:
   - `gostlib.go` — Lifecycle: `Start(yaml)` / `Stop()` / `StartVPNMode(yaml)` / `ValidateConfig()`. `StartVPNMode()` parses the YAML, extracts the `tungo` handler service (TUN-based VPN), stores its chain name, then starts the remaining gost services normally.
   - `tun.go` — VPN packet routing via sing-tun system stack. `StartTun(fd, mtu)` takes an Android TUN file descriptor, dups it, creates a sing-tun Tun device, and starts the system stack. The system stack rewrites IP/TCP headers to redirect traffic to a local listener bound to the TUN address — the OS kernel handles TCP reassembly, no userspace TCP/IP stack needed. `StopTun()` cancels the context and releases the device.
   - `vpnlog.go` — Async buffered logging (512-message channel) from VPN transport goroutines to file. `SetLogFile()` starts a background drain goroutine that batches writes.
@@ -45,11 +45,6 @@ Building the macOS target requires Xcode. Building Android requires `gomobile` a
 - **`GostVpnService`** (`service/GostVpnService.kt`) — Android `VpnService` subclass. Lifecycle: `startVpn()` → validate config → `GostLibBridge.startVPNMode(yaml)` → establish TUN via `Builder.establish()` → `GostLibBridge.startVPN(fd)` → register network callback for reconnect on network change. Internal `GostLibBridge` object calls the Go AAR via reflection.
 - **`ConfigRepository`** (`data/ConfigRepository.kt`) — Multi-profile YAML config persistence via `SharedPreferences`. Supports add/rename/delete/set-active profiles. App filter (blacklist/whitelist) for per-app VPN routing.
 - **Navigation**: `Screen` sealed class defines routes (Home → ConfigEdit, Logs, Settings → AppFilter). `MainActivity` wires them via NavHost.
-
-### macOS (`macos/`)
-
-- SwiftUI app. Links `libgost.a` (universal: arm64 + amd64) via a bridging header.
-- `AppDelegate.swift`, `MacExtrasConfigurator.swift`, `SettingsView.swift`, `Arguments.swift`.
 
 ### Key dependencies (Go)
 
