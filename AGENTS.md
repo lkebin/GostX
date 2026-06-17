@@ -34,9 +34,9 @@ Building the macOS target requires Xcode. Building Android requires `gomobile` a
 
 - **`go/cmd/macos/`** — CGo entry point. Exports `gostRunYaml`, `gostStop`, `gostInfo` for the macOS app. `main.go` is thin; real logic lives in `gostlib`.
 - **`go/gostlib/`** — Shared Go library used by both platforms:
-  - `gostlib.go` — Lifecycle: `Start(yaml)` / `Stop()` / `StartVPNMode(yaml)` / `ValidateConfig()`. `StartVPNMode()` parses the YAML, extracts the `tungo` handler service (TUN-over-gVisor), stores its chain name, then starts the remaining gost services normally.
-  - `tun.go` — VPN packet routing via gVisor. `StartVPN(fd, mtu)` takes an Android TUN file descriptor, dups it, wraps it in a gVisor fdbased endpoint, creates a gVisor userspace TCP/IP stack, and routes all sessions through the named gost chain via `gostTransportHandler`. `StopVPN()` tears it down.
-  - `vpnlog.go` — Async buffered logging (512-message channel) from gVisor transport goroutines to file. `SetLogFile()` starts a background drain goroutine that batches writes.
+  - `gostlib.go` — Lifecycle: `Start(yaml)` / `Stop()` / `StartVPNMode(yaml)` / `ValidateConfig()`. `StartVPNMode()` parses the YAML, extracts the `tungo` handler service (TUN-based VPN), stores its chain name, then starts the remaining gost services normally.
+  - `tun.go` — VPN packet routing via sing-tun system stack. `StartTun(fd, mtu)` takes an Android TUN file descriptor, dups it, creates a sing-tun Tun device, and starts the system stack. The system stack rewrites IP/TCP headers to redirect traffic to a local listener bound to the TUN address — the OS kernel handles TCP reassembly, no userspace TCP/IP stack needed. `StopTun()` cancels the context and releases the device.
+  - `vpnlog.go` — Async buffered logging (512-message channel) from VPN transport goroutines to file. `SetLogFile()` starts a background drain goroutine that batches writes.
   - `logger.go` — Uses `reflect` + `unsafe` to attach a logrus hook to go-gost's internal logger, forwarding gost logs to the same VPN log sink.
 
 ### Android (`android/`)
@@ -54,16 +54,19 @@ Building the macOS target requires Xcode. Building Android requires `gomobile` a
 ### Key dependencies (Go)
 
 - `github.com/go-gost/x` — gost v3 core: handlers, listeners, dialers, connectors, chains
-- `github.com/xjasonlyu/tun2socks/v2` — gVisor-based TUN-to-socks adapter for VPN mode
-- `gvisor.dev/gvisor` — Userspace TCP/IP stack powering the VPN TUN path
+- `github.com/sagernet/sing-tun` — TUN device + system stack (OS kernel TCP, IP header rewriting)
+- `github.com/sagernet/sing` — Buffer pool, metadata types, network interfaces used by sing-tun
 - `gopkg.in/yaml.v3` — Gost YAML config parsing
 
 ### VPN data flow (Android)
 
 ```
-Apps → TUN fd → gVisor stack (fdbased endpoint) → gostTransportHandler
+Apps → TUN fd → sing-tun system stack (IP header rewrite)
+  → OS kernel TCP/IP → singTunHandler (NewConnectionEx / NewPacketConnectionEx)
   → gost chain Router → upstream proxy (SS/HTTP/WSS/etc.) → internet
 ```
+
+The system stack avoids a userspace TCP/IP implementation: it rewrites destination IP/port in raw packets to redirect them to a local TCP listener bound to the TUN interface address, letting the OS kernel handle TCP reassembly and connection state.
 
 DNS queries to `10.0.0.3:53` (the virtual DNS address) are intercepted by the transport handler and forwarded to the Gost DNS service's loopback address instead of going through the chain.
 

@@ -69,14 +69,19 @@ fun SettingsScreen(
 ) {
     val loggingEnabled by vm.loggingEnabled.collectAsState()
     val logLevel by vm.logLevel.collectAsState()
+    val logMaxSizeKb by vm.logMaxSizeKb.collectAsState()
     val appFilterEnabled by vm.appFilterEnabled.collectAsState()
     val appFilterMode by vm.appFilterMode.collectAsState()
     val appFilterList by vm.appFilterList.collectAsState()
 
     var showLogLevelDialog by remember { mutableStateOf(false) }
+    var showLogMaxSizeDialog by remember { mutableStateOf(false) }
 
     val logLevelOptions = remember {
         listOf("error", "warn", "info", "debug", "trace")
+    }
+    val logMaxSizeOptions = remember {
+        listOf(512, 1024, 2048, 5120)
     }
 
     Scaffold(
@@ -116,6 +121,20 @@ fun SettingsScreen(
                     title = stringResource(R.string.settings_log_level_label),
                     description = logLevelLabel(logLevel),
                     onClick = { showLogLevelDialog = true },
+                    trailing = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                )
+                SettingItem(
+                    icon = null,
+                    title = stringResource(R.string.settings_log_max_size_label),
+                    description = logMaxSizeLabel(logMaxSizeKb),
+                    onClick = { showLogMaxSizeDialog = true },
                     trailing = {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -232,6 +251,47 @@ fun SettingsScreen(
             }
         )
     }
+
+    if (showLogMaxSizeDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogMaxSizeDialog = false },
+            title = { Text(stringResource(R.string.settings_log_max_size_label)) },
+            text = {
+                Column {
+                    logMaxSizeOptions.forEach { kb ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    vm.setLogMaxSizeKb(kb)
+                                    showLogMaxSizeDialog = false
+                                }
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = logMaxSizeKb == kb,
+                                onClick = {
+                                    vm.setLogMaxSizeKb(kb)
+                                    showLogMaxSizeDialog = false
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = logMaxSizeLabel(kb),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showLogMaxSizeDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -242,6 +302,12 @@ private fun logLevelLabel(level: String): String = when (level) {
     "debug" -> stringResource(R.string.settings_log_level_debug)
     "trace" -> stringResource(R.string.settings_log_level_trace)
     else -> level
+}
+
+@Composable
+private fun logMaxSizeLabel(kb: Int): String = when {
+    kb < 1024 -> stringResource(R.string.settings_log_max_size_kb, kb)
+    else -> stringResource(R.string.settings_log_max_size_mb, kb / 1024)
 }
 
 // Dual-target switch: left text area navigates (or shows dialog), right switch toggles.

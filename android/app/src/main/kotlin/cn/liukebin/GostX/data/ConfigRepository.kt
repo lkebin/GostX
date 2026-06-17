@@ -10,6 +10,7 @@ private const val KEY_PROFILES = "config_profile_list"
 private const val KEY_ACTIVE = "config_active_profile"
 private const val KEY_LOGGING_ENABLED = "logging_enabled"
 private const val KEY_LOG_LEVEL = "log_level"
+private const val KEY_LOG_MAX_SIZE_KB = "log_max_size_kb"
 private const val KEY_APP_FILTER_ENABLED = "app_filter_enabled"
 private const val KEY_APP_FILTER_MODE = "app_filter_mode"
 private const val KEY_APP_FILTER_PACKAGES = "app_filter_packages"
@@ -114,6 +115,19 @@ class ConfigRepository(private val prefs: SharedPreferences) {
         set(value) {
             logLevel = if (value) lastNonOffLevel else "off"
             _loggingEnabledFlow.value = value
+        }
+
+    // Valid options in KB: 512, 1024, 2048, 5120. Default 2048 (2 MiB).
+    private val _logMaxSizeKbFlow = MutableStateFlow(
+        prefs.getInt(KEY_LOG_MAX_SIZE_KB, 2048)
+    )
+    val logMaxSizeKbFlow: StateFlow<Int> = _logMaxSizeKbFlow.asStateFlow()
+
+    var logMaxSizeKb: Int
+        get() = _logMaxSizeKbFlow.value
+        set(value) {
+            prefs.edit().putInt(KEY_LOG_MAX_SIZE_KB, value).apply()
+            _logMaxSizeKbFlow.value = value
         }
 
     private val _appFilterEnabledFlow = MutableStateFlow(

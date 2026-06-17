@@ -85,7 +85,7 @@ class LogViewModel(
         viewModelScope.launch(ioDispatcher) {
             readMutex.withLock {
                 val (lines, offset) = readFileFrom(logFile, 0L)
-                _lines.value = lines.takeLast(2000)
+                _lines.value = lines
                 fileOffset = offset
             }
         }
@@ -122,8 +122,8 @@ class LogViewModel(
             val wasTruncated = newOffset < prevOffset
             fileOffset = newOffset
             when {
-                wasTruncated -> _lines.value = newLines.takeLast(2000)   // replace on truncation
-                newLines.isNotEmpty() -> _lines.value = (_lines.value + newLines).takeLast(2000)
+                wasTruncated -> _lines.value = newLines          // replace on truncation
+                newLines.isNotEmpty() -> _lines.value = _lines.value + newLines
             }
         }
     }
@@ -142,8 +142,10 @@ class LogViewModel(
     @MainThread
     fun toggleFollow() = setFollowing(!_isFollowing.value)
 
-    /** Returns full file contents for clipboard copy. Does not depend on in-memory [lines]. */
-    fun copyAll(): String = try { logFile.readText() } catch (_: Exception) { "" }
+    /** Returns current in-memory log lines joined for clipboard copy.
+     *  Uses the already-loaded [lines] buffer to avoid reading the log file
+     *  on the main thread. Line count is bounded by Go's file rotation limit. */
+    fun copyAll(): String = lines.value.joinToString("\n")
 
     /** Truncates the log file and clears the displayed lines. */
     fun clearLog() {
