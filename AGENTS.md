@@ -32,7 +32,6 @@ Building Android requires `gomobile` and the Android NDK.
 
 ### Go layer (`go/`)
 
-- **`go/lib/`** — Go library build support. Real logic lives in `gostlib`.
 - **`go/gostlib/`** — Shared Go library:
   - `gostlib.go` — Lifecycle: `Start(yaml)` / `Stop()` / `StartVPNMode(yaml)` / `ValidateConfig()`. `StartVPNMode()` parses the YAML, extracts the `tungo` handler service (TUN-based VPN), stores its chain name, then starts the remaining gost services normally.
   - `tun.go` — VPN packet routing via sing-tun system stack. `StartTun(fd, mtu)` takes an Android TUN file descriptor, dups it, creates a sing-tun Tun device, and starts the system stack. The system stack rewrites IP/TCP headers to redirect traffic to a local listener bound to the TUN address — the OS kernel handles TCP reassembly, no userspace TCP/IP stack needed. `StopTun()` cancels the context and releases the device.
