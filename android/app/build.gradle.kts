@@ -12,7 +12,10 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = (System.currentTimeMillis() / 60000).toInt()
-        versionName = "0.1.1"
+        versionName = runCatching {
+            Runtime.getRuntime().exec(arrayOf("git", "describe", "--tags", "--exact-match"))
+                .inputStream.bufferedReader().readText().trim()
+        }.getOrDefault("dev")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
