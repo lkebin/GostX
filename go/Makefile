@@ -4,7 +4,7 @@ MIN_MACOS := 11.0
 
 .PHONY: all clean
 
-all: libgost.a
+all: gostlib.aar
 
 # macOS universal binary (arm64 + amd64)
 libgost.a: libgost_arm64.a libgost_amd64.a
