@@ -403,12 +403,16 @@ func ensureServiceNames(cfg *config.Config) {
 }
 
 // SetMemoryLimit configures the Go runtime GC for mobile background use.
-// enabled=true: aggressive GC (GOGC=10) + 30 MB soft heap limit to prevent
-// unbounded growth during high-traffic VPN sessions.
+// enabled=true: moderately aggressive GC (GOGC=50) + 100 MB soft heap limit.
+// 30 MB was too small: when per-app proxy is disabled all system traffic routes
+// through gVisor, creating many concurrent relay goroutines whose io.Copy
+// buffers (32 KB × 2 per connection) easily push the heap past 30 MB,
+// causing continuous GC and high CPU drain. 100 MB gives enough headroom for
+// full-system proxy workloads while still capping unbounded growth.
 // enabled=false: restore defaults so normal service mode is unaffected.
 // Call with enabled=true when VPN starts, false when it stops.
 func SetMemoryLimit(enabled bool) {
-	const limit = 30 * 1024 * 1024
+	const limit = 100 * 1024 * 1024
 	if enabled {
 		runtimeDebug.SetGCPercent(50)
 		runtimeDebug.SetMemoryLimit(limit)

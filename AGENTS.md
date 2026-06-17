@@ -72,7 +72,7 @@ DNS queries to `10.0.0.3:53` (the virtual DNS address) are intercepted by the tr
 - The `tungo` handler type is **not** registered in gost's service registry — it's handled entirely inside this codebase. `ValidateConfig()` treats it as an internal type to avoid false "unknown handler" errors.
 - `google.golang.org/genproto` is replaced with a local stub (`go/fakepkg/`) because the monorepo zip is too large for restricted network environments.
 - Android's `gostlib.aar` is built with `-z max-page-size=16384` for 16KB page alignment (Android 15 requirement).
-- VPN lifecycle must call `GostLibBridge.setMemoryLimit(true)` on start (limits GC to 30MB) and `false` on stop to restore defaults.
+- VPN lifecycle must call `GostLibBridge.setMemoryLimit(true)` on start (caps heap at 100MB, GOGC=50) and `false` on stop to restore defaults.
 - `Stop()` has a 5-second timeout on `serveWg.Wait()` to guarantee it always returns.
 
 ### Superpowers
