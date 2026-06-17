@@ -1,15 +1,18 @@
 # GostX
 
-A dual-platform (Android + macOS) VPN proxy app built on [gost v3](https://github.com/go-gost/x). The core proxy engine is written in Go and compiled as a native library that the Android and macOS UIs call into.
+An Android VPN proxy app built on [gost v3](https://github.com/go-gost/x). The core proxy engine is written in Go and compiled as a native AAR library that the Android UI calls into.
 
 ## Features
 
-- All features of original gost (GostX working in sandbox, some features may not working)
+- All features of original gost (GostX working in sandbox, some features may not work)
 - Support [Tor](https://torproject.org) protocol via `-L tor://:9050?Socks5Proxy=127.0.0.1:1080`
 
-## Screenshots
+## Build
 
-[screen-recording.webm](https://user-images.githubusercontent.com/1335935/232206459-bf03a0d1-eedb-4151-af7b-e239c8ad9dcf.webm)
+```bash
+make android          # Debug APK
+make android-release  # Release APK + AAB (requires keystore)
+```
 
 ## Android VPN Data Flow
 
