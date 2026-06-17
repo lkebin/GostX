@@ -78,6 +78,9 @@
     <string name="settings_log_level_info">信息</string>
     <string name="settings_log_level_debug">调试</string>
     <string name="settings_log_level_trace">追踪</string>
+    <string name="settings_log_max_size_label">日志文件大小上限</string>
+    <string name="settings_log_max_size_kb">%d KB</string>
+    <string name="settings_log_max_size_mb">%d MB</string>
 
     <!-- Per-app proxy (settings entry) -->
     <string name="settings_app_filter_label">分应用代理</string>

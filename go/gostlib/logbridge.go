@@ -3,6 +3,7 @@ package gostlib
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"runtime"
@@ -19,6 +20,14 @@ import (
 // logCh buffers log messages from the logrus hook.
 // Capacity 512 means we can hold ~512 messages before dropping.
 var logCh = make(chan string, 512)
+
+// logMaxBytes is the maximum log file size before in-place rotation.
+// Default 2 MiB; override with SetLogMaxSize before SetLogFile.
+var logMaxBytes atomic.Int64
+
+func init() {
+	logMaxBytes.Store(2 * 1024 * 1024)
+}
 
 // loggingEnabled gates all enqueueLog output. False by default; call SetLoggingEnabled(true)
 // before starting VPN to activate logging.
@@ -110,6 +119,7 @@ func SetLogFile(path string) error {
 
 // drainLogFile reads from logCh and writes to f until ctx is cancelled.
 // Batches messages that arrived concurrently to minimise write syscalls.
+// After each batch it calls rotateLargeFile to keep the file within logMaxBytes.
 func drainLogFile(ctx context.Context, f *os.File) {
 	defer logDrainRunning.Store(false)
 	for {
@@ -132,8 +142,48 @@ func drainLogFile(ctx context.Context, f *os.File) {
 				}
 			}
 			f.WriteString(b.String()) //nolint:errcheck
+			rotateLargeFile(f, logMaxBytes.Load())
 		}
 	}
+}
+
+// SetLogMaxSize sets the maximum log file size in bytes. When the file
+// exceeds this size, the oldest half is discarded and the newest half is
+// kept. Call before SetLogFile. Default: 2 MiB (2097152).
+func SetLogMaxSize(maxBytes int) {
+	if maxBytes > 0 {
+		logMaxBytes.Store(int64(maxBytes))
+	}
+}
+
+// rotateLargeFile truncates f in-place when its size exceeds maxBytes.
+// It keeps the newest half of the file content so the most recent log
+// entries are retained. The file must have been opened with O_APPEND;
+// after truncation subsequent writes still go to the new EOF.
+func rotateLargeFile(f *os.File, maxBytes int64) {
+	info, err := f.Stat()
+	if err != nil || info.Size() <= maxBytes {
+		return
+	}
+	// Read the newest half.
+	keepFrom := info.Size() / 2
+	buf := make([]byte, info.Size()-keepFrom)
+	n, err := f.ReadAt(buf, keepFrom)
+	if err != nil && err != io.EOF {
+		return
+	}
+	buf = buf[:n]
+
+	// Prepend a marker so viewers can see where the rotation happened.
+	header := []byte("--- [log rotated: oldest entries discarded] ---\n")
+	payload := append(header, buf...)
+
+	// Truncate and rewrite. With O_APPEND the write atomically seeks to
+	// the new EOF (0 after Truncate), so the rewrite lands at offset 0.
+	if err := f.Truncate(0); err != nil {
+		return
+	}
+	f.Write(payload) //nolint:errcheck
 }
 
 // GetVPNLog drains all pending log messages and returns them newline-separated.

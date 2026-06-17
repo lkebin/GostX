@@ -12,6 +12,8 @@ import android.net.VpnService
 import android.os.Build
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
+import android.system.Os
+import android.system.OsConstants
 import cn.liukebin.gostx.data.AppFilterMode
 import cn.liukebin.gostx.data.ConfigRepository
 import cn.liukebin.gostx.data.GlobalVpnState
@@ -146,24 +148,21 @@ class GostVpnService : VpnService() {
             val yaml = configRepo.getActiveConfig()
 
             val logLevel = configRepo.logLevel
+            val logMaxBytes = configRepo.logMaxSizeKb.toLong() * 1024
             GostLibBridge.setLogLevel(logLevel)
+            GostLibBridge.setLogMaxSize(logMaxBytes.toInt())
+            LogRepository.maxLogBytes = logMaxBytes
             if (logLevel != "off") {
                 GostLibBridge.setLogFile(LogRepository.getLogFile().absolutePath)
                     .onFailure { log("WARNING: setLogFile failed: ${it.message}") }
             }
 
-            val vpnDnsAddr: String
-            try {
-                log("[start] loading config and starting gost...")
-                GostLibBridge.startGost(yaml)
-                vpnDnsAddr = GostLibBridge.getVpnDnsAddr()
-                log("[start] gost ready")
-            } catch (e: Exception) {
-                log("gost start failed: ${e.message}")
-                GlobalVpnState.setError("gost 启动失败: ${e.message}")
-                stopSelf()
-                return
-            }
+            // Determine the DNS address from YAML before establishing VPN.
+            // We parse the config here (not via Go) because startGost must run
+            // after establish() so that readAndSetVpnBypassMark() can read a
+            // real VPN-bypass SO_MARK (protect() returns mark=0 before VPN is up).
+            val vpnDnsAddr = extractVpnDnsAddr(yaml)
+
             val builder = Builder()
                 .setMtu(1500)
                 .addAddress("10.0.0.2", 24)
@@ -175,18 +174,20 @@ class GostVpnService : VpnService() {
             // Android VPN API forbids mixing addDisallowedApplication and
             // addAllowedApplication on the same builder. Handle three cases:
             //
-            // 1. App filter OFF      → disallow self only (so gost can reach proxy)
-            // 2. BLACKLIST           → disallow self + user-selected packages
-            // 3. WHITELIST           → allow only user-selected packages (excludes self)
+            // 1. App filter OFF      → no exclusions (GostX participates in VPN so
+            //                          sing-tun's TCP listener can route SYN-ACKs
+            //                          back through tun0; upstream proxy connections
+            //                          bypass VPN via SO_MARK set after establish())
+            // 2. BLACKLIST           → disallow user-selected packages (not self)
+            // 3. WHITELIST           → allow self + user-selected packages
             val stalePackages = mutableSetOf<String>()
             when {
                 !configRepo.appFilterEnabled -> {
-                    try { builder.addDisallowedApplication(packageName) }
-                        catch (_: PackageManager.NameNotFoundException) {}
+                    // No exclusions: GostX goes through VPN. Upstream proxy sockets
+                    // bypass VPN via SO_MARK injected into gost chain hops.
                 }
                 configRepo.appFilterMode == AppFilterMode.BLACKLIST -> {
-                    try { builder.addDisallowedApplication(packageName) }
-                        catch (_: PackageManager.NameNotFoundException) {}
+                    // Exclude user-selected apps but NOT self.
                     configRepo.appFilterList.forEach { pkg ->
                         if (pkg == packageName) return@forEach
                         try { builder.addDisallowedApplication(pkg) }
@@ -196,6 +197,9 @@ class GostVpnService : VpnService() {
                     }
                 }
                 configRepo.appFilterMode == AppFilterMode.WHITELIST -> {
+                    // Include self so sing-tun's TCP listener can route properly.
+                    try { builder.addAllowedApplication(packageName) }
+                        catch (_: PackageManager.NameNotFoundException) {}
                     configRepo.appFilterList.forEach { pkg ->
                         if (pkg == packageName) return@forEach
                         try { builder.addAllowedApplication(pkg) }
@@ -213,11 +217,29 @@ class GostVpnService : VpnService() {
             tunFd = builder.establish() ?: run {
                 log("Failed to establish VPN interface")
                 GlobalVpnState.setError("VPN 接口建立失败，请先授予 VPN 权限")
-                GostLibBridge.stopGost()
                 stopSelf()
                 return
             }
             log("[start] VPN interface ready")
+
+            // NOW the VPN is active — protect() sets a real bypass mark here.
+            // This must happen before startGost so the mark is injected into
+            // gost's chain hops (preventing upstream connections from looping
+            // back through the VPN).
+            readAndSetVpnBypassMark()
+            registerSocketProtector()
+
+            try {
+                log("[start] loading config and starting gost...")
+                GostLibBridge.startGost(yaml)
+                log("[start] gost ready")
+            } catch (e: Exception) {
+                log("gost start failed: ${e.message}")
+                GlobalVpnState.setError("gost 启动失败: ${e.message}")
+                closeTun()
+                stopSelf()
+                return
+            }
 
             try {
                 log("[start] starting VPN...")
@@ -269,6 +291,7 @@ class GostVpnService : VpnService() {
         // during this time, preventing the user from starting a new connection while
         // the previous Go shutdown is still in progress.
         GostLibBridge.setMemoryLimit(false)
+        GostLibBridge.setSocketProtector(null)
         log("[stop] stopping VPN...")
         GostLibBridge.stopTun()
         log("[stop] stopping gost...")
@@ -296,7 +319,98 @@ class GostVpnService : VpnService() {
         tunFd = null
     }
 
+    /**
+     * Creates a raw TCP socket, calls VpnService.protect() on it to read its
+     * SO_MARK (secondary bypass mechanism — only works on devices where protect()
+     * sets SO_MARK). The primary bypass mechanism is registerSocketProtector()
+     * which calls protect() directly on every gost upstream socket via the
+     * SocketProtector gomobile interface.
+     *
+     * MUST be called AFTER establish() — protect() returns mark=0 before VPN is up.
+     */
+    private fun readAndSetVpnBypassMark() {
+        try {
+            val fd = Os.socket(OsConstants.AF_INET, OsConstants.SOCK_STREAM, OsConstants.IPPROTO_TCP)
+            try {
+                val fdField = java.io.FileDescriptor::class.java.getDeclaredField("descriptor")
+                fdField.isAccessible = true
+                val intFd = fdField.getInt(fd)
+                protect(intFd)
+                // Pass the protected fd to Go; Go reads SO_MARK via getsockopt.
+                GostLibBridge.setVPNMark(intFd.toLong())
+                val mark = GostLibBridge.getVPNBypassMark()
+                if (mark == 0L) {
+                    log("[start] SO_MARK is 0 (device does not use SO_MARK for protect); using per-socket protector instead")
+                } else {
+                    log("[start] VPN bypass SO_MARK = 0x${mark.toString(16)} ($mark), fd=$intFd")
+                }
+            } finally {
+                Os.close(fd)
+            }
+        } catch (e: Exception) {
+            log("[start] WARNING: failed to read VPN bypass mark: ${e.message}")
+        }
+    }
+
+    /**
+     * Registers a SocketProtector with Go that calls VpnService.protect() on
+     * every socket gost creates for upstream proxy connections — BEFORE connect()
+     * is called. This is the primary VPN-bypass mechanism; it works on all Android
+     * devices regardless of whether protect() sets SO_MARK.
+     *
+     * MUST be called AFTER establish() so that protect() routes sockets outside
+     * the active VPN (before VPN is established there is nothing to protect from).
+     */
+    private fun registerSocketProtector() {
+        GostLibBridge.setSocketProtector(object : gostlib.SocketProtector {
+            override fun protect(fd: Long): Boolean {
+                val result = this@GostVpnService.protect(fd.toInt())
+                if (!result) log("[protect] WARNING: VpnService.protect() returned false for fd=$fd")
+                return result
+            }
+        })
+        log("[start] socket protector registered")
+    }
+
     private fun log(msg: String) = LogRepository.append(msg)
+
+    /**
+     * Parses the YAML config to detect if it contains a gost DNS handler service.
+     * Returns "10.0.0.3" (the vpnDNSVirtualAddr constant set by Go) if found,
+     * or "" if not (caller falls back to 8.8.8.8).
+     *
+     * This duplicates Go's detectVPNDNSService() logic so we can set the VPN
+     * builder's DNS server BEFORE startGost() is called (gost must start after
+     * establish() so that readAndSetVpnBypassMark() gets a real bypass mark).
+     */
+    private fun extractVpnDnsAddr(yaml: String): String {
+        // Look for a "handler:" block whose "type:" is "dns".
+        // The vpnDNSVirtualAddr Go constant is always "10.0.0.3".
+        var inHandler = false
+        var handlerIndent = -1
+        for (line in yaml.lines()) {
+            if (line.isBlank()) continue
+            val indent = line.length - line.trimStart().length
+            val t = line.trimStart()
+            when {
+                t.startsWith("handler:") -> {
+                    inHandler = true
+                    handlerIndent = indent
+                }
+                inHandler -> {
+                    if (indent <= handlerIndent && !t.startsWith("-")) {
+                        // Stepped out of handler block
+                        inHandler = false
+                    } else if (t.startsWith("type:")) {
+                        val v = t.removePrefix("type:").trim().trim('"', '\'').lowercase()
+                        if (v == "dns") return "10.0.0.3"
+                        inHandler = false
+                    }
+                }
+            }
+        }
+        return ""
+    }
 
     private fun parseFirstAddress(statusJson: String): String {
         val match = Regex(""""addresses":\["([^"]+)"""").find(statusJson)
@@ -424,6 +538,29 @@ internal object GostLibBridge {
 
     fun setMemoryLimit(enabled: Boolean) {
         runCatching { invoke("setMemoryLimit", enabled) }
+    }
+
+    fun setLogMaxSize(maxBytes: Int) {
+        runCatching { invoke("setLogMaxSize", maxBytes) }
+    }
+
+    fun setVPNMark(mark: Long) {
+        runCatching { invoke("setVPNMark", mark) }
+    }
+
+    fun getVPNBypassMark(): Long = runCatching { invoke("getVPNBypassMark") as? Long ?: 0L }.getOrDefault(0L)
+
+    /**
+     * Sets the SocketProtector callback that Go will call for every upstream
+     * socket before connect(). Pass null to clear. The protector object must
+     * implement gostlib.SocketProtector (generated by gomobile from the Go
+     * interface of the same name).
+     */
+    fun setSocketProtector(protector: gostlib.SocketProtector?) {
+        runCatching {
+            val method = clazz().getMethod("setSocketProtector", gostlib.SocketProtector::class.java)
+            method.invoke(null, protector)
+        }
     }
 
     fun setWorkDir(path: String): Result<Unit> =

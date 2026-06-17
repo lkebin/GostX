@@ -12,9 +12,12 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/go-gost/core/service"
 	"github.com/go-gost/x/config"
 	"github.com/go-gost/x/config/loader"
+	xdialer "github.com/go-gost/x/dialer"
 	serviceparser "github.com/go-gost/x/config/parsing/service"
 	"github.com/go-gost/x/registry"
 	"github.com/sirupsen/logrus"
@@ -78,7 +81,28 @@ var (
 	// vpnDNSServiceAddr is the normalised listen address of the first DNS service
 	// found in the config, e.g. "127.0.0.1:5353". Empty when none is configured.
 	vpnDNSServiceAddr string
+
+	// vpnBypassMark is the SO_MARK value used by Android to bypass VPN routing.
+	// Set via SetVPNMark before StartGost; injected into every gost chain hop
+	// so that upstream proxy connections bypass the VPN (breaking routing loops).
+	// 0 means unset (no SO_MARK applied).
+	vpnBypassMark int
+
+	// socketProtector is the Android VpnService protect() callback.
+	// When set, every TCP/UDP socket created by gost's internal dialer calls
+	// socketProtector.Protect(fd) before connect(), bypassing VPN routing.
+	// This is the primary bypass mechanism; SO_MARK is a secondary fallback.
+	socketProtector SocketProtector
 )
+
+// SocketProtector is a callback interface implemented by Android's VpnService.
+// Protect is called for every socket created by gost's upstream dialers,
+// before connect() is called, so the socket bypasses VPN routing.
+// The fd parameter is the raw Linux file descriptor of the socket.
+// Returning false is logged but does not abort the connection attempt.
+type SocketProtector interface {
+	Protect(fd int64) bool
+}
 
 var stateCond = sync.NewCond(&mu)
 
@@ -106,25 +130,19 @@ func Start(yamlConfig string) (err error) {
 		return fmt.Errorf("gost is already running; call StopGost() first")
 	}
 
-	logrus.Debug("Start: unmarshal config")
 	cfg := &config.Config{}
 	if err := yaml.Unmarshal([]byte(yamlConfig), cfg); err != nil {
 		return fmt.Errorf("invalid YAML config: %w", err)
 	}
-	logrus.Debugf("Start: services=%d chains=%d hops=%d bypasses=%d",
-		len(cfg.Services), len(cfg.Chains), len(cfg.Hops), len(cfg.Bypasses))
 	ensureServiceNames(cfg)
 	loadCfg := *cfg
 	loadCfg.Services = nil
-	logrus.Debug("Start: calling loader.Load")
 	if err := loader.Load(&loadCfg); err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
-	logrus.Debug("Start: loader.Load done")
 	// loader.Load() calls corelogger.SetDefault() with a *logrusLogger.
 	// Attach our hook now so gost internal logs also appear in the app UI.
 	installLogrusHook()
-	logrus.Debug("Start: starting services")
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("panic in service startup: %v", r)
@@ -141,7 +159,8 @@ func Start(yamlConfig string) (err error) {
 	cancelFn = cancel
 	services = svcs
 	running = true
-	logrus.Debug("Start: done")
+	logrus.Infof("gost started: services=%d chains=%d hops=%d bypasses=%d",
+		len(cfg.Services), len(cfg.Chains), len(cfg.Hops), len(cfg.Bypasses))
 	return nil
 }
 
@@ -197,7 +216,14 @@ func StartGost(yamlConfig string) (err error) {
 	mu.Lock()
 	vpnChainName = chainName
 	vpnDNSServiceAddr = dnsServiceAddr
+	mark := vpnBypassMark
 	mu.Unlock()
+
+	// Inject the VPN bypass mark into every chain hop so that gost's upstream
+	// proxy connections use SO_MARK to bypass VPN routing (avoiding loops).
+	if mark != 0 {
+		injectVPNBypassMark(filtered, mark)
+	}
 
 	b, err := yaml.Marshal(filtered)
 	if err != nil {
@@ -224,6 +250,33 @@ func extractTungoService(cfg *config.Config) (chainName string, filtered *config
 		filtered.Services = append(filtered.Services, svc)
 	}
 	return chainName, filtered
+}
+
+// injectVPNBypassMark sets SO_MARK on every chain hop and standalone hop in
+// the config so that gost's upstream proxy connections bypass the Android VPN
+// routing table. Only sets the mark when the hop has no existing SockOpts.Mark.
+func injectVPNBypassMark(cfg *config.Config, mark int) {
+	setHopMark := func(hop *config.HopConfig) {
+		if hop == nil {
+			return
+		}
+		if hop.SockOpts == nil {
+			hop.SockOpts = &config.SockOptsConfig{Mark: mark}
+		} else if hop.SockOpts.Mark == 0 {
+			hop.SockOpts.Mark = mark
+		}
+	}
+	for _, chain := range cfg.Chains {
+		if chain == nil {
+			continue
+		}
+		for _, hop := range chain.Hops {
+			setHopMark(hop)
+		}
+	}
+	for _, hop := range cfg.Hops {
+		setHopMark(hop)
+	}
 }
 
 // Stop stops all running gost services.
@@ -419,6 +472,60 @@ func SetMemoryLimit(enabled bool) {
 	} else {
 		runtimeDebug.SetGCPercent(100)
 		runtimeDebug.SetMemoryLimit(math.MaxInt64)
+	}
+}
+
+// SetVPNMark receives a file descriptor of a VpnService.protect()-ed socket,
+// reads its SO_MARK value (the Android VPN bypass mark), and stores it so it
+// can be injected into gost chain hops. Must be called before StartGost.
+func SetVPNMark(protectedFd int64) {
+	mark, err := unix.GetsockoptInt(int(protectedFd), unix.SOL_SOCKET, unix.SO_MARK)
+	if err != nil {
+		logrus.Warnf("getsockopt SO_MARK on fd %d: %v", protectedFd, err)
+		return
+	}
+	if mark == 0 {
+		logrus.Warn("SO_MARK is 0 after protect(); upstream connections may loop through VPN")
+		return
+	}
+	mu.Lock()
+	vpnBypassMark = mark
+	mu.Unlock()
+	logrus.Debugf("VPN bypass SO_MARK = 0x%x (%d)", mark, mark)
+}
+
+// GetVPNBypassMark returns the SO_MARK value that will be (or was) injected
+// into gost chain hops to bypass VPN routing. Returns 0 if SetVPNMark has not
+// been called yet or if protect() returned mark=0.
+func GetVPNBypassMark() int {
+	mu.Lock()
+	defer mu.Unlock()
+	return vpnBypassMark
+}
+
+// SetSocketProtector sets the VpnService.protect() callback. When set, every
+// TCP/UDP socket created by gost's upstream dialers is protected before
+// connect(), bypassing Android's VPN routing table. This is the primary
+// bypass mechanism — more reliable than SO_MARK on devices where protect()
+// does not set a readable mark. Must be called before StartGost.
+func SetSocketProtector(p SocketProtector) {
+	mu.Lock()
+	socketProtector = p
+	mu.Unlock()
+	if p != nil {
+		// Wire the protect callback into gost-x's global dialer hook.
+		xdialer.SetGlobalSocketControl(func(fd uintptr) {
+			mu.Lock()
+			sp := socketProtector
+			mu.Unlock()
+			if sp != nil && !sp.Protect(int64(fd)) {
+				logrus.Warnf("VpnService.protect() failed for fd %d", fd)
+			}
+		})
+		logrus.Info("VPN socket protector registered")
+	} else {
+		xdialer.SetGlobalSocketControl(nil)
+		logrus.Info("VPN socket protector cleared")
 	}
 }
 

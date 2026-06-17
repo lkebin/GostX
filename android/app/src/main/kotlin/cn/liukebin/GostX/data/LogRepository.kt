@@ -10,6 +10,9 @@ object LogRepository {
     @Volatile private var logFile: File? = null
     private val timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss.SSS")
 
+    /** Maximum log file size in bytes. Matches Go's default 2 MiB. */
+    @Volatile var maxLogBytes: Long = 2L * 1024 * 1024
+
     fun init(context: Context) {
         if (logFile != null) return
         synchronized(this) {
@@ -32,6 +35,12 @@ object LogRepository {
         val file = logFile ?: return
         try {
             synchronized(this) {
+                // Safety-net: if Kotlin's own writes push the file over the
+                // limit (Go handles rotation for its higher-volume writes),
+                // truncate to empty so the file stays manageable.
+                if (file.length() > maxLogBytes) {
+                    file.writeText("")
+                }
                 val ts = LocalTime.now().format(timeFormat)
                 FileWriter(file, /* append = */ true).use { it.write("$ts $line\n") }
             }
