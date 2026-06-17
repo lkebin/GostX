@@ -12,8 +12,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"golang.org/x/sys/unix"
-
 	"github.com/go-gost/core/service"
 	"github.com/go-gost/x/config"
 	"github.com/go-gost/x/config/loader"
@@ -82,16 +80,10 @@ var (
 	// found in the config, e.g. "127.0.0.1:5353". Empty when none is configured.
 	vpnDNSServiceAddr string
 
-	// vpnBypassMark is the SO_MARK value used by Android to bypass VPN routing.
-	// Set via SetVPNMark before StartGost; injected into every gost chain hop
-	// so that upstream proxy connections bypass the VPN (breaking routing loops).
-	// 0 means unset (no SO_MARK applied).
-	vpnBypassMark int
-
 	// socketProtector is the Android VpnService protect() callback.
 	// When set, every TCP/UDP socket created by gost's internal dialer calls
 	// socketProtector.Protect(fd) before connect(), bypassing VPN routing.
-	// This is the primary bypass mechanism; SO_MARK is a secondary fallback.
+	// This is the primary bypass mechanism, working on all Android devices.
 	socketProtector SocketProtector
 )
 
@@ -216,14 +208,7 @@ func StartGost(yamlConfig string) (err error) {
 	mu.Lock()
 	vpnChainName = chainName
 	vpnDNSServiceAddr = dnsServiceAddr
-	mark := vpnBypassMark
 	mu.Unlock()
-
-	// Inject the VPN bypass mark into every chain hop so that gost's upstream
-	// proxy connections use SO_MARK to bypass VPN routing (avoiding loops).
-	if mark != 0 {
-		injectVPNBypassMark(filtered, mark)
-	}
 
 	b, err := yaml.Marshal(filtered)
 	if err != nil {
@@ -250,33 +235,6 @@ func extractTungoService(cfg *config.Config) (chainName string, filtered *config
 		filtered.Services = append(filtered.Services, svc)
 	}
 	return chainName, filtered
-}
-
-// injectVPNBypassMark sets SO_MARK on every chain hop and standalone hop in
-// the config so that gost's upstream proxy connections bypass the Android VPN
-// routing table. Only sets the mark when the hop has no existing SockOpts.Mark.
-func injectVPNBypassMark(cfg *config.Config, mark int) {
-	setHopMark := func(hop *config.HopConfig) {
-		if hop == nil {
-			return
-		}
-		if hop.SockOpts == nil {
-			hop.SockOpts = &config.SockOptsConfig{Mark: mark}
-		} else if hop.SockOpts.Mark == 0 {
-			hop.SockOpts.Mark = mark
-		}
-	}
-	for _, chain := range cfg.Chains {
-		if chain == nil {
-			continue
-		}
-		for _, hop := range chain.Hops {
-			setHopMark(hop)
-		}
-	}
-	for _, hop := range cfg.Hops {
-		setHopMark(hop)
-	}
 }
 
 // Stop stops all running gost services.
@@ -475,39 +433,10 @@ func SetMemoryLimit(enabled bool) {
 	}
 }
 
-// SetVPNMark receives a file descriptor of a VpnService.protect()-ed socket,
-// reads its SO_MARK value (the Android VPN bypass mark), and stores it so it
-// can be injected into gost chain hops. Must be called before StartGost.
-func SetVPNMark(protectedFd int64) {
-	mark, err := unix.GetsockoptInt(int(protectedFd), unix.SOL_SOCKET, unix.SO_MARK)
-	if err != nil {
-		logrus.Warnf("getsockopt SO_MARK on fd %d: %v", protectedFd, err)
-		return
-	}
-	if mark == 0 {
-		logrus.Warn("SO_MARK is 0 after protect(); upstream connections may loop through VPN")
-		return
-	}
-	mu.Lock()
-	vpnBypassMark = mark
-	mu.Unlock()
-	logrus.Debugf("VPN bypass SO_MARK = 0x%x (%d)", mark, mark)
-}
-
-// GetVPNBypassMark returns the SO_MARK value that will be (or was) injected
-// into gost chain hops to bypass VPN routing. Returns 0 if SetVPNMark has not
-// been called yet or if protect() returned mark=0.
-func GetVPNBypassMark() int {
-	mu.Lock()
-	defer mu.Unlock()
-	return vpnBypassMark
-}
-
 // SetSocketProtector sets the VpnService.protect() callback. When set, every
 // TCP/UDP socket created by gost's upstream dialers is protected before
 // connect(), bypassing Android's VPN routing table. This is the primary
-// bypass mechanism — more reliable than SO_MARK on devices where protect()
-// does not set a readable mark. Must be called before StartGost.
+// bypass mechanism, working on all Android devices. Must be called before StartGost.
 func SetSocketProtector(p SocketProtector) {
 	mu.Lock()
 	socketProtector = p

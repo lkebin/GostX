@@ -98,7 +98,6 @@ func startVPNSingTun(fd, mtu int, chainName, dnsServiceAddr string) error {
 	}
 	router := xchain.NewRouter(
 		gostchain.ChainRouterOption(chainer),
-		gostchain.SockOptsRouterOption(&gostchain.SockOpts{Mark: vpnBypassMark}),
 	)
 
 	prefix, err := netip.ParsePrefix(tunVPNPrefix)
@@ -194,8 +193,8 @@ type singTunHandler struct {
 }
 
 // maxActiveTCPConns is a safety ceiling on concurrent TCP sessions.
-// If gost's upstream connections loop back through the VPN (SO_MARK not set),
-// this prevents goroutine explosion from crashing the VPN service.
+// Protects against routing-loop goroutine explosion if the socket protector
+// is misconfigured, keeping the VPN service alive for graceful shutdown.
 const maxActiveTCPConns = 2000
 
 // PrepareConnection is a pre-flight hook called before each new session.
@@ -218,10 +217,10 @@ func (h *singTunHandler) NewConnectionEx(ctx context.Context, conn net.Conn, sou
 			}
 		}()
 
-		// Guard against routing-loop goroutine explosion. If SO_MARK bypass is
-		// not working, gost's upstream connections loop back through the VPN,
-		// spawning a goroutine per iteration. Cap at maxActiveTCPConns to keep
-		// the service alive and allow graceful shutdown.
+		// Guard against routing-loop goroutine explosion. If the socket protector
+		// fails, gost's upstream connections loop back through the VPN, spawning
+		// a goroutine per iteration. Cap at maxActiveTCPConns to keep the service
+		// alive and allow graceful shutdown.
 		active := h.activeConns.Add(1)
 		defer h.activeConns.Add(-1)
 		if active > maxActiveTCPConns {
