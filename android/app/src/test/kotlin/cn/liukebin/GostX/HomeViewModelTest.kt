@@ -2,7 +2,6 @@ package cn.liukebin.gostx
 
 import android.app.Application
 import cn.liukebin.gostx.data.ConfigRepository
-import cn.liukebin.gostx.data.DEFAULT_PROFILE_ID
 import cn.liukebin.gostx.data.GlobalVpnState
 import cn.liukebin.gostx.data.VpnState
 import cn.liukebin.gostx.data.VpnStatus
@@ -76,6 +75,7 @@ class HomeViewModelTest {
 
     @Test
     fun `setActiveProfile ignored while vpn connecting`() = runTest(dispatcher) {
+        repo.addProfile("First")
         val secondId = repo.addProfile("Second")!!
         GlobalVpnState.setConnecting()
         val viewModel = createViewModel()
@@ -83,7 +83,8 @@ class HomeViewModelTest {
 
         viewModel.setActiveProfile(secondId)
 
-        assertEquals(DEFAULT_PROFILE_ID, repo.getActiveProfileId())
+        // setActiveProfile is ignored while connecting, active stays on First
+        assertEquals(repo.getProfiles().first().id, repo.getActiveProfileId())
     }
 
     @Test

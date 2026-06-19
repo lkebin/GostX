@@ -1,7 +1,6 @@
 package cn.liukebin.gostx
 
 import cn.liukebin.gostx.data.ConfigRepository
-import cn.liukebin.gostx.data.DEFAULT_PROFILE_ID
 import cn.liukebin.gostx.data.GlobalVpnState
 import cn.liukebin.gostx.data.VpnState
 import cn.liukebin.gostx.data.VpnStatus
@@ -48,43 +47,31 @@ class ConfigViewModelTest {
         Dispatchers.resetMain()
     }
 
-    @Test
-    fun `canDelete falseWhenOneProfile`() = runTest(dispatcher) {
-        GlobalVpnState.setStopped()
-
-        val viewModel = ConfigViewModel(repo, DEFAULT_PROFILE_ID)
-        advanceUntilIdle()
-
-        assertFalse(viewModel.uiState.value.canDelete)
-    }
+    private fun firstProfileId(): String = repo.addProfile("First")!!
 
     @Test
-    fun `canDelete trueWhenMultipleProfilesAndStopped`() = runTest(dispatcher) {
-        repo.addProfile("Second")
+    fun `canDelete trueWhenOneProfileAndStopped`() = runTest(dispatcher) {
+        val profileId = firstProfileId()
         GlobalVpnState.setStopped()
-
-        val viewModel = ConfigViewModel(repo, DEFAULT_PROFILE_ID)
+        val viewModel = ConfigViewModel(repo, profileId)
         advanceUntilIdle()
-
         assertTrue(viewModel.uiState.value.canDelete)
     }
 
     @Test
     fun `canDelete falseWhenConnecting`() = runTest(dispatcher) {
-        repo.addProfile("Second")
+        val profileId = firstProfileId()
         GlobalVpnState.setConnecting()
-
-        val viewModel = ConfigViewModel(repo, DEFAULT_PROFILE_ID)
+        val viewModel = ConfigViewModel(repo, profileId)
         advanceUntilIdle()
-
         assertFalse(viewModel.uiState.value.canDelete)
     }
 
     @Test
     fun `canDelete reactsToVpnStateChange`() = runTest(dispatcher) {
-        repo.addProfile("Second")
+        val profileId = firstProfileId()
         GlobalVpnState.setConnecting()
-        val viewModel = ConfigViewModel(repo, DEFAULT_PROFILE_ID)
+        val viewModel = ConfigViewModel(repo, profileId)
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.canDelete)
@@ -93,28 +80,13 @@ class ConfigViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.canDelete)
-    }
-
-    @Test
-    fun `canDelete reactsToProfileListChange`() = runTest(dispatcher) {
-        val secondId = repo.addProfile("Second")!!
-        GlobalVpnState.setStopped()
-        val viewModel = ConfigViewModel(repo, DEFAULT_PROFILE_ID)
-        advanceUntilIdle()
-
-        assertTrue(viewModel.uiState.value.canDelete)
-
-        repo.deleteProfile(secondId)
-        advanceUntilIdle()
-
-        assertFalse(viewModel.uiState.value.canDelete)
     }
 
     @Test
     fun `deleteProfile noOpWhenCanDeleteFalse`() = runTest(dispatcher) {
-        repo.addProfile("Second")
+        val profileId = firstProfileId()
         GlobalVpnState.setConnecting()
-        val viewModel = ConfigViewModel(repo, DEFAULT_PROFILE_ID)
+        val viewModel = ConfigViewModel(repo, profileId)
         val navBackEvents = mutableListOf<Unit>()
         val job = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.navBack.collect { navBackEvents.add(it) }
@@ -124,16 +96,16 @@ class ConfigViewModelTest {
         viewModel.deleteProfile()
         advanceUntilIdle()
 
-        assertEquals(listOf(DEFAULT_PROFILE_ID, "Second"), repo.getProfiles().map { it.name })
+        assertEquals(1, repo.getProfiles().size)
         assertTrue(navBackEvents.isEmpty())
         job.cancel()
     }
 
     @Test
     fun `deleteProfile emitsNavBackOnSuccess`() = runTest(dispatcher) {
-        repo.addProfile("Second")
+        val profileId = firstProfileId()
         GlobalVpnState.setStopped()
-        val viewModel = ConfigViewModel(repo, DEFAULT_PROFILE_ID)
+        val viewModel = ConfigViewModel(repo, profileId)
         val navBackEvents = mutableListOf<Unit>()
         val job = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.navBack.collect { navBackEvents.add(it) }
@@ -143,7 +115,7 @@ class ConfigViewModelTest {
         viewModel.deleteProfile()
         advanceUntilIdle()
 
-        assertEquals(listOf("Second"), repo.getProfiles().map { it.name })
+        assertEquals(0, repo.getProfiles().size)
         assertEquals(1, navBackEvents.size)
         job.cancel()
     }

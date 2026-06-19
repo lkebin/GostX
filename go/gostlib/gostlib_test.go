@@ -383,7 +383,7 @@ func TestNormalizeDNSAddr(t *testing.T) {
 
 func TestGetVPNDNSAddrNoService(t *testing.T) {
 	resetTestState(t)
-	if err := StartGost(testVPNSocks5YAML); err != nil {
+	if err := StartGost(testVPNSocks5YAML, ""); err != nil {
 		t.Fatalf("StartGost() failed: %v", err)
 	}
 	defer StopGost()
@@ -396,7 +396,7 @@ func TestGetVPNDNSAddrNoService(t *testing.T) {
 
 func TestGetVPNDNSAddrWithService(t *testing.T) {
 	resetTestState(t)
-	if err := StartGost(testVPNDNSYAML); err != nil {
+	if err := StartGost(testVPNDNSYAML, ""); err != nil {
 		t.Fatalf("StartGost() failed: %v", err)
 	}
 	defer StopGost()
@@ -409,7 +409,7 @@ func TestGetVPNDNSAddrWithService(t *testing.T) {
 
 func TestGetVPNDNSAddrNormalisesHost(t *testing.T) {
 	resetTestState(t)
-	if err := StartGost(testVPNDNSYAMLNoHost); err != nil {
+	if err := StartGost(testVPNDNSYAMLNoHost, ""); err != nil {
 		t.Fatalf("StartGost() failed: %v", err)
 	}
 	defer StopGost()

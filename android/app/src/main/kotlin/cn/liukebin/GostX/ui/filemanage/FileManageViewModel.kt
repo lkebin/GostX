@@ -7,6 +7,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import cn.liukebin.gostx.R
 import cn.liukebin.gostx.data.FileInfo
 import cn.liukebin.gostx.data.FileRepository
 import java.io.FileNotFoundException
@@ -55,7 +56,7 @@ class FileManageViewModel(
                 }
             } catch (_: Exception) { null }
             if (fileName == null) {
-                _toastEvent.emit("导入失败：找不到文件")
+                _toastEvent.emit(getApplication<Application>().getString(R.string.file_import_failed_not_found))
                 return@launch
             }
 
@@ -90,8 +91,9 @@ class FileManageViewModel(
             }
             refresh()
         } catch (e: Exception) {
-            val msg = if (e is FileNotFoundException) "导入失败：找不到文件"
-                      else "导入失败：${e.message}"
+            val app = getApplication<Application>()
+            val msg = if (e is FileNotFoundException) app.getString(R.string.file_import_failed_not_found)
+                      else app.getString(R.string.file_import_failed, e.message)
             _toastEvent.emit(msg)
         }
     }
@@ -102,10 +104,11 @@ class FileManageViewModel(
             result.onSuccess { refresh() }
             if (result.isFailure) {
                 val e = result.exceptionOrNull()!!
+                val app = getApplication<Application>()
                 val msg = when (e) {
-                    is IllegalArgumentException -> "文件名不能为空或包含非法字符"
-                    is IllegalStateException -> "文件名已存在"
-                    else -> "重命名失败"
+                    is IllegalArgumentException -> app.getString(R.string.file_name_invalid)
+                    is IllegalStateException -> app.getString(R.string.file_name_exists)
+                    else -> app.getString(R.string.file_rename_failed)
                 }
                 _toastEvent.emit(msg)
             }
@@ -116,7 +119,7 @@ class FileManageViewModel(
         viewModelScope.launch {
             val result = repo.deleteFile(name)
             if (result.isFailure) {
-                _toastEvent.emit("删除失败")
+                _toastEvent.emit(getApplication<Application>().getString(R.string.file_delete_failed))
             }
             refresh()
         }
@@ -126,9 +129,9 @@ class FileManageViewModel(
         viewModelScope.launch {
             try {
                 repo.exportToUri(name, dest, getApplication<Application>().contentResolver)
-                _toastEvent.emit("已导出")
+                _toastEvent.emit(getApplication<Application>().getString(R.string.file_export_done))
             } catch (e: Exception) {
-                _toastEvent.emit("导出失败：${e.message}")
+                _toastEvent.emit(getApplication<Application>().getString(R.string.file_export_failed, e.message))
             }
         }
     }
@@ -137,6 +140,6 @@ class FileManageViewModel(
         val app = getApplication<Application>()
         val clipboard = app.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("file path", name))
-        viewModelScope.launch { _toastEvent.emit("已复制到剪贴板") }
+        viewModelScope.launch { _toastEvent.emit(getApplication<Application>().getString(R.string.file_copy_path_done)) }
     }
 }

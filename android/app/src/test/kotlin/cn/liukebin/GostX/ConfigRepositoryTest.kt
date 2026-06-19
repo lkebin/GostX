@@ -3,8 +3,6 @@ package cn.liukebin.gostx
 import cn.liukebin.gostx.data.AppFilterMode
 import cn.liukebin.gostx.data.ConfigProfile
 import cn.liukebin.gostx.data.ConfigRepository
-import cn.liukebin.gostx.data.DEFAULT_PROFILE_ID
-import cn.liukebin.gostx.data.DEFAULT_YAML
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -18,13 +16,23 @@ class ConfigRepositoryTest {
         repo = ConfigRepository(prefs)
     }
 
-    @Test fun `getProfiles returns default profile as ConfigProfile on first run`() {
-        val profiles = repo.getProfiles()
-        assertEquals(1, profiles.size)
-        assertEquals(ConfigProfile(DEFAULT_PROFILE_ID, DEFAULT_PROFILE_ID), profiles[0])
+    @Test fun `getProfiles returns empty list on first run`() {
+        assertEquals(0, repo.getProfiles().size)
     }
 
-    @Test fun `getNextDefaultName returns Config 1 when no numbered profiles exist`() {
+    @Test fun `getActiveProfileId returns empty string when no profiles`() {
+        assertEquals("", repo.getActiveProfileId())
+    }
+
+    @Test fun `getActiveConfig returns empty string when no profiles`() {
+        assertEquals("", repo.getActiveConfig())
+    }
+
+    @Test fun `getConfig returns empty string when not stored`() {
+        assertEquals("", repo.getConfig("nonexistent"))
+    }
+
+    @Test fun `getNextDefaultName returns Config 1 when no profiles`() {
         assertEquals("Config 1", repo.getNextDefaultName())
     }
 
@@ -55,8 +63,15 @@ class ConfigRepositoryTest {
         assertNull(repo.addProfile("MyProfile"))
     }
 
-    @Test fun `addProfile returns null for duplicate of existing default`() {
-        assertNull(repo.addProfile(DEFAULT_PROFILE_ID))
+    @Test fun `addProfile auto-sets active when first profile`() {
+        val id = repo.addProfile("First")!!
+        assertEquals(id, repo.getActiveProfileId())
+    }
+
+    @Test fun `addProfile does not change active when not first`() {
+        val firstId = repo.addProfile("First")!!
+        val secondId = repo.addProfile("Second")!!
+        assertEquals(firstId, repo.getActiveProfileId())
     }
 
     @Test fun `addProfile creates profile with empty yaml`() {
@@ -70,6 +85,7 @@ class ConfigRepositoryTest {
     }
 
     @Test fun `deleteProfile of non-active does not change active`() {
+        val firstId = repo.addProfile("First")!!
         val otherId = repo.addProfile("Other")!!
         val activeBefore = repo.getActiveProfileId()
         repo.deleteProfile(otherId)
@@ -77,10 +93,11 @@ class ConfigRepositoryTest {
     }
 
     @Test fun `deleteProfile of active profile switches active to first remaining`() {
+        val firstId = repo.addProfile("First")!!
         val secondId = repo.addProfile("Second")!!
         repo.setActiveProfile(secondId)
         repo.deleteProfile(secondId)
-        assertEquals(DEFAULT_PROFILE_ID, repo.getActiveProfileId())
+        assertEquals(firstId, repo.getActiveProfileId())
     }
 
     @Test fun `deleteProfile removes profile from list`() {
@@ -89,12 +106,11 @@ class ConfigRepositoryTest {
         assertFalse(repo.getProfiles().any { it.name == "ToDelete" })
     }
 
-    @Test fun `deleteProfile removes DEFAULT_PROFILE_ID when another profile exists`() {
-        val otherId = repo.addProfile("Other")!!
-        repo.setActiveProfile(otherId)
-        repo.deleteProfile(DEFAULT_PROFILE_ID)
-        assertFalse(repo.getProfiles().any { it.id == DEFAULT_PROFILE_ID })
-        assertEquals(otherId, repo.getActiveProfileId())
+    @Test fun `deleteProfile of last profile clears activeId`() {
+        val id = repo.addProfile("Only")!!
+        repo.deleteProfile(id)
+        assertTrue(repo.getProfiles().isEmpty())
+        assertEquals("", repo.getActiveProfileId())
     }
 
     @Test fun `profilesFlow initial value reflects stored profiles`() {
@@ -113,18 +129,16 @@ class ConfigRepositoryTest {
     }
 
     @Test fun `activeProfileIdFlow updates after setActiveProfile`() {
+        repo.addProfile("First")
         val secondId = repo.addProfile("Second")!!
         repo.setActiveProfile(secondId)
         assertEquals(secondId, repo.activeProfileIdFlow.value)
     }
 
-    @Test fun `getConfig for default profile returns DEFAULT_YAML when not stored`() {
-        assertEquals(DEFAULT_YAML, repo.getConfig(DEFAULT_PROFILE_ID))
-    }
-
     @Test fun `saveConfig on existing profile does not duplicate it in list`() {
+        repo.addProfile("First")
         val countBefore = repo.getProfiles().size
-        repo.saveConfig(DEFAULT_PROFILE_ID, "updated: yaml")
+        repo.saveConfig(repo.getActiveProfileId(), "updated: yaml")
         assertEquals(countBefore, repo.getProfiles().size)
     }
 
@@ -142,21 +156,17 @@ class ConfigRepositoryTest {
     }
 
     @Test fun `saveConfig persists yaml and makes profile retrievable`() {
-        repo.saveConfig(DEFAULT_PROFILE_ID, "custom: yaml")
-        assertEquals("custom: yaml", repo.getConfig(DEFAULT_PROFILE_ID))
-    }
-
-    @Test fun `deleteProfile does nothing when only one profile exists`() {
-        repo.deleteProfile(DEFAULT_PROFILE_ID)
-        assertEquals(1, repo.getProfiles().size)
-        assertEquals(DEFAULT_PROFILE_ID, repo.getProfiles()[0].id)
+        val id = repo.addProfile("MyConfig")!!
+        repo.saveConfig(id, "custom: yaml")
+        assertEquals("custom: yaml", repo.getConfig(id))
     }
 
     @Test fun `activeProfileIdFlow updates when deleteProfile changes active`() {
+        val firstId = repo.addProfile("First")!!
         val secondId = repo.addProfile("Second")!!
         repo.setActiveProfile(secondId)
         repo.deleteProfile(secondId)
-        assertEquals(DEFAULT_PROFILE_ID, repo.activeProfileIdFlow.value)
+        assertEquals(firstId, repo.activeProfileIdFlow.value)
     }
 
     @Test fun `fake shared preferences getStringSet returns stored set`() {
