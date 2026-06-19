@@ -111,11 +111,9 @@ func tcpUDPChecksum(ipHdr IPv4Header, protocol uint8) uint16 {
 	for sum > 0xFFFF {
 		sum = (sum & 0xFFFF) + (sum >> 16)
 	}
-	result := uint16(sum)
-	if result == 0 && payloadLen > 0 {
-		return 0xFFFF
-	}
-	return result
+	// Return the pre-negation sum. Callers negate with ^ to get the stored
+	// checksum. When sum==0, ^ produces 0xFFFF (correct per RFC 793/768).
+	return uint16(sum)
 }
 
 // UDPHeader provides typed access to a raw UDP header byte slice.
@@ -125,7 +123,16 @@ func (h UDPHeader) SrcPort() uint16  { return binary.BigEndian.Uint16(h[0:2]) }
 func (h UDPHeader) DstPort() uint16  { return binary.BigEndian.Uint16(h[2:4]) }
 func (h UDPHeader) Length() uint16   { return binary.BigEndian.Uint16(h[4:6]) }
 func (h UDPHeader) Checksum() uint16 { return binary.BigEndian.Uint16(h[6:8]) }
-func (h UDPHeader) Payload() []byte  { return h[UDPHeaderLen:] }
+// Payload returns the UDP data field, bounded by the UDP length field.
+// Using the length field rather than the slice tail avoids delivering IP
+// trailing-pad bytes to callers when the link layer forced packet alignment.
+func (h UDPHeader) Payload() []byte {
+	l := int(h.Length())
+	if l < UDPHeaderLen || l > len(h) {
+		return h[UDPHeaderLen:] // malformed header: best-effort fallback
+	}
+	return h[UDPHeaderLen:l]
+}
 
 func (h UDPHeader) SetSrcPort(v uint16)  { binary.BigEndian.PutUint16(h[0:2], v) }
 func (h UDPHeader) SetDstPort(v uint16)  { binary.BigEndian.PutUint16(h[2:4], v) }

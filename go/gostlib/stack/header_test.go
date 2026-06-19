@@ -187,11 +187,19 @@ func TestUDPChecksumCorrectness(t *testing.T) {
 }
 
 func TestOnesComplementSumZero(t *testing.T) {
-	// All zeros: result should be 0xFFFF (RFC 1071: +0 is represented as 0xFFFF)
+	// All-zeros data: the pre-negation sum is 0x0000. Callers store the
+	// one's complement by negating the result with ^, which gives 0xFFFF.
+	// That is the correct "zero checksum" value per RFC 1071.
+	// (The old code returned 0xFFFF here, but that caused callers to store
+	// ^0xFFFF = 0x0000 — the wrong value.)
 	buf := []byte{0, 0, 0, 0}
 	got := OnesComplementSum(buf)
-	if got != 0xFFFF {
-		t.Fatalf("OnesComplementSum of all zeros = 0x%04X, want 0xFFFF", got)
+	if got != 0x0000 {
+		t.Fatalf("OnesComplementSum of all zeros = 0x%04X, want 0x0000 (caller negates to 0xFFFF)", got)
+	}
+	// Confirm that after negation we get the correct stored checksum value.
+	if ^got != 0xFFFF {
+		t.Fatalf("^OnesComplementSum(zeros) = 0x%04X, want 0xFFFF", ^got)
 	}
 
 	// Empty input: result should be 0

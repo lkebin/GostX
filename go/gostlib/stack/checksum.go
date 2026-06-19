@@ -1,7 +1,11 @@
 package stack
 
-// OnesComplementSum returns the 16-bit one's complement of the one's
-// complement sum of data, or 0xFFFF if the sum is 0.
+// OnesComplementSum returns the 16-bit one's complement sum of b.
+// The result is suitable for use as an IP/TCP/UDP checksum field after
+// bitwise negation by the caller (e.g. `^OnesComplementSum(...)`).
+// When b is non-empty and the sum is zero, the pre-negation result is
+// zero; after negation the caller stores 0xFFFF, which is the correct
+// "valid checksum" value per RFC 791/793.
 func OnesComplementSum(b []byte) uint16 {
 	var sum uint32
 	for i := 0; i < len(b)-1; i += 2 {
@@ -13,9 +17,5 @@ func OnesComplementSum(b []byte) uint16 {
 	for sum > 0xFFFF {
 		sum = (sum & 0xFFFF) + (sum >> 16)
 	}
-	res := uint16(sum)
-	if res == 0 && len(b) > 0 {
-		return 0xFFFF
-	}
-	return res
+	return uint16(sum)
 }

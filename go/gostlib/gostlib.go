@@ -102,7 +102,10 @@ var stateCond = sync.NewCond(&mu)
 // vpnDNSVirtualAddr is the virtual IP advertised to Android as the DNS server
 // when a Gost DNS service is found in the config. It must fall within the VPN
 // subnet (10.0.0.0/24) so that DNS queries are routed through the TUN fd.
-// Value is TUN address (10.0.0.2) + 1.
+// Address layout: serverAddr=10.0.0.1, natAddr=10.0.0.2, dnsVirtual=10.0.0.3.
+// These three must be distinct; in particular natAddr must not equal
+// vpnDNSVirtualAddr to avoid martian-source packet drops by the kernel
+// (Android may add a local route for the DNS virtual address).
 const (
 	vpnDNSVirtualAddr = "10.0.0.3"
 	vpnDNSVirtualPort = 53

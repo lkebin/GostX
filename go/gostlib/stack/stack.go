@@ -28,10 +28,10 @@ func NewTunDevice(fd int, mtu int, addr netip.Prefix) (*TunDevice, error) {
 	}, nil
 }
 
-func (t *TunDevice) Read(p []byte) (int, error)   { return t.file.Read(p) }
-func (t *TunDevice) Write(p []byte) (int, error)   { return t.file.Write(p) }
-func (t *TunDevice) Close() error                  { return t.file.Close() }
-func (t *TunDevice) MTU() int                      { return t.mtu }
+func (t *TunDevice) Read(p []byte) (int, error)  { return t.file.Read(p) }
+func (t *TunDevice) Write(p []byte) (int, error) { return t.file.Write(p) }
+func (t *TunDevice) Close() error                { return t.file.Close() }
+func (t *TunDevice) MTU() int                    { return t.mtu }
 
 // Stack implements a kernel-TCP-based TUN stack.
 // TCP packets have their headers rewritten to redirect to a local listener;
@@ -49,8 +49,9 @@ type Stack struct {
 	udpTimeout  time.Duration
 	udpConns    map[connKey]*udpConn
 	udpMu       sync.Mutex
-	tcpRespOK   uint64
+	tcpRespOK      uint64
 	tcpRespDropped uint64
+	tcpDiagCount   uint64 // counts TCP packets for capped diagnostic logging
 	// Forward-direction packet counters (app → listener).
 	// tcpFwdSyn:  SYN packets that created a new NAT session.
 	// tcpFwdData: data/ACK packets for an existing session, rewritten and
@@ -63,8 +64,10 @@ type Stack struct {
 }
 
 // NewStack creates a new system stack. The addr prefix must have room for
-// at least 2 addresses: .Addr() is the server address (TCP listener),
-// .Addr().Next() is the NAT source address.
+// at least 2 addresses: .Addr() is the server address (TCP listener,
+// matches the TUN interface address), and .Addr().Next() is the NAT source
+// address used when rewriting forward SYN packets. The NAT source must
+// differ from vpnDNSVirtualAddr to avoid martian-source packet drops.
 func NewStack(ctx context.Context, tun *TunDevice, handler Handler, udpTimeout time.Duration) (*Stack, error) {
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -129,7 +132,25 @@ func (s *Stack) Start() error {
 
 	go s.acceptLoop()
 	go s.tunLoop()
+	go s.selfTest()
 	return nil
+}
+
+// selfTest attempts a direct TCP dial to the listener to verify it is reachable
+// from within the gost process, bypassing TUN routing entirely. If this
+// succeeds but normal TUN-path connections don't, it confirms the Android
+// routing issue: the gost process's kernel sockets bypass VPN routing (tun0),
+// so SYN-ACKs go via the physical interface instead of TUN.
+func (s *Stack) selfTest() {
+	time.Sleep(200 * time.Millisecond)
+	addr := fmt.Sprintf("%s:%d", s.serverAddr, s.tcpPort)
+	conn, err := net.DialTimeout("tcp4", addr, 2*time.Second)
+	if err != nil {
+		logrus.Errorf("stack: self-test FAIL - direct dial to listener %s failed: %v", addr, err)
+		return
+	}
+	logrus.Infof("stack: self-test OK - direct dial to listener succeeded (local=%v remote=%v)", conn.LocalAddr(), conn.RemoteAddr())
+	conn.Close()
 }
 
 func (s *Stack) Close() error {
@@ -170,6 +191,16 @@ func (s *Stack) tunLoop() {
 				tcpResp++
 			} else {
 				tcpNew++
+			}
+			// Diagnostic: log first 30 TCP packets to show src/dst
+			if n := atomic.AddUint64(&s.tcpDiagCount, 1); n <= 30 {
+				tcpHdr := TCPHeader(ip.Payload())
+				src := netip.AddrPortFrom(ip.SrcAddr(), tcpHdr.SrcPort())
+				dst := netip.AddrPortFrom(ip.DstAddr(), tcpHdr.DstPort())
+				flags := tcpHdr.Flags()
+				fromSrv := ip.SrcAddr() == s.serverAddr
+				logrus.Debugf("stack: tcp pkt#%d src=%v dst=%v flags=0x%02x fromSrv=%v (serverAddr=%v tcpPort=%d)",
+					n, src, dst, flags, fromSrv, s.serverAddr, s.tcpPort)
 			}
 		case UDPProtocol:
 			udp++
@@ -261,6 +292,7 @@ func (s *Stack) processTCP(ip IPv4Header) bool {
 			return false
 		}
 		atomic.AddUint64(&s.tcpRespOK, 1)
+		logrus.Debugf("stack: tcp RESP {%v→%v} nat:%d → rewrite {%v→%v}", src, dst, dst.Port(), sess.Destination, sess.Source)
 		// Rewrite back: src = original dst, dst = original src
 		ip.SetSrcAddr(sess.Destination.Addr())
 		tcpHdr.SetSrcPort(sess.Destination.Port())
@@ -291,6 +323,10 @@ func (s *Stack) processTCP(ip IPv4Header) bool {
 		tcpHdr.SetSrcPort(natPort)
 		ip.SetDstAddr(s.serverAddr)
 		tcpHdr.SetDstPort(s.tcpPort)
+
+		if isSYN {
+			logrus.Debugf("stack: tcp SYN fwd %v→%v → nat:%d→srv:%v", src, dst, natPort, s.serverAddr)
+		}
 	}
 
 	// Recalculate checksums — CalculateChecksum zeroes the field and returns ^sum.
@@ -449,7 +485,13 @@ func (u *udpConn) WritePacket(data []byte) error {
 	copy(udp.Payload(), data)
 
 	udp.SetChecksum(0) // must zero before computing (tcpUDPChecksum reads the field)
-	udp.SetChecksum(^tcpUDPChecksum(ip, UDPProtocol))
+	cs := ^tcpUDPChecksum(ip, UDPProtocol)
+	if cs == 0 {
+		// RFC 768: a stored checksum of 0 means "checksum disabled".
+		// When the computed ones-complement happens to be 0, use 0xFFFF.
+		cs = 0xFFFF
+	}
+	udp.SetChecksum(cs)
 	ip.SetChecksum(ip.CalculateChecksum())
 
 	_, err := u.stack.tun.Write(packet)

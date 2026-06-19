@@ -36,18 +36,17 @@ var (
 
 // tunVPNPrefix must match the address configured in GostVpnService
 // (builder.addAddress("10.0.0.2", 24)). The system stack binds its TCP
-// listener to this address, so packets arriving on the TUN interface are
-// redirected to the local listener via IP header rewriting — no userspace
-// TCP/IP stack required.
+// listener to serverAddr (10.0.0.2), so injected SYNs (src=natAddr=10.0.0.3)
+// are delivered locally; SYN-ACKs (dst=10.0.0.3) route via tun0's subnet
+// and appear in tunLoop's TUN fd read.
 const tunVPNPrefix = "10.0.0.2/24"
 
 // StartTun creates a system stack on the given TUN file descriptor,
 // routing TCP/UDP sessions through the gost chain. StartGost must have been
 // called first to parse the config and start service listeners.
 //
-// The system stack binds TCP listeners to the TUN interface address and
-// rewrites IP/TCP headers so the OS kernel handles TCP reassembly — unlike
-// the former gVisor approach which ran a full userspace TCP/IP stack.
+// The system stack rewrites IP/TCP headers so the OS kernel handles TCP
+// reassembly — no userspace TCP/IP stack required.
 func StartTun(fd int, mtu int) error {
 	tunMu.Lock()
 	defer tunMu.Unlock()
@@ -173,61 +172,63 @@ func (h *vpnHandler) PrepareConnection(network string, source, destination netip
 	return nil
 }
 
+// NewConnection is called by acceptLoop on its own goroutine; run directly.
 func (h *vpnHandler) NewConnection(ctx context.Context, conn stack.TCPConn, source, destination netip.AddrPort) {
-	go func() {
-		defer conn.Close()
-		defer func() {
-			if r := recover(); r != nil {
-				logrus.Errorf("[tcp] panic: %v", r)
-			}
-		}()
-
-		active := h.activeConns.Add(1)
-		defer h.activeConns.Add(-1)
-		if active > maxActiveTCPConns {
-			logrus.Warnf("[tcp] connection limit (%d) reached, dropping %v->%v",
-				maxActiveTCPConns, source, destination)
-			atomic.AddInt64(&failedConns, 1)
-			return
+	defer conn.Close()
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("[tcp] panic: %v", r)
 		}
-
-		dst := net.JoinHostPort(destination.Addr().String(), strconv.Itoa(int(destination.Port())))
-		n := atomic.AddInt64(&tcpConns, 1)
-		logrus.Debugf("[tcp#%d] dial %s", n, dst)
-
-		var upstream net.Conn
-		var err error
-		if h.dnsServiceAddr != "" &&
-			destination.Addr().String() == vpnDNSVirtualAddr &&
-			int(destination.Port()) == vpnDNSVirtualPort {
-			upstream, err = net.Dial("tcp", h.dnsServiceAddr)
-		} else {
-			upstream, err = h.router.Dial(ctx, "tcp", dst)
-		}
-		if err != nil {
-			atomic.AddInt64(&failedConns, 1)
-			logrus.Errorf("[tcp#%d] dial %s failed: %v", n, dst, err)
-			return
-		}
-		defer upstream.Close()
-		logrus.Infof("[tcp#%d] connected %s, relaying", n, dst)
-
-		var up, down int64
-		relayDone := make(chan struct{})
-		go func() {
-			t := time.NewTimer(3 * time.Second)
-			defer t.Stop()
-			select {
-			case <-t.C:
-				logrus.Infof("[tcp#%d] heartbeat %s up=%dB down=%dB (still relaying)",
-					n, dst, atomic.LoadInt64(&up), atomic.LoadInt64(&down))
-			case <-relayDone:
-			}
-		}()
-		relay(conn, upstream, &up, &down)
-		close(relayDone)
-		logrus.Infof("[tcp#%d] done %s up=%dB down=%dB", n, dst, up, down)
 	}()
+
+	active := h.activeConns.Add(1)
+	defer h.activeConns.Add(-1)
+	if active > maxActiveTCPConns {
+		logrus.Warnf("[tcp] connection limit (%d) reached, dropping %v->%v",
+			maxActiveTCPConns, source, destination)
+		atomic.AddInt64(&failedConns, 1)
+		return
+	}
+
+	dst := net.JoinHostPort(destination.Addr().String(), strconv.Itoa(int(destination.Port())))
+	n := atomic.AddInt64(&tcpConns, 1)
+	logrus.Debugf("[tcp#%d] dial %s", n, dst)
+
+	dialCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	var upstream net.Conn
+	var err error
+	if h.dnsServiceAddr != "" &&
+		destination.Addr().String() == vpnDNSVirtualAddr &&
+		int(destination.Port()) == vpnDNSVirtualPort {
+		upstream, err = net.Dial("tcp", h.dnsServiceAddr)
+	} else {
+		upstream, err = h.router.Dial(dialCtx, "tcp", dst)
+	}
+	if err != nil {
+		atomic.AddInt64(&failedConns, 1)
+		logrus.Errorf("[tcp#%d] dial %s failed: %v", n, dst, err)
+		return
+	}
+	defer upstream.Close()
+	logrus.Infof("[tcp#%d] connected %s, relaying", n, dst)
+
+	var up, down int64
+	relayDone := make(chan struct{})
+	go func() {
+		t := time.NewTimer(3 * time.Second)
+		defer t.Stop()
+		select {
+		case <-t.C:
+			logrus.Infof("[tcp#%d] heartbeat %s up=%dB down=%dB (still relaying)",
+				n, dst, atomic.LoadInt64(&up), atomic.LoadInt64(&down))
+		case <-relayDone:
+		}
+	}()
+	relay(conn, upstream, &up, &down)
+	close(relayDone)
+	logrus.Infof("[tcp#%d] done %s up=%dB down=%dB", n, dst, up, down)
 }
 
 func (h *vpnHandler) NewPacketConnection(ctx context.Context, conn stack.PacketConn, source, destination netip.AddrPort) {

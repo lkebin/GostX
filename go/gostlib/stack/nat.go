@@ -87,6 +87,10 @@ func (n *TCPNat) cleanExpired(maxAge time.Duration) {
 // reuse after TCP TIME_WAIT does not misroute a new connection to the stale
 // destination of a previous one. If PrepareConnection is provided, it is
 // called on first lookup.
+//
+// Note: under concurrent SYN packets for the same 5-tuple, prepare may be
+// called more than once. Callers must be idempotent (the current implementation
+// always returns nil, so this is benign).
 func (n *TCPNat) Lookup(source, destination netip.AddrPort, prepare func() error) (uint16, error) {
 	key := connKey{source, destination}
 	n.mu.RLock()
@@ -136,11 +140,11 @@ func (n *TCPNat) Lookup(source, destination netip.AddrPort, prepare func() error
 
 // LookupBack returns the session for a NAT port (used for response packets).
 func (n *TCPNat) LookupBack(port uint16) *TCPSession {
-	n.mu.RLock()
+	n.mu.Lock()
 	sess := n.portMap[port]
-	n.mu.RUnlock()
 	if sess != nil {
 		sess.LastActive = time.Now()
 	}
+	n.mu.Unlock()
 	return sess
 }
