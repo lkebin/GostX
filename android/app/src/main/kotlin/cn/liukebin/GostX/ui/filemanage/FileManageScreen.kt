@@ -89,10 +89,20 @@ fun FileManageScreen(
         }
     )
 ) {
+    var exportTarget by remember { mutableStateOf<String?>(null) }
+
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         if (uri != null) vm.importFile(uri)
+    }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("*/*")
+    ) { uri: Uri? ->
+        val name = exportTarget
+        exportTarget = null
+        if (uri != null && name != null) vm.exportFile(name, uri)
     }
 
     val files by vm.files.collectAsState()
@@ -213,6 +223,10 @@ fun FileManageScreen(
                 items(files, key = { it.name }) { file ->
                     FileListItem(
                         file = file,
+                        onExport = {
+                            exportTarget = file.name
+                            exportLauncher.launch(file.name)
+                        },
                         onRename = { renameTarget = file.name },
                         onDelete = { vm.deleteFile(file.name) },
                         onCopyPath = { vm.copyPath(file.name) }
@@ -226,6 +240,7 @@ fun FileManageScreen(
 @Composable
 private fun FileListItem(
     file: FileInfo,
+    onExport: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
     onCopyPath: () -> Unit
@@ -300,6 +315,13 @@ private fun FileListItem(
                     onClick = {
                         menuExpanded = false
                         onRename()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.file_export)) },
+                    onClick = {
+                        menuExpanded = false
+                        onExport()
                     }
                 )
                 DropdownMenuItem(

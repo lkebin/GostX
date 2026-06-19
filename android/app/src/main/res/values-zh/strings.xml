@@ -108,6 +108,9 @@
     <string name="file_delete">删除</string>
     <string name="file_delete_confirm_title">删除文件</string>
     <string name="file_delete_confirm_message">确定要删除 \"%s\" 吗？</string>
+    <string name="file_export">导出</string>
+    <string name="file_export_done">已导出</string>
+    <string name="file_export_failed">导出失败：%s</string>
     <string name="file_copy_path">复制路径</string>
     <string name="file_copy_path_done">已复制到剪贴板</string>
     <string name="file_name_label">文件名</string>
@@ -118,4 +121,5 @@
     <string name="file_overwrite_title">文件已存在</string>
     <string name="file_overwrite_message">文件 \"%s\" 已存在，覆盖？</string>
     <string name="file_overwrite_confirm">覆盖</string>
+    <string name="settings_version">版本 %s</string>
 </resources>

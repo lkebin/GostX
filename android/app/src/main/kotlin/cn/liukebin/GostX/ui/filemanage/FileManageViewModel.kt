@@ -122,6 +122,17 @@ class FileManageViewModel(
         }
     }
 
+    fun exportFile(name: String, dest: Uri) {
+        viewModelScope.launch {
+            try {
+                repo.exportToUri(name, dest, getApplication<Application>().contentResolver)
+                _toastEvent.emit("已导出")
+            } catch (e: Exception) {
+                _toastEvent.emit("导出失败：${e.message}")
+            }
+        }
+    }
+
     fun copyPath(name: String) {
         val app = getApplication<Application>()
         val clipboard = app.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
