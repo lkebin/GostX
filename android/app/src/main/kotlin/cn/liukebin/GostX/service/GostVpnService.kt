@@ -14,6 +14,7 @@ import android.os.IBinder
 import android.os.ParcelFileDescriptor
 import android.system.Os
 import android.system.OsConstants
+import cn.liukebin.gostx.R
 import cn.liukebin.gostx.data.AppFilterMode
 import cn.liukebin.gostx.data.ConfigRepository
 import cn.liukebin.gostx.data.GlobalVpnState
@@ -69,7 +70,7 @@ class GostVpnService : VpnService() {
 
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
         log("Uncaught coroutine exception: ${throwable.message}")
-        GlobalVpnState.setError("意外错误: ${throwable.message}")
+        GlobalVpnState.setError(getString(R.string.vpn_error_unexpected, throwable.message))
         stopSelf()
     }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
@@ -216,7 +217,7 @@ class GostVpnService : VpnService() {
             log("[start] establishing VPN interface...")
             tunFd = builder.establish() ?: run {
                 log("Failed to establish VPN interface")
-                GlobalVpnState.setError("VPN 接口建立失败，请先授予 VPN 权限")
+                GlobalVpnState.setError(getString(R.string.vpn_error_establish))
                 stopSelf()
                 return
             }
@@ -227,12 +228,13 @@ class GostVpnService : VpnService() {
             registerSocketProtector()
 
             try {
+                val systemDNS = collectSystemDNS()
                 log("[start] loading config and starting gost...")
-                GostLibBridge.startGost(yaml)
+                GostLibBridge.startGost(yaml, systemDNS)
                 log("[start] gost ready")
             } catch (e: Exception) {
                 log("gost start failed: ${e.message}")
-                GlobalVpnState.setError("gost 启动失败: ${e.message}")
+                GlobalVpnState.setError(getString(R.string.vpn_error_gost_start, e.message))
                 closeTun()
                 stopSelf()
                 return
@@ -243,7 +245,7 @@ class GostVpnService : VpnService() {
                 GostLibBridge.startTun(tunFd!!.fd.toLong(), 1500L)
             } catch (e: Exception) {
                 log("VPN start failed: ${e.message}")
-                GlobalVpnState.setError("VPN 启动失败: ${e.message}")
+                GlobalVpnState.setError(getString(R.string.vpn_error_tun_start, e.message))
                 closeTun()
                 GostLibBridge.stopGost()
                 stopSelf()
@@ -262,7 +264,7 @@ class GostVpnService : VpnService() {
                 GostLibBridge.setMemoryLimit(true)
             } catch (e: Exception) {
                 log("VPN post-start error: ${e.message}")
-                GlobalVpnState.setError("VPN 启动后错误: ${e.message}")
+                GlobalVpnState.setError(getString(R.string.vpn_error_post_start, e.message))
                 GostLibBridge.setMemoryLimit(false)
                 closeTun()
                 GostLibBridge.stopTun()
@@ -334,6 +336,19 @@ class GostVpnService : VpnService() {
             }
         })
         log("[start] socket protector registered")
+    }
+
+    /**
+     * Reads system DNS servers from the current network. Returns a
+     * comma-separated string (e.g. "192.168.1.1") or "" if unavailable.
+     */
+    private fun collectSystemDNS(): String {
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        return cm.getLinkProperties(cm.activeNetwork)?.dnsServers
+            ?.mapNotNull { it.hostAddress }
+            ?.takeIf { it.isNotEmpty() }
+            ?.joinToString(",")
+            ?: ""
     }
 
     private fun log(msg: String) = LogRepository.append(msg)
@@ -478,8 +493,8 @@ internal object GostLibBridge {
         }
     }
 
-    fun startGost(yaml: String) {
-        invoke("startGost", yaml)
+    fun startGost(yaml: String, systemDNS: String) {
+        invoke("startGost", yaml, systemDNS)
     }
 
     fun startTun(fd: Long, mtu: Long) {
@@ -534,4 +549,5 @@ internal object GostLibBridge {
     fun setLogLevel(level: String) {
         runCatching { invoke("setLogLevel", level) }
     }
+
 }

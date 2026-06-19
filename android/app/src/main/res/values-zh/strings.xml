@@ -53,6 +53,7 @@
     <string name="profile_rename">重命名</string>
     <string name="profile_rename_title">重命名配置</string>
     <string name="profile_add">添加配置</string>
+    <string name="home_empty_profiles">暂无配置\n点击右上角 + 添加</string>
     <string name="profile_new_title">新建配置</string>
     <string name="profile_name_label">名称</string>
     <string name="profile_name_duplicate">名称已存在</string>
@@ -118,8 +119,17 @@
     <string name="file_name_invalid">文件名不能为空或包含非法字符</string>
     <string name="file_import_failed_not_found">导入失败：找不到文件</string>
     <string name="file_import_failed">导入失败：%s</string>
+    <string name="file_rename_failed">重命名失败</string>
+    <string name="file_delete_failed">删除失败</string>
     <string name="file_overwrite_title">文件已存在</string>
     <string name="file_overwrite_message">文件 \"%s\" 已存在，覆盖？</string>
     <string name="file_overwrite_confirm">覆盖</string>
     <string name="settings_version">版本 %s</string>
+
+    <!-- VPN error messages -->
+    <string name="vpn_error_unexpected">意外错误: %s</string>
+    <string name="vpn_error_establish">VPN 接口建立失败，请先授予 VPN 权限</string>
+    <string name="vpn_error_gost_start">gost 启动失败: %s</string>
+    <string name="vpn_error_tun_start">VPN 启动失败: %s</string>
+    <string name="vpn_error_post_start">VPN 启动后错误: %s</string>
 </resources>

@@ -52,6 +52,7 @@
     <string name="profile_rename">Rename</string>
     <string name="profile_rename_title">Rename Profile</string>
     <string name="profile_add">Add Profile</string>
+    <string name="home_empty_profiles">No configurations yet.\nTap + to add one.</string>
     <string name="profile_new_title">New Profile</string>
     <string name="profile_name_label">Name</string>
     <string name="profile_name_duplicate">Name already exists</string>
@@ -116,8 +117,17 @@
     <string name="file_name_invalid">Invalid file name</string>
     <string name="file_import_failed_not_found">Import failed: file not found</string>
     <string name="file_import_failed">Import failed: %s</string>
+    <string name="file_rename_failed">Rename failed</string>
+    <string name="file_delete_failed">Delete failed</string>
     <string name="file_overwrite_title">File exists</string>
     <string name="file_overwrite_message">\"%s\" already exists. Overwrite?</string>
     <string name="file_overwrite_confirm">Overwrite</string>
     <string name="settings_version">Version %s</string>
+
+    <!-- VPN error messages -->
+    <string name="vpn_error_unexpected">Unexpected error: %s</string>
+    <string name="vpn_error_establish">VPN setup failed. Please grant VPN permission first.</string>
+    <string name="vpn_error_gost_start">gost start failed: %s</string>
+    <string name="vpn_error_tun_start">VPN start failed: %s</string>
+    <string name="vpn_error_post_start">VPN post-start error: %s</string>
 </resources>

@@ -39,7 +39,7 @@ class ConfigViewModel(
         load()
         viewModelScope.launch {
             combine(GlobalVpnState.state, repo.profilesFlow) { vpnState, profiles ->
-                val canDelete = profiles.size > 1 && (vpnState.status == VpnStatus.STOPPED || vpnState.status == VpnStatus.ERROR)
+                val canDelete = profiles.any { it.id == profileId } && (vpnState.status == VpnStatus.STOPPED || vpnState.status == VpnStatus.ERROR)
                 val otherNames = profiles.filter { it.id != profileId }.map { it.name }.toSet()
                 canDelete to otherNames
             }.collect { (canDelete, otherNames) ->

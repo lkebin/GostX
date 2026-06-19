@@ -1,15 +1,10 @@
 package cn.liukebin.gostx.ui.config
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -19,9 +14,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -31,13 +27,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -106,7 +103,8 @@ fun ConfigScreen(
     val state by vm.uiState.collectAsState()
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
-    var showSaved by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         vm.navBack.collect { onBack() }
@@ -116,27 +114,17 @@ fun ConfigScreen(
         if (!state.canDelete) showDeleteConfirm = false
     }
 
+    val savedMsg = stringResource(R.string.config_saved)
     LaunchedEffect(state.isSaved) {
         if (state.isSaved) {
-            showSaved = true
-            kotlinx.coroutines.delay(2000)
-            showSaved = false
-        } else {
-            showSaved = false
+            scope.launch { snackbarHostState.showSnackbar(savedMsg) }
         }
     }
 
-    if (state.validationError != null) {
-        AlertDialog(
-            onDismissRequest = { vm.clearValidationError() },
-            title = { Text(stringResource(R.string.config_error_title)) },
-            text = { Text(state.validationError!!) },
-            confirmButton = {
-                TextButton(onClick = { vm.clearValidationError() }) {
-                    Text(stringResource(R.string.action_ok))
-                }
-            }
-        )
+    LaunchedEffect(state.validationError) {
+        val error = state.validationError ?: return@LaunchedEffect
+        vm.clearValidationError()
+        scope.launch { snackbarHostState.showSnackbar(error) }
     }
 
     if (showRenameDialog) {
@@ -196,14 +184,14 @@ fun ConfigScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .imePadding()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             OutlinedTextField(
                 value = state.yaml,
@@ -214,21 +202,6 @@ fun ConfigScreen(
                 textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp),
                 minLines = 10,
             )
-
-            AnimatedVisibility(
-                visible = showSaved,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                Column {
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        stringResource(R.string.config_saved),
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
         }
     }
 }

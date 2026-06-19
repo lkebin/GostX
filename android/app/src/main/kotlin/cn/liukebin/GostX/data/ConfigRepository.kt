@@ -14,8 +14,6 @@ private const val KEY_LOG_MAX_SIZE_KB = "log_max_size_kb"
 private const val KEY_APP_FILTER_ENABLED = "app_filter_enabled"
 private const val KEY_APP_FILTER_MODE = "app_filter_mode"
 private const val KEY_APP_FILTER_PACKAGES = "app_filter_packages"
-const val DEFAULT_PROFILE_ID = "default"
-
 enum class AppFilterMode { BLACKLIST, WHITELIST }
 
 /**
@@ -27,62 +25,12 @@ enum class AppFilterMode { BLACKLIST, WHITELIST }
  */
 data class ConfigProfile(val id: String, val name: String)
 
-val DEFAULT_YAML = """
-# GostX VPN 配置
-# 使用 tungo 模式：gVisor 直接处理 TUN 数据包，无需额外监听端口
-#
-# ⚠️  metadata 位置很重要：
-#   - connector 的参数（如 SS 的 method/password）放在 connector.metadata 下
-#   - dialer 的参数（如 WSS 的 path、host）放在 dialer.metadata 下
-#   - 不要把 dialer 参数放在节点级别的 metadata 下，否则会被忽略
-#
-# 示例 1: Shadowsocks over TCP（最简单）
-services:
-  - name: vpn
-    addr: :0
-    handler:
-      type: tungo
-      chain: upstream
-    listener:
-      type: tungo
-
-chains:
-  - name: upstream
-    hops:
-      - name: hop0
-        nodes:
-          - name: server
-            addr: 您的代理服务器:端口
-            connector:
-              type: ss
-              metadata:
-                method: chacha20-ietf-poly1305
-                password: 您的密码
-            dialer:
-              type: tcp
-
-# 示例 2: HTTP CONNECT over WebSocket (WSS)
-# chains:
-#   - name: upstream
-#     hops:
-#       - name: hop0
-#         nodes:
-#           - name: server
-#             addr: your.server.com:443
-#             connector:
-#               type: http
-#             dialer:
-#               type: wss
-#               metadata:
-#                 path: /your-secret-path   # ← 必须在 dialer.metadata 下，不是节点级别
-""".trimIndent()
-
 class ConfigRepository(private val prefs: SharedPreferences) {
 
     private val _profilesFlow = MutableStateFlow<List<ConfigProfile>>(emptyList())
     val profilesFlow: StateFlow<List<ConfigProfile>> = _profilesFlow.asStateFlow()
 
-    private val _activeProfileIdFlow = MutableStateFlow(DEFAULT_PROFILE_ID)
+    private val _activeProfileIdFlow = MutableStateFlow("")
     val activeProfileIdFlow: StateFlow<String> = _activeProfileIdFlow.asStateFlow()
 
     // Backward compat: migrate from old boolean logging_enabled to log_level string.
@@ -173,7 +121,7 @@ class ConfigRepository(private val prefs: SharedPreferences) {
 
     init {
         _profilesFlow.value = loadProfilesFromPrefs()
-        _activeProfileIdFlow.value = prefs.getString(KEY_ACTIVE, DEFAULT_PROFILE_ID) ?: DEFAULT_PROFILE_ID
+        _activeProfileIdFlow.value = prefs.getString(KEY_ACTIVE, "") ?: ""
     }
 
     fun getProfiles(): List<ConfigProfile> = _profilesFlow.value
@@ -187,7 +135,7 @@ class ConfigRepository(private val prefs: SharedPreferences) {
 
     fun getConfig(profileId: String): String =
         prefs.getString("config_profile_$profileId", null)
-            ?: if (profileId == DEFAULT_PROFILE_ID) DEFAULT_YAML else ""
+            ?: ""
 
     fun getActiveConfig(): String = getConfig(getActiveProfileId())
 
@@ -217,11 +165,15 @@ class ConfigRepository(private val prefs: SharedPreferences) {
         if (name.contains(',')) return null
         val id = UUID.randomUUID().toString()
         val newList = current + ConfigProfile(id, name)
-        prefs.edit()
+        val editor = prefs.edit()
             .putString(KEY_PROFILES, newList.joinToString(",") { it.id })
             .putString("config_profile_name_$id", name)
             .putString("config_profile_$id", "")
-            .apply()
+        if (current.isEmpty()) {
+            editor.putString(KEY_ACTIVE, id)
+            _activeProfileIdFlow.value = id
+        }
+        editor.apply()
         _profilesFlow.value = newList
         return id
     }
@@ -240,14 +192,13 @@ class ConfigRepository(private val prefs: SharedPreferences) {
 
     fun deleteProfile(profileId: String) {
         val current = _profilesFlow.value
-        if (current.size <= 1) return
         val newList = current.filter { it.id != profileId }
         val editor = prefs.edit()
             .putString(KEY_PROFILES, newList.joinToString(",") { it.id })
             .remove("config_profile_$profileId")
             .remove("config_profile_name_$profileId")
         if (_activeProfileIdFlow.value == profileId) {
-            val newActive = newList.first().id
+            val newActive = newList.firstOrNull()?.id ?: ""
             editor.putString(KEY_ACTIVE, newActive)
             _activeProfileIdFlow.value = newActive
         }
@@ -257,7 +208,7 @@ class ConfigRepository(private val prefs: SharedPreferences) {
 
     private fun loadProfilesFromPrefs(): List<ConfigProfile> {
         val raw = prefs.getString(KEY_PROFILES, null)
-            ?: return listOf(ConfigProfile(DEFAULT_PROFILE_ID, DEFAULT_PROFILE_ID))
+            ?: return emptyList()
         return raw.split(",").filter { it.isNotBlank() }.map { id ->
             val name = prefs.getString("config_profile_name_$id", null) ?: id
             ConfigProfile(id, name)

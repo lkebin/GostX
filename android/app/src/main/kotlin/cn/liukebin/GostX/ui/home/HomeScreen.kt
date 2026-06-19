@@ -1,6 +1,7 @@
 package cn.liukebin.gostx.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -43,8 +44,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -57,6 +60,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import cn.liukebin.gostx.R
 import cn.liukebin.gostx.data.ConfigProfile
 import cn.liukebin.gostx.data.ConfigRepository
+import cn.liukebin.gostx.data.GlobalVpnState
 import cn.liukebin.gostx.data.VpnStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -111,6 +115,7 @@ fun HomeScreen(
                 withDismissAction = true,
                 duration = SnackbarDuration.Indefinite
             )
+            GlobalVpnState.setStopped()
         }
     }
 
@@ -130,6 +135,7 @@ fun HomeScreen(
     }
 
     val isTransitioning = vpnState.status == VpnStatus.CONNECTING || vpnState.status == VpnStatus.STOPPING
+    val canToggleVpn = homeState.profiles.isNotEmpty() || vpnState.status == VpnStatus.CONNECTED
 
     Scaffold(
         topBar = {
@@ -157,39 +163,41 @@ fun HomeScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    if (!isTransitioning) vm.toggleVpn(onRequestVpnPermission)
-                },
-                modifier = Modifier.size(72.dp),
-                shape = CircleShape,
-                containerColor = when (vpnState.status) {
-                    VpnStatus.CONNECTED -> MaterialTheme.colorScheme.primary
-                    VpnStatus.ERROR -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.primaryContainer
-                },
-                contentColor = when (vpnState.status) {
-                    VpnStatus.CONNECTED -> MaterialTheme.colorScheme.onPrimary
-                    VpnStatus.ERROR -> MaterialTheme.colorScheme.onError
-                    else -> MaterialTheme.colorScheme.onPrimaryContainer
-                }
-            ) {
-                if (isTransitioning) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        trackColor = Color.Transparent
-                    )
-                } else {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_tile_vpn),
-                        modifier = Modifier.size(36.dp),
-                        contentDescription = if (vpnState.status == VpnStatus.CONNECTED)
-                            stringResource(R.string.vpn_stop_label)
-                        else
-                            stringResource(R.string.vpn_start_label)
-                    )
+            if (canToggleVpn) {
+                FloatingActionButton(
+                    onClick = {
+                        if (!isTransitioning) vm.toggleVpn(onRequestVpnPermission)
+                    },
+                    modifier = Modifier.size(72.dp),
+                    shape = CircleShape,
+                    containerColor = when (vpnState.status) {
+                        VpnStatus.CONNECTED -> MaterialTheme.colorScheme.primary
+                        VpnStatus.ERROR -> MaterialTheme.colorScheme.error
+                        else -> MaterialTheme.colorScheme.primaryContainer
+                    },
+                    contentColor = when (vpnState.status) {
+                        VpnStatus.CONNECTED -> MaterialTheme.colorScheme.onPrimary
+                        VpnStatus.ERROR -> MaterialTheme.colorScheme.onError
+                        else -> MaterialTheme.colorScheme.onPrimaryContainer
+                    }
+                ) {
+                    if (isTransitioning) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            trackColor = Color.Transparent
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_tile_vpn),
+                            modifier = Modifier.size(36.dp),
+                            contentDescription = if (vpnState.status == VpnStatus.CONNECTED)
+                                stringResource(R.string.vpn_stop_label)
+                            else
+                                stringResource(R.string.vpn_start_label)
+                        )
+                    }
                 }
             }
         },
@@ -208,24 +216,40 @@ fun HomeScreen(
                     onDismiss = { vm.dismissBatteryOptimizationPrompt() }
                 )
             }
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(homeState.profiles, key = { it.id }) { profile ->
-                    Card(
-                        shape = MaterialTheme.shapes.medium,
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        ProfileListItem(
-                            profile = profile,
-                            isActive = profile.id == homeState.activeProfileId,
-                            radioEnabled = canSetActiveProfile(vpnState.status),
-                            onActivate = { vm.setActiveProfile(profile.id) },
-                            onEdit = { onNavigateToConfigEdit(profile.id) }
-                        )
+            if (homeState.profiles.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.home_empty_profiles),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(homeState.profiles, key = { it.id }) { profile ->
+                        Card(
+                            shape = MaterialTheme.shapes.medium,
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            ProfileListItem(
+                                profile = profile,
+                                isActive = profile.id == homeState.activeProfileId,
+                                radioEnabled = canSetActiveProfile(vpnState.status),
+                                onActivate = { vm.setActiveProfile(profile.id) },
+                                onEdit = { onNavigateToConfigEdit(profile.id) }
+                            )
+                        }
                     }
                 }
             }

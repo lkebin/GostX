@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import cn.liukebin.gostx.R
 import cn.liukebin.gostx.data.FileInfo
 import cn.liukebin.gostx.data.FileRepository
 import cn.liukebin.gostx.ui.filemanage.FileManageViewModel
@@ -46,6 +47,8 @@ class FileManageViewModelTest {
             on { getSystemService(Context.CLIPBOARD_SERVICE) } doReturn clipboard
             on { getExternalFilesDir(null) } doReturn tempDir
             on { filesDir } doReturn tempDir
+            on { getString(R.string.file_copy_path_done) } doReturn "Copied to clipboard"
+            on { getString(R.string.file_name_exists) } doReturn "Name already exists"
         }
     }
 
@@ -73,7 +76,7 @@ class FileManageViewModelTest {
         val captor = argumentCaptor<ClipData>()
         verify(clipboard).setPrimaryClip(captor.capture())
         assertEquals(clip, captor.firstValue)
-        assertEquals("已复制到剪贴板", vm.toastEvent.first())
+        assertEquals("Copied to clipboard", vm.toastEvent.first())
     }
 
     @Test
@@ -108,6 +111,6 @@ class FileManageViewModelTest {
         val vm = FileManageViewModel(app, repo)
         vm.refresh()
         vm.renameFile("a.txt", "b.txt")
-        assertEquals("文件名已存在", vm.toastEvent.first())
+        assertEquals("Name already exists", vm.toastEvent.first())
     }
 }
