@@ -8,12 +8,13 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -53,6 +54,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         val prefs = getSharedPreferences("gostx_prefs", Context.MODE_PRIVATE)
         configRepository = ConfigRepository(prefs)
         setContent { GostXApp(configRepository, onRequestVpnPermission = ::requestVpnPermission) }
@@ -82,11 +84,10 @@ fun GostXApp(
         if (darkTheme) darkColorScheme() else lightColorScheme()
     }
     MaterialTheme(colorScheme = colorScheme) {
-        Scaffold { padding ->
+        Surface(modifier = Modifier.fillMaxSize()) {
             NavHost(
                 navController = navController,
                 startDestination = Screen.Home.route,
-                modifier = Modifier.padding(padding),
                 enterTransition = { EnterTransition.None },
                 exitTransition = { ExitTransition.None },
                 popEnterTransition = { EnterTransition.None },
