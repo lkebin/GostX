@@ -184,6 +184,7 @@ fun HomeScreen(
                 } else {
                     Icon(
                         painter = painterResource(R.drawable.ic_tile_vpn),
+                        modifier = Modifier.size(36.dp),
                         contentDescription = if (vpnState.status == VpnStatus.CONNECTED)
                             stringResource(R.string.vpn_stop_label)
                         else

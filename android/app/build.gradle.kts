@@ -13,12 +13,12 @@ android {
         targetSdk = 35
         versionCode = (System.currentTimeMillis() / 60000).toInt()
         versionName = runCatching {
-            Runtime.getRuntime().exec(arrayOf("git", "describe", "--tags", "--exact-match"))
+            Runtime.getRuntime().exec(arrayOf("git", "describe", "--tags", "--exact-match"), null, rootDir)
                 .inputStream.bufferedReader().readText().trim()
-        }.getOrElse {
-            Runtime.getRuntime().exec(arrayOf("git", "rev-parse", "--abbrev-ref", "HEAD"))
+        }.getOrNull()?.ifEmpty { null } ?: runCatching {
+            Runtime.getRuntime().exec(arrayOf("git", "rev-parse", "--abbrev-ref", "HEAD"), null, rootDir)
                 .inputStream.bufferedReader().readText().trim()
-        }
+        }.getOrDefault("unknown")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

@@ -106,6 +106,9 @@
     <string name="file_delete">Delete</string>
     <string name="file_delete_confirm_title">Delete File</string>
     <string name="file_delete_confirm_message">Delete \"%s\"?</string>
+    <string name="file_export">Export</string>
+    <string name="file_export_done">Exported</string>
+    <string name="file_export_failed">Export failed: %s</string>
     <string name="file_copy_path">Copy path</string>
     <string name="file_copy_path_done">Copied to clipboard</string>
     <string name="file_name_label">File name</string>
@@ -116,4 +119,5 @@
     <string name="file_overwrite_title">File exists</string>
     <string name="file_overwrite_message">\"%s\" already exists. Overwrite?</string>
     <string name="file_overwrite_confirm">Overwrite</string>
+    <string name="settings_version">Version %s</string>
 </resources>
