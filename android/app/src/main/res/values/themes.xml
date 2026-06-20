@@ -1,8 +1,8 @@
 <resources>
     <!-- Light theme: white splash background, transparent icon container -->
     <style name="Theme.GostX" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">@android:color/white</item>
-        <item name="android:windowSplashScreenBackground">@android:color/white</item>
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowSplashScreenBackground">@android:color/black</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_branding</item>
     </style>
 </resources>

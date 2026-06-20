@@ -5,6 +5,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.OutlinedTextField
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -14,7 +18,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -191,16 +194,19 @@ fun ConfigScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .imePadding()
+                .navigationBarsPadding()
         ) {
-            OutlinedTextField(
+            BasicTextField(
                 value = state.yaml,
                 onValueChange = { vm.onYamlChange(it) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
-                textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp),
-                minLines = 10,
+                    .weight(1f)
+                    .imePadding(),
+                textStyle = TextStyle(
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 13.sp
+                ),
             )
         }
     }

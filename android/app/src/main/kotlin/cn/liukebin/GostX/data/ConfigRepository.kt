@@ -79,7 +79,7 @@ class ConfigRepository(private val prefs: SharedPreferences) {
         }
 
     private val _appFilterEnabledFlow = MutableStateFlow(
-        prefs.getBoolean(KEY_APP_FILTER_ENABLED, true)
+        prefs.getBoolean(KEY_APP_FILTER_ENABLED, false)
     )
     val appFilterEnabledFlow: StateFlow<Boolean> = _appFilterEnabledFlow.asStateFlow()
 
