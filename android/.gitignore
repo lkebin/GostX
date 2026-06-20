@@ -4,5 +4,5 @@ build/
 app/build/
 *.iml
 .idea/
-app/libs/gostlib.aar
-app/libs/gostlib-sources.jar
+app/libs/libgost.aar
+app/libs/libgost-sources.jar

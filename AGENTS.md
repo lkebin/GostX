@@ -6,16 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Android debug build
-make android         # builds gostlib.aar via gomobile → Gradle assembleDebug
+make android         # builds libgost.aar via gomobile → Gradle assembleDebug
 
 # Android release build (AAB + APK)
-make android-release # builds gostlib.aar → Gradle assembleRelease bundleRelease
+make android-release # builds libgost.aar → Gradle assembleRelease bundleRelease
 
 # Clean
 make clean           # cleans Go + Gradle
 
 # Go tests
-cd go && go test ./gostlib/...
+cd libgost && go test .
 
 # Android unit tests
 cd android && ./gradlew test
@@ -30,18 +30,17 @@ Building Android requires `gomobile` and the Android NDK.
 
 **GostX** is an Android VPN proxy app built on [gost v3](https://github.com/go-gost/x). The core proxy engine is written in Go and compiled as an AAR (Android Archive) that the native UI calls into.
 
-### Go layer (`go/`)
+### Go layer (`libgost/`)
 
-- **`go/gostlib/`** — Shared Go library:
-  - `gostlib.go` — Lifecycle: `Start(yaml)` / `Stop()` / `StartVPNMode(yaml)` / `ValidateConfig()`. `StartVPNMode()` parses the YAML, extracts the `tungo` handler service (TUN-based VPN), stores its chain name, then starts the remaining gost services normally.
+- **`libgost/`** — Shared Go library:
+  - `libgost.go` — Lifecycle: `Start(yaml)` / `Stop()` / `StartVPNMode(yaml)` / `ValidateConfig()`. `StartVPNMode()` parses the YAML, extracts the `tungo` handler service (TUN-based VPN), stores its chain name, then starts the remaining gost services normally.
   - `tun.go` — VPN packet routing via sing-tun system stack. `StartTun(fd, mtu)` takes an Android TUN file descriptor, dups it, creates a sing-tun Tun device, and starts the system stack. The system stack rewrites IP/TCP headers to redirect traffic to a local listener bound to the TUN address — the OS kernel handles TCP reassembly, no userspace TCP/IP stack needed. `StopTun()` cancels the context and releases the device.
-  - `vpnlog.go` — Async buffered logging (512-message channel) from VPN transport goroutines to file. `SetLogFile()` starts a background drain goroutine that batches writes.
-  - `logger.go` — Uses `reflect` + `unsafe` to attach a logrus hook to go-gost's internal logger, forwarding gost logs to the same VPN log sink.
+  - `logbridge.go` — Logging: attaches a logrus hook to go-gost's internal logger and manages log file output.
 
 ### Android (`android/`)
 
 - **MVI architecture** with Jetpack Compose. ViewModels expose `StateFlow`s; screens are composable functions.
-- **`GostVpnService`** (`service/GostVpnService.kt`) — Android `VpnService` subclass. Lifecycle: `startVpn()` → validate config → `GostLibBridge.startVPNMode(yaml)` → establish TUN via `Builder.establish()` → `GostLibBridge.startVPN(fd)` → register network callback for reconnect on network change. Internal `GostLibBridge` object calls the Go AAR via reflection.
+- **`GostVpnService`** (`service/GostVpnService.kt`) — Android `VpnService` subclass. Lifecycle: `startVpn()` → validate config → `LibgostBridge.startGost(yaml, systemDNS)` → establish TUN via `Builder.establish()` → `LibgostBridge.startTun(fd, mtu)` → register network callback for reconnect on network change. Internal `LibgostBridge` object calls the Go AAR via reflection.
 - **`ConfigRepository`** (`data/ConfigRepository.kt`) — Multi-profile YAML config persistence via `SharedPreferences`. Supports add/rename/delete/set-active profiles. App filter (blacklist/whitelist) for per-app VPN routing.
 - **Navigation**: `Screen` sealed class defines routes (Home → ConfigEdit, Logs, Settings → AppFilter). `MainActivity` wires them via NavHost.
 
@@ -68,8 +67,8 @@ DNS queries to `10.0.0.3:53` (the virtual DNS address) are intercepted by the tr
 
 - The `tungo` handler type is **not** registered in gost's service registry — it's handled entirely inside this codebase. `ValidateConfig()` treats it as an internal type to avoid false "unknown handler" errors.
 - `google.golang.org/genproto` is replaced with a local stub (`go/fakepkg/`) because the monorepo zip is too large for restricted network environments.
-- Android's `gostlib.aar` is built with `-z max-page-size=16384` for 16KB page alignment (Android 15 requirement).
-- VPN lifecycle must call `GostLibBridge.setMemoryLimit(true)` on start (caps heap at 100MB, GOGC=50) and `false` on stop to restore defaults.
+- Android's `libgost.aar` is built with `-z max-page-size=16384` for 16KB page alignment (Android 15 requirement).
+- VPN lifecycle must call `LibgostBridge.setMemoryLimit(true)` on start (caps heap at 100MB, GOGC=50) and `false` on stop to restore defaults.
 - `Stop()` has a 5-second timeout on `serveWg.Wait()` to guarantee it always returns.
 
 ### Superpowers

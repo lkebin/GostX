@@ -1,11 +1,9 @@
 services:
+  # Type tungo service is required
   - name: vpn
-    addr: :0
     handler:
       type: tungo
       chain: upstream
-    listener:
-      type: tungo
 
 chains:
   - name: upstream

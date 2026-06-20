@@ -1,4 +1,4 @@
-package gostlib
+package libgost
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/go-gost/core/service"
 	"github.com/go-gost/x/config"
@@ -275,6 +276,20 @@ func StopGost() error {
 		_ = s.Close()
 	}
 
+	// Wait for service goroutines with a timeout. Some service implementations
+	// wait for active connections to drain inside Close(), which can take
+	// arbitrarily long. The 5-second cap ensures StopGost() always returns so
+	// the next Start() is never blocked indefinitely on stateCond.Wait().
+	waitDone := make(chan struct{})
+	go func() {
+		serveWg.Wait()
+		close(waitDone)
+	}()
+	select {
+	case <-waitDone:
+	case <-time.After(5 * time.Second):
+	}
+
 	mu.Lock()
 	stopping = false
 	stateCond.Broadcast()
@@ -315,7 +330,7 @@ func ValidateConfig(yamlConfig string) string {
 		return fmt.Sprintf("YAML 解析错误: %v", err)
 	}
 
-	// internalTypes are handler/listener types implemented inside gostlib
+	// internalTypes are handler/listener types implemented inside libgost
 	// rather than via the go-gost registry; skip the registry lookup for them.
 	internalTypes := map[string]bool{"tungo": true}
 
@@ -398,7 +413,7 @@ func launchServices(ctx context.Context, svcs []service.Service) {
 		go func(s service.Service) {
 			defer serveWg.Done()
 			<-ctx.Done()
-			_ = s.Close()
+			_ = s // unused after refactor; Close is handled by StopGost
 		}(svc)
 
 		serveWg.Add(1)

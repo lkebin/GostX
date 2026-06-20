@@ -93,7 +93,7 @@ class GostVpnService : VpnService() {
         configRepo = ConfigRepository(getSharedPreferences("gostx_prefs", Context.MODE_PRIVATE))
         val workDir = getExternalFilesDir(null)?.absolutePath
             ?: filesDir.absolutePath.also { log("External storage unavailable, falling back to internal: $it") }
-        GostLibBridge.setWorkDir(workDir)
+        LibgostBridge.setWorkDir(workDir)
             .onFailure { log("WARNING: setWorkDir($workDir) failed: ${it.message}") }
     }
 
@@ -150,11 +150,11 @@ class GostVpnService : VpnService() {
 
             val logLevel = configRepo.logLevel
             val logMaxBytes = configRepo.logMaxSizeKb.toLong() * 1024
-            GostLibBridge.setLogLevel(logLevel)
-            GostLibBridge.setLogMaxSize(logMaxBytes.toInt())
+            LibgostBridge.setLogLevel(logLevel)
+            LibgostBridge.setLogMaxSize(logMaxBytes.toInt())
             LogRepository.maxLogBytes = logMaxBytes
             if (logLevel != "off") {
-                GostLibBridge.setLogFile(LogRepository.getLogFile().absolutePath)
+                LibgostBridge.setLogFile(LogRepository.getLogFile().absolutePath)
                     .onFailure { log("WARNING: setLogFile failed: ${it.message}") }
             }
 
@@ -230,7 +230,7 @@ class GostVpnService : VpnService() {
             try {
                 val systemDNS = collectSystemDNS()
                 log("[start] loading config and starting gost...")
-                GostLibBridge.startGost(yaml, systemDNS)
+                LibgostBridge.startGost(yaml, systemDNS)
                 log("[start] gost ready")
             } catch (e: Exception) {
                 log("gost start failed: ${e.message}")
@@ -242,18 +242,18 @@ class GostVpnService : VpnService() {
 
             try {
                 log("[start] starting VPN...")
-                GostLibBridge.startTun(tunFd!!.fd.toLong(), 1500L)
+                LibgostBridge.startTun(tunFd!!.fd.toLong(), 1500L)
             } catch (e: Exception) {
                 log("VPN start failed: ${e.message}")
                 GlobalVpnState.setError(getString(R.string.vpn_error_tun_start, e.message))
                 closeTun()
-                GostLibBridge.stopGost()
+                LibgostBridge.stopGost()
                 stopSelf()
                 return
             }
 
             try {
-                val status = GostLibBridge.getStatus()
+                val status = LibgostBridge.getStatus()
                 val addr = parseFirstAddress(status)
                 GlobalVpnState.setConnected(addr)
                 lastVpnConnectTime = System.currentTimeMillis()
@@ -261,14 +261,14 @@ class GostVpnService : VpnService() {
                 log("[start] VPN connected, addr: $addr")
                 registerNetworkCallback()
                 saveLastRunState(true)
-                GostLibBridge.setMemoryLimit(true)
+                LibgostBridge.setMemoryLimit(true)
             } catch (e: Exception) {
                 log("VPN post-start error: ${e.message}")
                 GlobalVpnState.setError(getString(R.string.vpn_error_post_start, e.message))
-                GostLibBridge.setMemoryLimit(false)
+                LibgostBridge.setMemoryLimit(false)
                 closeTun()
-                GostLibBridge.stopTun()
-                GostLibBridge.stopGost()
+                LibgostBridge.stopTun()
+                LibgostBridge.stopGost()
                 stopSelf()
             }
         } finally {
@@ -289,12 +289,12 @@ class GostVpnService : VpnService() {
         // call is guaranteed to return within 5 seconds. STOPPING loading is shown
         // during this time, preventing the user from starting a new connection while
         // the previous Go shutdown is still in progress.
-        GostLibBridge.setMemoryLimit(false)
-        GostLibBridge.setSocketProtector(null)
+        LibgostBridge.setMemoryLimit(false)
+        LibgostBridge.setSocketProtector(null)
         log("[stop] stopping VPN...")
-        GostLibBridge.stopTun()
+        LibgostBridge.stopTun()
         log("[stop] stopping gost...")
-        GostLibBridge.stopGost()
+        LibgostBridge.stopGost()
 
         if (updatePersistentState) {
             GlobalVpnState.setStopped()
@@ -328,7 +328,7 @@ class GostVpnService : VpnService() {
      * the active VPN (before VPN is established there is nothing to protect from).
      */
     private fun registerSocketProtector() {
-        GostLibBridge.setSocketProtector(object : gostlib.SocketProtector {
+        LibgostBridge.setSocketProtector(object : libgost.SocketProtector {
             override fun protect(fd: Long): Boolean {
                 val result = this@GostVpnService.protect(fd.toInt())
                 if (!result) log("[protect] WARNING: VpnService.protect() returned false for fd=$fd")
@@ -457,20 +457,20 @@ class GostVpnService : VpnService() {
         // the Go DNS listener and gVisor stack would otherwise continue holding
         // their ports, causing "address already in use" on the next Start().
         closeTun()
-        GostLibBridge.stopTun()
-        GostLibBridge.stopGost()
+        LibgostBridge.stopTun()
+        LibgostBridge.stopGost()
         scope.cancel()
         super.onDestroy()
     }
 }
 
-internal object GostLibBridge {
-    private const val CLASS_NAME = "gostlib.Gostlib"
+internal object LibgostBridge {
+    private const val CLASS_NAME = "libgost.Libgost"
 
     private fun clazz(): Class<*> = try {
         Class.forName(CLASS_NAME)
     } catch (e: ClassNotFoundException) {
-        throw IllegalStateException("gostlib.aar not available; see android/app/libs/README.txt", e)
+        throw IllegalStateException("libgost.aar not available; see android/app/libs/README.txt", e)
     }
 
     private fun invoke(name: String, vararg args: Any): Any? {
@@ -485,7 +485,7 @@ internal object GostLibBridge {
         return try {
             clazz().getMethod(name, *types).invoke(null, *args)
         } catch (e: NoSuchMethodException) {
-            throw IllegalStateException("gostlib.Gostlib#$name not found; verify the generated AAR matches the expected API", e)
+            throw IllegalStateException("libgost.Libgost#$name not found; verify the generated AAR matches the expected API", e)
         } catch (e: InvocationTargetException) {
             val cause = e.targetException
             if (cause is Exception) throw cause
@@ -526,12 +526,12 @@ internal object GostLibBridge {
     /**
      * Sets the SocketProtector callback that Go will call for every upstream
      * socket before connect(). Pass null to clear. The protector object must
-     * implement gostlib.SocketProtector (generated by gomobile from the Go
+     * implement libgost.SocketProtector (generated by gomobile from the Go
      * interface of the same name).
      */
-    fun setSocketProtector(protector: gostlib.SocketProtector?) {
+    fun setSocketProtector(protector: libgost.SocketProtector?) {
         runCatching {
-            val method = clazz().getMethod("setSocketProtector", gostlib.SocketProtector::class.java)
+            val method = clazz().getMethod("setSocketProtector", libgost.SocketProtector::class.java)
             method.invoke(null, protector)
         }
     }

@@ -1,4 +1,4 @@
-package gostlib
+package libgost
 
 import (
 	"context"
