@@ -6,7 +6,7 @@ When VPN mode is active, all device traffic is routed through a TUN virtual netw
 flowchart TD
     APP["App (e.g. Chrome)\nTCP connect → google.com:443"]
     TUN["TUN virtual interface\n(fd from VpnService)"]
-    SINGTUN["sing-tun system stack\ngo/gostlib/tun.go\n\nparses IP packets → TCP/UDP sessions"]
+    SINGTUN["sing-tun system stack\nlibgost/tun.go\n\nparses IP packets → TCP/UDP sessions"]
     HANDLER["singTunHandler.NewConnectionEx()\ndst = 142.250.x.x:443"]
     GOST["gost chain router\ngithub.com/go-gost/x"]
     PROTECT["GlobalSocketControl(fd)\n→ VpnService.protect(fd)\n\nsocket created, not yet connected"]

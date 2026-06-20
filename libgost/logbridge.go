@@ -1,4 +1,4 @@
-package gostlib
+package libgost
 
 import (
 	"context"
@@ -51,7 +51,7 @@ func getLogLevel() string {
 
 // channelHook is a logrus hook that forwards log entries to logCh.
 // Attached to both the go-gost/x logger (via installLogrusHook) and the
-// standard logrus logger (once, via installStdHookOnce) so that gostlib's own
+// standard logrus logger (once, via installStdHookOnce) so that libgost's own
 // logrus calls and go-gost/x internal logs reach the same channel.
 type channelHook struct{}
 

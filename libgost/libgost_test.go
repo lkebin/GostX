@@ -1,4 +1,4 @@
-package gostlib
+package libgost
 
 import (
 	"context"
@@ -61,10 +61,17 @@ services:
         mode: udp`
 
 const testVPNSocks5YAML = `
+chains:
+  - name: default
+    hops:
+      - nodes:
+          - connector:
+              type: direct
 services:
   - name: _test_tungo
     handler:
       type: tungo
+      chain: default
   - name: test-socks5
     addr: 127.0.0.1:19080
     handler:
@@ -74,10 +81,17 @@ services:
 
 // testVPNDNSYAML includes a tungo service (for StartGost) + socks5 + dns.
 const testVPNDNSYAML = `
+chains:
+  - name: default
+    hops:
+      - nodes:
+          - connector:
+              type: direct
 services:
   - name: _test_tungo
     handler:
       type: tungo
+      chain: default
   - name: test-socks5
     addr: 127.0.0.1:19080
     handler:
@@ -97,10 +111,17 @@ services:
 
 // testVPNDNSYAMLNoHost is like testVPNDNSYAML but with an unqualified DNS addr.
 const testVPNDNSYAMLNoHost = `
+chains:
+  - name: default
+    hops:
+      - nodes:
+          - connector:
+              type: direct
 services:
   - name: _test_tungo
     handler:
       type: tungo
+      chain: default
   - name: test-dns
     addr: :15353
     handler:

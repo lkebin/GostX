@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import cn.liukebin.gostx.data.ConfigRepository
 import cn.liukebin.gostx.data.GlobalVpnState
 import cn.liukebin.gostx.data.VpnStatus
-import cn.liukebin.gostx.service.GostLibBridge
+import cn.liukebin.gostx.service.LibgostBridge
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -62,7 +62,7 @@ class ConfigViewModel(
     }
 
     fun save() {
-        val error = GostLibBridge.validateConfig(_ui.value.yaml)
+        val error = LibgostBridge.validateConfig(_ui.value.yaml)
         if (error.isNotEmpty()) {
             _ui.value = _ui.value.copy(validationError = error)
             return
