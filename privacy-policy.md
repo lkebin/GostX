@@ -27,6 +27,8 @@ GostX requests the following permissions:
 | Permission | Purpose |
 |---|---|
 | `android.permission.BIND_VPN_SERVICE` | Required to create and manage the VPN tunnel for traffic routing |
+| `android.permission.FOREGROUND_SERVICE_SPECIAL_USE` | Required to keep the VPN service running in the foreground so that the VPN tunnel remains active while the app is in the background. The foreground service notification informs you that the VPN connection is active. |
+| `android.permission.QUERY_ALL_PACKAGES` | Required to list installed apps for the per-app proxy feature, allowing you to choose which apps route through the VPN tunnel and which bypass it. No app list data is collected or transmitted. |
 
 ## Changes to This Policy
 
