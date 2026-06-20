@@ -1,11 +1,14 @@
 # GostX
 
-An Android VPN proxy app built on [gost v3](https://github.com/go-gost/x). The core proxy engine is written in Go and compiled as a native AAR library that the Android UI calls into.
+A gost client for Android.
 
 ## Features
 
-- All features of original gost (GostX working in sandbox, some features may not work)
-- Support [Tor](https://torproject.org) protocol via `-L tor://:9050?Socks5Proxy=127.0.0.1:1080`
+- **TUN** — Stream traffic through a Gost proxy chain via TUN device
+- **Per-app proxy** — Choose which apps route through the tunnel and which bypass it
+- **YAML configuration** — Define services, chains, hops, and bypasses in a single config file
+- **System DNS** — Resolve domains through the proxy tunnel or use system DNS directly
+- **Multi-profile** — Manage separate configurations with profile rename, delete, and quick switching
 
 ## Build
 
