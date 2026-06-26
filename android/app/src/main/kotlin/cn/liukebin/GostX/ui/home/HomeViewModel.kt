@@ -128,6 +128,7 @@ class HomeViewModel(
     }
 
     fun acceptVpnDisclosure() {
+        if (vpnDisclosureAccepted) return
         prefs.edit().putBoolean("vpn_disclosure_accepted", true).apply()
         _showVpnDisclosureDialog.value = false
         val ctx = getApplication<Application>()
