@@ -66,7 +66,7 @@ class HomeViewModel(
     fun checkBatteryOptimization() {
         val pm = getApplication<Application>().getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return
         val dismissed = prefs.getBoolean("battery_opt_dismissed", false)
-        _batteryOptimizationNeeded.value = !dismissed && !pm.isIgnoringBatteryOptimizations(applicationContext.packageName)
+        _batteryOptimizationNeeded.value = !dismissed && !pm.isIgnoringBatteryOptimizations(getApplication<Application>().packageName)
     }
 
     fun dismissBatteryOptimizationPrompt() {
