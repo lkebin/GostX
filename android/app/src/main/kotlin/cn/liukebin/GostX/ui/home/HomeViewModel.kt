@@ -41,6 +41,8 @@ class HomeViewModel(
     private val repo: ConfigRepository
 ) : AndroidViewModel(app) {
 
+    private val prefs = app.getSharedPreferences("gostx_prefs", Context.MODE_PRIVATE)
+
     val vpnState = GlobalVpnState.state
         .stateIn(viewModelScope, SharingStarted.Eagerly, GlobalVpnState.state.value)
 
@@ -50,23 +52,25 @@ class HomeViewModel(
     private val _batteryOptimizationNeeded = MutableStateFlow(false)
     val batteryOptimizationNeeded: StateFlow<Boolean> = _batteryOptimizationNeeded
 
+    private val _showVpnDisclosureDialog = MutableStateFlow(false)
+    val showVpnDisclosureDialog: StateFlow<Boolean> = _showVpnDisclosureDialog
+
+    private val vpnDisclosureAccepted: Boolean
+        get() = prefs.getBoolean("vpn_disclosure_accepted", false)
+
     init {
         checkBatteryOptimization()
     }
 
     /** Re-checks battery optimization status; call on every screen resume. */
     fun checkBatteryOptimization() {
-        val ctx = getApplication<Application>()
-        val pm = ctx.getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return
-        val dismissed = ctx.getSharedPreferences("gostx_prefs", Context.MODE_PRIVATE)
-            ?.getBoolean("battery_opt_dismissed", false) ?: false
-        _batteryOptimizationNeeded.value = !dismissed && !pm.isIgnoringBatteryOptimizations(ctx.packageName)
+        val pm = getApplication<Application>().getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return
+        val dismissed = prefs.getBoolean("battery_opt_dismissed", false)
+        _batteryOptimizationNeeded.value = !dismissed && !pm.isIgnoringBatteryOptimizations(applicationContext.packageName)
     }
 
     fun dismissBatteryOptimizationPrompt() {
-        getApplication<Application>()
-            .getSharedPreferences("gostx_prefs", Context.MODE_PRIVATE)
-            .edit().putBoolean("battery_opt_dismissed", true).apply()
+        prefs.edit().putBoolean("battery_opt_dismissed", true).apply()
         _batteryOptimizationNeeded.value = false
     }
 
@@ -109,14 +113,29 @@ class HomeViewModel(
         val ctx = getApplication<Application>()
         when (resolveVpnToggleAction(vpnState.value.status, VpnService.prepare(ctx) == null)) {
             VpnToggleAction.STOP -> {
-                // Set STOPPING immediately so the loading animation shows before the
-                // service receives the intent and calls setStopping() itself.
                 GlobalVpnState.setStopping()
                 startService(ctx, GostVpnService.ACTION_STOP)
             }
-            VpnToggleAction.START -> startService(ctx, GostVpnService.ACTION_START)
+            VpnToggleAction.START -> {
+                if (vpnDisclosureAccepted) {
+                    startService(ctx, GostVpnService.ACTION_START)
+                } else {
+                    _showVpnDisclosureDialog.value = true
+                }
+            }
             VpnToggleAction.REQUEST_PERMISSION -> onVpnPermissionRequired()
         }
+    }
+
+    fun acceptVpnDisclosure() {
+        prefs.edit().putBoolean("vpn_disclosure_accepted", true).apply()
+        _showVpnDisclosureDialog.value = false
+        val ctx = getApplication<Application>()
+        startService(ctx, GostVpnService.ACTION_START)
+    }
+
+    fun dismissVpnDisclosure() {
+        _showVpnDisclosureDialog.value = false
     }
 
     private fun startService(ctx: Application, action: String) {
