@@ -130,4 +130,9 @@
     <string name="vpn_error_gost_start">gost start failed: %s</string>
     <string name="vpn_error_tun_start">VPN start failed: %s</string>
     <string name="vpn_error_post_start">VPN post-start error: %s</string>
+
+    <!-- VPN disclosure dialog -->
+    <string name="vpn_disclosure_title">VPN Connection Notice</string>
+    <string name="vpn_disclosure_message">GostX will create a VPN connection to route your network traffic.\n\n• Uses Android VpnService to create a local VPN tunnel\n• All traffic is routed through your configured proxy chains\n• No personal data is collected or transmitted\n• Traffic encryption is provided by your chosen proxy protocols</string>
+    <string name="vpn_disclosure_accept">Accept &amp; Start</string>
 </resources>
