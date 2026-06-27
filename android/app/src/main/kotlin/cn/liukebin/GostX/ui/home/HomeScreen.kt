@@ -142,7 +142,7 @@ fun HomeScreen(
             title = { Text(stringResource(R.string.vpn_disclosure_title)) },
             text = { Text(stringResource(R.string.vpn_disclosure_message)) },
             confirmButton = {
-                TextButton(onClick = { vm.acceptVpnDisclosure() }) {
+                TextButton(onClick = { vm.acceptVpnDisclosure(onRequestVpnPermission) }) {
                     Text(stringResource(R.string.vpn_disclosure_accept))
                 }
             },

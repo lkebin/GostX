@@ -123,16 +123,21 @@ class HomeViewModel(
                     _showVpnDisclosureDialog.value = true
                 }
             }
-            VpnToggleAction.REQUEST_PERMISSION -> onVpnPermissionRequired()
+            VpnToggleAction.REQUEST_PERMISSION -> {
+                if (vpnDisclosureAccepted) {
+                    onVpnPermissionRequired()
+                } else {
+                    _showVpnDisclosureDialog.value = true
+                }
+            }
         }
     }
 
-    fun acceptVpnDisclosure() {
+    fun acceptVpnDisclosure(onVpnPermissionRequired: () -> Unit = {}) {
         if (vpnDisclosureAccepted) return
         prefs.edit().putBoolean("vpn_disclosure_accepted", true).apply()
         _showVpnDisclosureDialog.value = false
-        val ctx = getApplication<Application>()
-        startService(ctx, GostVpnService.ACTION_START)
+        toggleVpn(onVpnPermissionRequired)
     }
 
     fun dismissVpnDisclosure() {
