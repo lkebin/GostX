@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
@@ -92,6 +93,7 @@ fun HomeScreen(
     val loggingEnabled by vm.loggingEnabled.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showAddDialog by remember { mutableStateOf(false) }
+    val showDisclosureDialog by vm.showVpnDisclosureDialog.collectAsState()
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -131,6 +133,24 @@ fun HomeScreen(
                 }
             },
             onDismiss = { showAddDialog = false }
+        )
+    }
+
+    if (showDisclosureDialog) {
+        AlertDialog(
+            onDismissRequest = { vm.dismissVpnDisclosure() },
+            title = { Text(stringResource(R.string.vpn_disclosure_title)) },
+            text = { Text(stringResource(R.string.vpn_disclosure_message)) },
+            confirmButton = {
+                TextButton(onClick = { vm.acceptVpnDisclosure(onRequestVpnPermission) }) {
+                    Text(stringResource(R.string.vpn_disclosure_accept))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { vm.dismissVpnDisclosure() }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
         )
     }
 

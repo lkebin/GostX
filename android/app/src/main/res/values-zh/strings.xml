@@ -132,4 +132,9 @@
     <string name="vpn_error_gost_start">gost 启动失败: %s</string>
     <string name="vpn_error_tun_start">VPN 启动失败: %s</string>
     <string name="vpn_error_post_start">VPN 启动后错误: %s</string>
+
+    <!-- VPN disclosure dialog -->
+    <string name="vpn_disclosure_title">VPN 连接说明</string>
+    <string name="vpn_disclosure_message">GostX 将创建 VPN 连接以路由您的网络流量。\n\n• 使用 Android VpnService 创建本地 VPN 隧道\n• 所有流量通过您配置的代理链进行路由\n• 不收集或传输任何个人数据\n• 流量加密由您选择的代理协议提供</string>
+    <string name="vpn_disclosure_accept">同意并启动</string>
 </resources>
