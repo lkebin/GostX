@@ -1,7 +1,9 @@
 package cn.liukebin.gostx.service
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.net.ConnectivityManager
@@ -12,6 +14,7 @@ import android.net.VpnService
 import android.os.Build
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
+import android.os.PowerManager
 import android.system.Os
 import android.system.OsConstants
 import cn.liukebin.gostx.R
@@ -76,6 +79,22 @@ class GostVpnService : VpnService() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
     private var tunFd: ParcelFileDescriptor? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    private val dozeReceiver = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                val pm = getSystemService<PowerManager>()!!
+                if (pm.isDeviceIdleMode) {
+                    log("[doze] device entering idle mode — pausing TUN")
+                    LibgostBridge.pauseTun()
+                } else {
+                    log("[doze] device exiting idle mode — waking TUN")
+                    LibgostBridge.wakeTun()
+                }
+            }
+        }
+    } else {
+        null
+    }
     private lateinit var configRepo: ConfigRepository
     private val reconnectInProgress = AtomicBoolean(false)
     private val startInProgress = AtomicBoolean(false)
@@ -95,6 +114,16 @@ class GostVpnService : VpnService() {
             ?: filesDir.absolutePath.also { log("External storage unavailable, falling back to internal: $it") }
         LibgostBridge.setWorkDir(workDir)
             .onFailure { log("WARNING: setWorkDir($workDir) failed: ${it.message}") }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val filter = IntentFilter(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(dozeReceiver, filter, RECEIVER_NOT_EXPORTED)
+            } else {
+                @Suppress("DEPRECATION")
+                registerReceiver(dozeReceiver, filter)
+            }
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = super.onBind(intent)
@@ -121,7 +150,7 @@ class GostVpnService : VpnService() {
                 stopVpn()
             }
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     // API-safe startForeground: supplies FOREGROUND_SERVICE_TYPE_SPECIAL_USE on API 34+
@@ -456,6 +485,7 @@ class GostVpnService : VpnService() {
         // without going through stopVpn() (e.g. coroutine exception → stopSelf()),
         // the Go DNS listener and gVisor stack would otherwise continue holding
         // their ports, causing "address already in use" on the next Start().
+        dozeReceiver?.let { unregisterReceiver(it) }
         closeTun()
         LibgostBridge.stopTun()
         LibgostBridge.stopGost()
@@ -549,5 +579,11 @@ internal object LibgostBridge {
     fun setLogLevel(level: String) {
         runCatching { invoke("setLogLevel", level) }
     }
+
+    fun pauseTun() = runCatching { invoke("pauseTun") }
+
+    fun wakeTun() = runCatching { invoke("wakeTun") }
+
+    fun resetTunConnections() = runCatching { invoke("resetTunConnections") }
 
 }
