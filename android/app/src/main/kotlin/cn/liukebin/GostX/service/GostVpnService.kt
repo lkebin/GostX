@@ -82,7 +82,7 @@ class GostVpnService : VpnService() {
     private val dozeReceiver = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                val pm = getSystemService<PowerManager>()!!
+                val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
                 if (pm.isDeviceIdleMode) {
                     log("[doze] device entering idle mode — pausing TUN")
                     LibgostBridge.pauseTun()
