@@ -31,6 +31,7 @@ import (
 type trackableConn struct {
 	conn     io.Closer
 	upstream io.Closer
+	mu       sync.Mutex
 	closed   atomic.Bool
 }
 
@@ -39,10 +40,25 @@ func (t *trackableConn) Close() error {
 		return nil
 	}
 	t.conn.Close()
-	if t.upstream != nil {
-		t.upstream.Close()
+	t.mu.Lock()
+	u := t.upstream
+	t.mu.Unlock()
+	if u != nil {
+		u.Close()
 	}
 	return nil
+}
+
+// setUpstream stores the upstream connection. If the trackableConn was already
+// closed (via PauseTun/WakeTun), u is closed immediately to avoid a leak.
+func (t *trackableConn) setUpstream(u io.Closer) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.closed.Load() {
+		u.Close()
+		return
+	}
+	t.upstream = u
 }
 
 var (
@@ -318,7 +334,7 @@ func (h *singTunHandler) NewConnectionEx(ctx context.Context, conn net.Conn, sou
 			logrus.Errorf("[tcp#%d] dial %s failed: %v", n, dst, err)
 			return
 		}
-		tc.upstream = upstream
+		tc.setUpstream(upstream)
 
 		relay(conn, upstream)
 		logrus.Debugf("[tcp#%d] done %s", n, dst)
@@ -360,7 +376,7 @@ func (h *singTunHandler) NewPacketConnectionEx(ctx context.Context, conn N.Packe
 			logrus.Errorf("[udp#%d] dial %s failed: %v", n, dst, err)
 			return
 		}
-		tc.upstream = upstream
+		tc.setUpstream(upstream)
 
 		relayPacketConn(conn, upstream, destination)
 	}()

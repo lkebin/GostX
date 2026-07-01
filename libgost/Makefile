@@ -19,7 +19,8 @@ libgost.aar:
 	@if [ -d ../android/app/libs ]; then cp libgost.aar ../android/app/libs/libgost.aar; fi
 
 # Build .aar with debug symbols for crash symbolication.
-# Produces libgost_debug.aar (unstripped) and debug-symbols.zip (for Google Play upload).
+# Produces debug-symbols.zip (for Google Play upload); libgost_debug.aar is a
+# temporary intermediate that is cleaned up at the end of this target.
 debug-symbols:
 	CGO_LDFLAGS="-Wl,-z,max-page-size=16384" GOFLAGS="-buildvcs=false" $(GOMOBILE) bind \
 	  -target android/arm,android/arm64,android/amd64 \
