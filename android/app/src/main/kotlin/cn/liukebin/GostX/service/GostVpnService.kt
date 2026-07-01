@@ -139,7 +139,7 @@ class GostVpnService : VpnService() {
             ACTION_START -> {
                 if (!shouldAcceptStartAction(GlobalVpnState.state.value.status)) {
                     log("Ignoring duplicate START: status=${GlobalVpnState.state.value.status}")
-                    return START_STICKY
+                    return START_NOT_STICKY
                 }
                 scope.launch {
                     LogRepository.deleteLog()
