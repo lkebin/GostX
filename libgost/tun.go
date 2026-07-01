@@ -382,6 +382,14 @@ func (h *singTunHandler) NewPacketConnectionEx(ctx context.Context, conn N.Packe
 	}()
 }
 
+// udpUpstreamReadBufferSize matches the max UDP datagram size (65535B).
+// UDP sockets truncate silently if the read buffer is smaller than the
+// datagram (POSIX recvfrom semantics, no error surfaced) — e.g. EDNS0 DNS
+// responses commonly reach ~4096B, well above a "typical MTU" guess, so
+// this must stay full-size even though it's now pooled rather than raw
+// make()'d. Matches the TUN→upstream direction's buffer size below.
+const udpUpstreamReadBufferSize = 65535
+
 // relayPacketConn pipes data bidirectionally between a sing-tun PacketConn
 // (one UDP session from the TUN device) and a plain net.Conn (upstream proxy).
 // Each Read/Write on the upstream corresponds to one datagram.
@@ -408,7 +416,8 @@ func relayPacketConn(src N.PacketConn, dst net.Conn, remoteAddr M.Socksaddr) {
 	// upstream proxy → TUN
 	go func() {
 		defer func() { done <- struct{}{} }()
-		data := make([]byte, 65535)
+		data := singbuf.Get(udpUpstreamReadBufferSize)
+		defer singbuf.Put(data)
 		for {
 			n, err := dst.Read(data)
 			if n > 0 {
@@ -430,18 +439,27 @@ func relayPacketConn(src N.PacketConn, dst net.Conn, remoteAddr M.Socksaddr) {
 	<-done
 }
 
+// tcpRelayBufferSize matches io.Copy's own default buffer size (32 KiB),
+// so pooling doesn't change the effective copy chunk size — only where the
+// buffer comes from.
+const tcpRelayBufferSize = 32 * 1024
+
 // relay pipes data bidirectionally between src and dst. When one direction
 // reaches EOF, CloseWrite is called on the other side so the remote peer
 // receives a proper FIN and the other goroutine unblocks.
 func relay(src, dst net.Conn) {
 	done := make(chan struct{}, 2)
 	go func() {
-		io.Copy(dst, src)
+		buf := singbuf.Get(tcpRelayBufferSize)
+		defer singbuf.Put(buf)
+		io.CopyBuffer(dst, src, buf)
 		closeWrite(dst)
 		done <- struct{}{}
 	}()
 	go func() {
-		io.Copy(src, dst)
+		buf := singbuf.Get(tcpRelayBufferSize)
+		defer singbuf.Put(buf)
+		io.CopyBuffer(src, dst, buf)
 		closeWrite(src)
 		done <- struct{}{}
 	}()
