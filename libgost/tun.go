@@ -25,13 +25,53 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// trackableConn pairs a TUN-side connection with its upstream proxy connection.
+// Both are closed together when the device enters doze mode, unblocking
+// the relay goroutines and allowing the Go runtime to idle.
+type trackableConn struct {
+	conn     io.Closer
+	upstream io.Closer
+	mu       sync.Mutex
+	closed   atomic.Bool
+}
+
+func (t *trackableConn) Close() error {
+	if t.closed.Swap(true) {
+		return nil
+	}
+	t.conn.Close()
+	t.mu.Lock()
+	u := t.upstream
+	t.mu.Unlock()
+	if u != nil {
+		u.Close()
+	}
+	return nil
+}
+
+// setUpstream stores the upstream connection. If the trackableConn was already
+// closed (via PauseTun/WakeTun), u is closed immediately to avoid a leak.
+func (t *trackableConn) setUpstream(u io.Closer) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.closed.Load() {
+		u.Close()
+		return
+	}
+	t.upstream = u
+}
+
 var (
 	tunMu      sync.Mutex
 	tunRunning bool
 
-	tunStack  singtun.Stack
-	tunDevice singtun.Tun
-	tunCancel context.CancelFunc
+	tunStack   singtun.Stack
+	tunDevice  singtun.Tun
+	tunCancel  context.CancelFunc
+	tunHandler *singTunHandler // set by StartTun, read by PauseTun/WakeTun
+
+	pauseMu    sync.Mutex
+	pauseTimer *time.Timer
 
 	// Connection counters; read by GetStatus().
 	tcpConns    int64
@@ -119,16 +159,17 @@ func startVPNSingTun(fd, mtu int, chainName, dnsServiceAddr string) error {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+	handler := &singTunHandler{
+		router:         router,
+		dnsServiceAddr: dnsServiceAddr,
+	}
 	stack, err := singtun.NewStack("system", singtun.StackOptions{
 		Context:    ctx,
 		Tun:        device,
 		TunOptions: tunOptions,
 		UDPTimeout: 30 * time.Second,
-		Handler: &singTunHandler{
-			router:         router,
-			dnsServiceAddr: dnsServiceAddr,
-		},
-		Logger: &logrusAdapter{},
+		Handler:    handler,
+		Logger:     &logrusAdapter{},
 	})
 	if err != nil {
 		cancel()
@@ -147,6 +188,7 @@ func startVPNSingTun(fd, mtu int, chainName, dnsServiceAddr string) error {
 	tunStack = stack
 	tunDevice = device
 	tunCancel = cancel
+	tunHandler = handler
 	tunRunning = true
 	return nil
 }
@@ -177,6 +219,15 @@ func StopTun() error {
 		tunDevice = nil
 	}
 
+	// Cancel any pending pause/wake timer.
+	pauseMu.Lock()
+	if pauseTimer != nil {
+		pauseTimer.Stop()
+		pauseTimer = nil
+	}
+	pauseMu.Unlock()
+
+	tunHandler = nil
 	resetConnCounters()
 	drainStaleLogs()
 
@@ -190,6 +241,38 @@ type singTunHandler struct {
 	router         *xchain.Router
 	dnsServiceAddr string // loopback address of the Gost DNS service, e.g. "127.0.0.1:5353"
 	activeConns    atomic.Int64
+
+	trackMu sync.Mutex
+	tracked []*trackableConn
+}
+
+func (h *singTunHandler) track(tc *trackableConn) {
+	h.trackMu.Lock()
+	h.tracked = append(h.tracked, tc)
+	h.trackMu.Unlock()
+}
+
+func (h *singTunHandler) untrack(tc *trackableConn) {
+	h.trackMu.Lock()
+	defer h.trackMu.Unlock()
+	for i, t := range h.tracked {
+		if t == tc {
+			h.tracked[i] = h.tracked[len(h.tracked)-1]
+			h.tracked[len(h.tracked)-1] = nil
+			h.tracked = h.tracked[:len(h.tracked)-1]
+			return
+		}
+	}
+}
+
+func (h *singTunHandler) closeTracked() {
+	h.trackMu.Lock()
+	tracked := h.tracked
+	h.tracked = nil
+	h.trackMu.Unlock()
+	for _, tc := range tracked {
+		tc.Close()
+	}
 }
 
 // maxActiveTCPConns is a safety ceiling on concurrent TCP sessions.
@@ -204,9 +287,12 @@ func (h *singTunHandler) PrepareConnection(network string, source, destination M
 }
 
 func (h *singTunHandler) NewConnectionEx(ctx context.Context, conn net.Conn, source, destination M.Socksaddr, onClose N.CloseHandlerFunc) {
+	tc := &trackableConn{conn: conn}
+	h.track(tc)
 	go func() {
+		defer tc.Close()
+		defer h.untrack(tc)
 		defer func() {
-			conn.Close()
 			if onClose != nil {
 				onClose(nil)
 			}
@@ -248,7 +334,7 @@ func (h *singTunHandler) NewConnectionEx(ctx context.Context, conn net.Conn, sou
 			logrus.Errorf("[tcp#%d] dial %s failed: %v", n, dst, err)
 			return
 		}
-		defer upstream.Close()
+		tc.setUpstream(upstream)
 
 		relay(conn, upstream)
 		logrus.Debugf("[tcp#%d] done %s", n, dst)
@@ -256,9 +342,12 @@ func (h *singTunHandler) NewConnectionEx(ctx context.Context, conn net.Conn, sou
 }
 
 func (h *singTunHandler) NewPacketConnectionEx(ctx context.Context, conn N.PacketConn, source, destination M.Socksaddr, onClose N.CloseHandlerFunc) {
+	tc := &trackableConn{conn: conn}
+	h.track(tc)
 	go func() {
+		defer tc.Close()
+		defer h.untrack(tc)
 		defer func() {
-			conn.Close()
 			if onClose != nil {
 				onClose(nil)
 			}
@@ -287,11 +376,19 @@ func (h *singTunHandler) NewPacketConnectionEx(ctx context.Context, conn N.Packe
 			logrus.Errorf("[udp#%d] dial %s failed: %v", n, dst, err)
 			return
 		}
-		defer upstream.Close()
+		tc.setUpstream(upstream)
 
 		relayPacketConn(conn, upstream, destination)
 	}()
 }
+
+// udpUpstreamReadBufferSize matches the max UDP datagram size (65535B).
+// UDP sockets truncate silently if the read buffer is smaller than the
+// datagram (POSIX recvfrom semantics, no error surfaced) — e.g. EDNS0 DNS
+// responses commonly reach ~4096B, well above a "typical MTU" guess, so
+// this must stay full-size even though it's now pooled rather than raw
+// make()'d. Matches the TUN→upstream direction's buffer size below.
+const udpUpstreamReadBufferSize = 65535
 
 // relayPacketConn pipes data bidirectionally between a sing-tun PacketConn
 // (one UDP session from the TUN device) and a plain net.Conn (upstream proxy).
@@ -319,7 +416,8 @@ func relayPacketConn(src N.PacketConn, dst net.Conn, remoteAddr M.Socksaddr) {
 	// upstream proxy → TUN
 	go func() {
 		defer func() { done <- struct{}{} }()
-		data := make([]byte, 65535)
+		data := singbuf.Get(udpUpstreamReadBufferSize)
+		defer singbuf.Put(data)
 		for {
 			n, err := dst.Read(data)
 			if n > 0 {
@@ -341,18 +439,27 @@ func relayPacketConn(src N.PacketConn, dst net.Conn, remoteAddr M.Socksaddr) {
 	<-done
 }
 
+// tcpRelayBufferSize matches io.Copy's own default buffer size (32 KiB),
+// so pooling doesn't change the effective copy chunk size — only where the
+// buffer comes from.
+const tcpRelayBufferSize = 32 * 1024
+
 // relay pipes data bidirectionally between src and dst. When one direction
 // reaches EOF, CloseWrite is called on the other side so the remote peer
 // receives a proper FIN and the other goroutine unblocks.
 func relay(src, dst net.Conn) {
 	done := make(chan struct{}, 2)
 	go func() {
-		io.Copy(dst, src)
+		buf := singbuf.Get(tcpRelayBufferSize)
+		defer singbuf.Put(buf)
+		io.CopyBuffer(dst, src, buf)
 		closeWrite(dst)
 		done <- struct{}{}
 	}()
 	go func() {
-		io.Copy(src, dst)
+		buf := singbuf.Get(tcpRelayBufferSize)
+		defer singbuf.Put(buf)
+		io.CopyBuffer(src, dst, buf)
 		closeWrite(src)
 		done <- struct{}{}
 	}()
@@ -385,6 +492,58 @@ func (l *logrusAdapter) Panic(args ...any) { logrus.Panic(args...) }
 
 // Ensure logrusAdapter satisfies the logger.Logger interface at compile time.
 var _ logger.Logger = (*logrusAdapter)(nil)
+
+// PauseTun is called when the device enters doze (idle) mode.
+// After a 3-second delay it closes all tracked connections so that relay
+// goroutines exit and the Go runtime can idle, saving power.
+func PauseTun() {
+	pauseMu.Lock()
+	defer pauseMu.Unlock()
+	if pauseTimer != nil {
+		pauseTimer.Stop()
+	}
+	pauseTimer = time.AfterFunc(3*time.Second, func() {
+		tunMu.Lock()
+		h := tunHandler
+		tunMu.Unlock()
+		if h != nil {
+			logrus.Info("[pause] doze mode: closing all tracked connections")
+			h.closeTracked()
+		}
+	})
+}
+
+// WakeTun is called when the device exits doze mode.
+// After a 3-minute delay it resets tracked connections so that applications
+// reconnect through fresh proxy connections.
+func WakeTun() {
+	pauseMu.Lock()
+	defer pauseMu.Unlock()
+	if pauseTimer != nil {
+		pauseTimer.Stop()
+	}
+	pauseTimer = time.AfterFunc(3*time.Minute, func() {
+		tunMu.Lock()
+		h := tunHandler
+		tunMu.Unlock()
+		if h != nil {
+			logrus.Info("[wake] doze ended: resetting connections")
+			h.closeTracked()
+		}
+	})
+}
+
+// ResetTunConnections immediately closes all tracked connections.
+// Exported for manual reset (e.g. network change handling).
+func ResetTunConnections() {
+	tunMu.Lock()
+	h := tunHandler
+	tunMu.Unlock()
+	if h != nil {
+		logrus.Info("[reset] manually closing all tracked connections")
+		h.closeTracked()
+	}
+}
 
 // resetConnCounters zeros the VPN connection counters for a new session.
 func resetConnCounters() {
