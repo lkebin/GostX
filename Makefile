@@ -10,6 +10,7 @@ android-release: libgost/libgost.aar
 
 libgost/libgost.aar:
 	cd libgost && $(MAKE) libgost.aar
+	cp libgost/libgost.aar android/app/libs/libgost.aar
 
 .PHONY: clean
 clean:
