@@ -16,7 +16,6 @@ libgost.aar:
 	  -trimpath -ldflags="-s -w" \
 	  -o libgost.aar \
 	  .
-	@if [ -d ../android/app/libs ]; then cp libgost.aar ../android/app/libs/libgost.aar; fi
 
 # Build .aar with debug symbols for crash symbolication.
 # Produces debug-symbols.zip (for Google Play upload); libgost_debug.aar is a
