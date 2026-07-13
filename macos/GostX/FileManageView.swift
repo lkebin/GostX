@@ -121,12 +121,19 @@ struct FileManageView: View {
     @State private var showDeleteConfirm = false
 
     var body: some View {
-        if !vm.isAvailable {
-            unavailableView
-        } else if vm.files.isEmpty {
-            emptyView
-        } else {
-            fileListView
+        Group {
+            if !vm.isAvailable {
+                unavailableView
+            } else if vm.files.isEmpty {
+                emptyView
+            } else {
+                fileListView
+            }
+        }
+        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.data, .plainText, .text]) { result in
+            if case .success(let url) = result {
+                vm.importFile(from: url)
+            }
         }
     }
 
@@ -159,11 +166,6 @@ struct FileManageView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.data, .plainText, .text]) { result in
-            if case .success(let url) = result {
-                vm.importFile(from: url)
-            }
-        }
         .modifier(FileManageAlertModifier(vm: vm))
         .modifier(OverwriteSheetModifier(vm: vm))
     }
@@ -213,14 +215,9 @@ struct FileManageView: View {
             .listStyle(.inset)
         }
         .frame(minWidth: 300, minHeight: 200)
-        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.data, .plainText, .text]) { result in
-            if case .success(let url) = result {
-                vm.importFile(from: url)
-            }
-        }
         .fileExporter(
             isPresented: $showExporter,
-            item: exportName as? String ?? "",
+            item: exportName ?? "",
             contentTypes: [.data],
             defaultFilename: exportName ?? "file"
         ) { result in
