@@ -19,13 +19,12 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         }
 
         // 3. 启动 gost 服务
-        do {
-            try LibgostStartGost(yaml, "")
-        } catch {
+        var err: NSError?
+        if !LibgostStartGost(yaml, "", &err), let err {
             cancelTunnelWithError(NSError(
                 domain: "GostXTunnel.startGost",
                 code: 2,
-                userInfo: [NSLocalizedDescriptionKey: error.localizedDescription]
+                userInfo: [NSLocalizedDescriptionKey: err.localizedDescription]
             ))
             return
         }
@@ -46,7 +45,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         do {
             try await setTunnelNetworkSettings(settings)
         } catch {
-            LibgostStopGost()
+            LibgostStopGost(nil)
             cancelTunnelWithError(NSError(
                 domain: "GostXTunnel.setNetworkSettings",
                 code: 3,
@@ -58,7 +57,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         // 5. 扫描找到 utun fd
         let tunFd = LibgostGetTunnelFileDescriptor()
         guard tunFd != -1 else {
-            LibgostStopGost()
+            LibgostStopGost(nil)
             cancelTunnelWithError(NSError(
                 domain: "GostXTunnel",
                 code: 4,
@@ -68,22 +67,20 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         }
 
         // 6. 启动 TUN stack（sing-tun 直接在 fd 上读写）
-        do {
-            try LibgostStartTun(Int(tunFd), 1500)
-        } catch {
-            LibgostStopGost()
+        if !LibgostStartTun(Int(tunFd), 1500, &err), let err {
+            LibgostStopGost(nil)
             cancelTunnelWithError(NSError(
                 domain: "GostXTunnel.startTun",
                 code: 5,
-                userInfo: [NSLocalizedDescriptionKey: error.localizedDescription]
+                userInfo: [NSLocalizedDescriptionKey: err.localizedDescription]
             ))
             return
         }
     }
 
     override func stopTunnel(with reason: NEProviderStopReason) async {
-        try? LibgostStopTun()
-        try? LibgostStopGost()
+        LibgostStopTun(nil)
+        LibgostStopGost(nil)
     }
 
     // MARK: - Private
@@ -91,10 +88,10 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     private func setWorkDirAndLog() {
         guard let containerURL = AppGroupConfig.containerURL else { return }
         let workDir = containerURL.path
-        LibgostSetWorkDir(workDir)
+        LibgostSetWorkDir(workDir, nil)
 
         let logFile = containerURL.appendingPathComponent("gost.log").path
-        LibgostSetLogFile(logFile)
+        LibgostSetLogFile(logFile, nil)
         LibgostSetLogLevel("info")
     }
 }

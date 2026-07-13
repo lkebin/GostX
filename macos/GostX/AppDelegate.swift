@@ -77,7 +77,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if vpnMode {
             VpnManager.shared.stop()
         } else {
-            LibgostStopGost()
+            LibgostStopGost(nil)
         }
         self.menu?.updateListen(nil)
         self.menu?.toOffState()
@@ -114,10 +114,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func startProxyMode() {
         let yaml = UserDefaults.standard.string(forKey: defaultsYamlKey) ?? defaultGostYAML
 
-        do {
-            try LibgostStartGost(yaml, "")
-        } catch {
-            logger.error("gost start failed: \(error.localizedDescription)")
+        var err: NSError?
+        if !LibgostStartGost(yaml, "", &err), let err {
+            logger.error("gost start failed: \(err.localizedDescription)")
             self.menu?.toOffState()
             return
         }
