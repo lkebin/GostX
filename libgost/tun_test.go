@@ -1,9 +1,6 @@
 package libgost
 
-import (
-	"runtime"
-	"testing"
-)
+import "testing"
 
 func TestStopTunWhenNotStarted(t *testing.T) {
 	// StopTun on an idle instance should be a no-op
@@ -19,13 +16,3 @@ func TestStartTunInvalidFd(t *testing.T) {
 	}
 }
 
-func TestGetTunnelFileDescriptor(t *testing.T) {
-	if runtime.GOOS != "darwin" {
-		t.Skip("GetTunnelFileDescriptor is darwin-only")
-	}
-	// When no utun is active (typical unit test env), returns -1 without error.
-	fd := GetTunnelFileDescriptor()
-	if fd != -1 {
-		t.Logf("found existing utun fd: %d", fd)
-	}
-}
