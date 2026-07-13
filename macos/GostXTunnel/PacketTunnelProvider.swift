@@ -82,8 +82,8 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     override func stopTunnel(with reason: NEProviderStopReason) async {
-        LibgostStopTun()
-        LibgostStopGost()
+        try? LibgostStopTun()
+        try? LibgostStopGost()
     }
 
     // MARK: - Private
