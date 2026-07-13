@@ -23,7 +23,7 @@ class VpnManager: ObservableObject {
         // 已有 manager 则跳过
         if manager != nil { return }
 
-        let managers = await NETunnelProviderManager.loadAllFromPreferences()
+        let managers = (try? await NETunnelProviderManager.loadAllFromPreferences()) ?? []
         if let existing = managers.first(where: {
             ($0.protocolConfiguration as? NETunnelProviderProtocol)?
                 .providerBundleIdentifier == tunnelBundleId

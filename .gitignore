@@ -14,3 +14,5 @@ libgost/build/
 # 个人配置（含敏感信息，不提交）
 android/config-templates/*.yaml
 android/app/libs/libgost*.aar
+.pi-subagents/
+macos/Frameworks/

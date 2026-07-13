@@ -75,7 +75,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func stop() {
         if vpnMode {
-            VpnManager.shared.stop()
+            Task { @MainActor in VpnManager.shared.stop() }
         } else {
             LibgostStopGost(nil)
         }
