@@ -144,7 +144,7 @@ struct FileManageView: View {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 32))
                 .foregroundColor(.secondary)
-            Text("App Group container not available.")
+            Text(NSLocalizedString("App Group container not available.", comment: ""))
                 .font(.system(size: 13))
                 .foregroundColor(.secondary)
         }
