@@ -22,7 +22,7 @@ struct SettingsView: View {
 }
 
 struct YamlConfigView: View {
-    @AppStorage(defaultsArgumentsKey)
+    @AppStorage(defaultsYamlKey)
     private var yamlConfig = defaultGostYAML
 
     private let rules: [HighlightRule] = [
@@ -46,6 +46,10 @@ struct YamlConfigView: View {
                     editor.textView.allowsUndo = true
                     editor.textView.breakUndoCoalescing()
                     editor.textView.font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
+                }
+                .onChange(of: yamlConfig) { newValue in
+                    // Sync to App Group for VPN Extension
+                    AppGroupConfig.writeYaml(newValue)
                 }
             Text("gost v3 YAML configuration — https://gost.run/docs/")
                 .padding(.horizontal, 5)

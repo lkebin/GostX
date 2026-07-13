@@ -8,7 +8,7 @@
 import SwiftUI
 import Cocoa
 import os
-import Gost
+import Libgost
 
 let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "runtime")
 
@@ -19,14 +19,16 @@ let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "runtime
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var menu: MacExtrasConfigurator?
-    private var logPipe: Pipe?
-    
+    private var vpnMode: Bool {
+        UserDefaults.standard.bool(forKey: defaultsVpnModeKey)
+    }
+
     func mainMenu() {
         let mainMenu = NSMenu(title: "MainMenu")
         var menuItem = mainMenu.addItem(withTitle: "", action: nil, keyEquivalent: "")
         var submenu = NSMenu(title: "Application")
         mainMenu.setSubmenu(submenu, for: menuItem)
-        
+
         menuItem = mainMenu.addItem(withTitle:"Edit", action:nil, keyEquivalent:"")
         submenu = NSMenu(title:NSLocalizedString("Edit", comment:"Edit menu"))
         submenu.addItem(withTitle: "Undo", action: #selector(EditMenuActions.undo(_:)), keyEquivalent: "z")
@@ -36,87 +38,92 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         submenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
         submenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         mainMenu.setSubmenu(submenu, for: menuItem)
-        
+
         NSApp.mainMenu = mainMenu
     }
-    
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         self.mainMenu()
         self.menu = MacExtrasConfigurator(delegate: self)
-        self.logPipe = pipe()
-        self.start()
+
+        Task {
+            await VpnManager.shared.setup()
+        }
+
+        // Auto-start based on saved state
+        if UserDefaults.standard.bool(forKey: "last_vpn_running") {
+            self.start()
+        }
     }
-    
+
     func applicationWillTerminate(_ notification: Notification) {
         self.stop()
     }
-    
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         NSApp.setActivationPolicy(.accessory)
-        
         return false
     }
-    
+
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
         return true
     }
-    
+
     func quit() {
         NSApp.terminate(self)
     }
-    
+
     func stop() {
-        gostStop()
+        if vpnMode {
+            VpnManager.shared.stop()
+        } else {
+            LibgostStopGost()
+        }
         self.menu?.updateListen(nil)
         self.menu?.toOffState()
     }
-    
+
     func start() {
-        let yaml = UserDefaults.standard.string(forKey: defaultsArgumentsKey) ?? defaultGostYAML
-
-        var fd = self.logPipe?.fileHandleForWriting.fileDescriptor
-        let fdPtr = UnsafeMutablePointer<CLong>.allocate(capacity: 1)
-        withUnsafeMutablePointer(to: &fd) { ptr in
-            fdPtr.initialize(to: CLong(ptr.pointee!))
+        if vpnMode {
+            startVpnMode()
+        } else {
+            startProxyMode()
         }
+    }
 
-        let isFailed = gostRunYaml(
-            UnsafeMutablePointer<CChar>(mutating: (yaml as NSString).utf8String),
-            UnsafeMutablePointer<CLong>(mutating: fdPtr)
-        )
+    // MARK: - VPN Mode
 
-        if isFailed != 0 {
+    private func startVpnMode() {
+        // 同步 YAML 到 App Group
+        let yaml = UserDefaults.standard.string(forKey: defaultsYamlKey) ?? defaultGostYAML
+        AppGroupConfig.writeYaml(yaml)
+
+        Task {
+            do {
+                try await VpnManager.shared.start()
+                self.menu?.toOnState()
+            } catch {
+                logger.error("VPN start failed: \(error.localizedDescription)")
+                self.menu?.toOffState()
+            }
+        }
+    }
+
+    // MARK: - Proxy Mode (non-VPN)
+
+    private func startProxyMode() {
+        let yaml = UserDefaults.standard.string(forKey: defaultsYamlKey) ?? defaultGostYAML
+
+        do {
+            try LibgostStartGost(yaml, "")
+        } catch {
+            logger.error("gost start failed: \(error.localizedDescription)")
             self.menu?.toOffState()
-            stop()
             return
         }
 
-        if let infoPtr = gostInfo() {
-            let statusJSON = String(cString: infoPtr.pointee.status_json)
-            self.menu?.updateListen(statusJSON)
-            infoPtr.deallocate()
-        }
+        let statusJSON = LibgostGetStatus()
+        self.menu?.updateListen(statusJSON)
         self.menu?.toOnState()
-    }
-    
-    private func pipe() -> Pipe {
-        let p = Pipe()
-        p.fileHandleForReading.readabilityHandler = { handle in
-            let data = handle.availableData
-            if data.count == 0 {
-                // No data available means EOF; we must unregister ourselves
-                // in order to not immediately be called again.
-                handle.readabilityHandler = nil
-                return
-            }
-
-            guard let str = String(data: data, encoding: .utf8) else {
-                // Non-UTF-8 data from Syncthing should never happen.
-                return
-            }
-
-            logger.log("\(str, privacy: .public)")
-        }
-        return p
     }
 }

@@ -18,6 +18,7 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
     public var statusActionRestartItem: NSMenuItem
     public var statusListenItem: NSMenuItem
     public var argsItem: NSMenuItem = NSMenuItem()
+    private var vpnModeItem: NSMenuItem!
     
     private var menu: NSMenu = NSMenu()
     private var activeImg: NSImage? = NSImage(named: "StatusBarActive")
@@ -49,7 +50,16 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
         // Listening
         statusListenItem.isEnabled = false
         menu.addItem(statusListenItem)
-        
+
+        // VPN Mode toggle
+        let vpnItem = NSMenuItem()
+        vpnItem.title = NSLocalizedString("VPN Mode", comment: "")
+        vpnItem.state = UserDefaults.standard.bool(forKey: defaultsVpnModeKey) ? .on : .off
+        vpnItem.target = self
+        vpnItem.action = #selector(onToggleVpnMode(_:))
+        menu.addItem(vpnItem)
+        self.vpnModeItem = vpnItem
+
         menu.addItem(.separator())
         
         // Configuration
@@ -107,6 +117,12 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
     }
     
     // MARK: - Actions
+    
+    @objc private func onToggleVpnMode(_ sender: NSMenuItem) {
+        let newValue = sender.state != .on
+        sender.state = newValue ? .on : .off
+        UserDefaults.standard.set(newValue, forKey: defaultsVpnModeKey)
+    }
     
     @objc private func onArgumentClick(_ sender: Any?) {
         onConfigClick(sender)
@@ -171,7 +187,7 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
     private func updateArgsMenuItem() {
         argsItem.title = NSLocalizedString("Configuration", comment: "")
         argsItem.image = NSImage(systemSymbolName: "doc.text", accessibilityDescription: "")
-        argsItem.toolTip = UserDefaults.standard.string(forKey: defaultsArgumentsKey) ?? defaultGostYAML
+        argsItem.toolTip = UserDefaults.standard.string(forKey: defaultsYamlKey) ?? defaultGostYAML
         argsItem.submenu = nil
     }
 }
