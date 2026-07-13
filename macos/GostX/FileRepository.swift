@@ -54,8 +54,8 @@ class FileRepository {
     // MARK: - Exists
 
     func exists(_ name: String) -> Bool {
-        guard let _ = try? validateName(name) else { return false }
-        let url = workDir.appendingPathComponent(name)
+        guard let trimmed = try? validateName(name) else { return false }
+        let url = workDir.appendingPathComponent(trimmed)
         var isDir: ObjCBool = false
         return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
             && !isDir.boolValue
@@ -66,8 +66,16 @@ class FileRepository {
     @discardableResult
     func importFile(from sourceURL: URL) throws -> FileInfo {
         let name = sourceURL.lastPathComponent
-        try validateName(name)
-        let target = workDir.appendingPathComponent(name)
+        let trimmed = try validateName(name)
+
+        // Reject directory sources — we only copy regular files.
+        var isDir: ObjCBool = false
+        FileManager.default.fileExists(atPath: sourceURL.path, isDirectory: &isDir)
+        guard !isDir.boolValue else {
+            throw FileRepositoryError.notAFile(name)
+        }
+
+        let target = workDir.appendingPathComponent(trimmed)
         // Remove existing file before copy
         if FileManager.default.fileExists(atPath: target.path) {
             try FileManager.default.removeItem(at: target)
@@ -75,7 +83,7 @@ class FileRepository {
         try FileManager.default.copyItem(at: sourceURL, to: target)
         let attrs = try target.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey])
         return FileInfo(
-            name: name,
+            name: trimmed,
             sizeBytes: Int64(attrs.fileSize ?? 0),
             lastModified: attrs.contentModificationDate ?? Date()
         )
@@ -84,10 +92,10 @@ class FileRepository {
     // MARK: - Export
 
     func exportFile(_ name: String, to destURL: URL) throws {
-        try validateName(name)
-        let source = workDir.appendingPathComponent(name)
+        let trimmed = try validateName(name)
+        let source = workDir.appendingPathComponent(trimmed)
         guard FileManager.default.fileExists(atPath: source.path) else {
-            throw FileRepositoryError.fileNotFound(name)
+            throw FileRepositoryError.fileNotFound(trimmed)
         }
         if FileManager.default.fileExists(atPath: destURL.path) {
             try FileManager.default.removeItem(at: destURL)
@@ -98,19 +106,15 @@ class FileRepository {
     // MARK: - Rename
 
     func renameFile(_ oldName: String, to newName: String) throws {
-        try validateName(oldName)
-        let trimmed = newName.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else {
-            throw FileRepositoryError.invalidName
-        }
-        try validateName(trimmed)
-        let oldURL = workDir.appendingPathComponent(oldName)
-        let newURL = workDir.appendingPathComponent(trimmed)
+        let trimmedOld = try validateName(oldName)
+        let trimmedNew = try validateName(newName)
+        let oldURL = workDir.appendingPathComponent(trimmedOld)
+        let newURL = workDir.appendingPathComponent(trimmedNew)
         guard FileManager.default.fileExists(atPath: oldURL.path) else {
-            throw FileRepositoryError.fileNotFound(oldName)
+            throw FileRepositoryError.fileNotFound(trimmedOld)
         }
         if FileManager.default.fileExists(atPath: newURL.path) {
-            throw FileRepositoryError.fileAlreadyExists(trimmed)
+            throw FileRepositoryError.fileAlreadyExists(trimmedNew)
         }
         try FileManager.default.moveItem(at: oldURL, to: newURL)
     }
@@ -118,13 +122,13 @@ class FileRepository {
     // MARK: - Delete
 
     func deleteFile(_ name: String) throws {
-        try validateName(name)
-        let url = workDir.appendingPathComponent(name)
+        let trimmed = try validateName(name)
+        let url = workDir.appendingPathComponent(trimmed)
         if !FileManager.default.fileExists(atPath: url.path) { return }
         var isDir: ObjCBool = false
         FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
         guard !isDir.boolValue else {
-            throw FileRepositoryError.notAFile(name)
+            throw FileRepositoryError.notAFile(trimmed)
         }
         try FileManager.default.removeItem(at: url)
     }
@@ -132,16 +136,18 @@ class FileRepository {
     // MARK: - Path
 
     func filePath(_ name: String) -> String {
-        workDir.appendingPathComponent(name).path
+        let safe = (try? validateName(name)) ?? name
+        return workDir.appendingPathComponent(safe).path
     }
 
     // MARK: - Validation
 
-    private func validateName(_ name: String) throws {
+    private func validateName(_ name: String) throws -> String {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         if trimmed.isEmpty || trimmed.contains("..") || trimmed.contains("/") {
             throw FileRepositoryError.invalidName
         }
+        return trimmed
     }
 }
 
