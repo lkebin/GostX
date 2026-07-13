@@ -15,4 +15,5 @@ libgost/libgost.aar:
 .PHONY: clean
 clean:
 	cd libgost && $(MAKE) clean
+	rm android/app/libs/libgost.aar
 	cd android && ./gradlew clean 2>/dev/null || true

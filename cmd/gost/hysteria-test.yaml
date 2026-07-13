@@ -1,0 +1,29 @@
+chains:
+  - name: upstream
+    hops:
+      - name: hop0
+        selector:
+          strategy: rand
+          maxFails: 2
+          failTimeout: 30s
+        nodes:
+          - name: server
+            addr: 47.76.189.76:443
+            connector:
+              type: hysteria
+            dialer:
+              type: hysteria
+              tls:
+                secure: false
+              metadata:
+                auth: dEI8TrWhJ4QEqqRh
+                direct: true
+
+services:
+  - name: local-socks5
+    addr: 127.0.0.1:11080
+    handler:
+      type: socks5
+      chain: upstream
+    listener:
+      type: tcp
