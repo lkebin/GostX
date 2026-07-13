@@ -110,6 +110,7 @@ class FileManageViewModel: ObservableObject {
 
 // MARK: - FileManageView
 
+@available(macOS 14.0, *)
 struct FileManageView: View {
     @StateObject private var vm = FileManageViewModel()
     @State private var showImporter = false
@@ -240,6 +241,7 @@ struct FileManageView: View {
 
 // MARK: - FileRowView
 
+@available(macOS 14.0, *)
 private struct FileRowView: View {
     let file: FileInfo
     let onExport: () -> Void
@@ -286,6 +288,7 @@ private struct FileRowView: View {
 
 // MARK: - Alert Modifier
 
+@available(macOS 14.0, *)
 private struct FileManageAlertModifier: ViewModifier {
     @ObservedObject var vm: FileManageViewModel
 
@@ -340,6 +343,7 @@ private struct OverwriteSheetModifier: ViewModifier {
 
 // MARK: - Rename / Delete Dialogs Modifier
 
+@available(macOS 14.0, *)
 private struct FileManageDialogsModifier: ViewModifier {
     @Binding var renameTarget: FileInfo?
     @Binding var renameText: String
