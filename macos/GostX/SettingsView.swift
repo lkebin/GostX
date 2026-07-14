@@ -54,16 +54,6 @@ struct SettingsView: View {
                 }
             }
             .listStyle(.plain)
-            .safeAreaInset(edge: .bottom) {
-                Divider()
-                Button(action: { showAddSheet = true }) {
-                    Label(NSLocalizedString("Add Profile", comment: ""), systemImage: "plus")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .buttonStyle(.borderless)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-            }
             .navigationSplitViewColumnWidth(min: 180, ideal: 220)
         } detail: {
             if let profileId = selectedProfileId {
@@ -84,6 +74,13 @@ struct SettingsView: View {
             }
         }
         .navigationTitle(Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "GostX")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: { showAddSheet = true }) {
+                    Label(NSLocalizedString("Add Profile", comment: ""), systemImage: "plus")
+                }
+            }
+        }
         .onAppear {
             if selectedProfileId == nil, let first = repo.profiles.first {
                 selectedProfileId = first.id
