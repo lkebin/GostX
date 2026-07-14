@@ -117,7 +117,7 @@ class ConfigRepository: ObservableObject {
         syncActiveToAppGroup()
     }
 
-    func activeConfig() -> String {
+    var activeConfig: String {
         guard let id = activeProfileId,
               let profile = profiles.first(where: { $0.id == id })
         else { return defaultGostYAML }
@@ -125,7 +125,6 @@ class ConfigRepository: ObservableObject {
     }
 
     private func syncActiveToAppGroup() {
-        let yaml = activeConfig()
-        AppGroupConfig.writeYaml(yaml)
+        AppGroupConfig.writeYaml(activeConfig)
     }
 }

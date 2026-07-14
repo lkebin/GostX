@@ -19,8 +19,9 @@ let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "runtime
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var menu: MacExtrasConfigurator?
+    /// 自动检测 YAML 是否包含 tungo 服务
     private var vpnMode: Bool {
-        UserDefaults.standard.bool(forKey: defaultsVpnModeKey)
+        ConfigRepository.shared.activeConfig.contains("type: tungo")
     }
 
     func mainMenu() {
@@ -100,10 +101,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Task {
             do {
                 try await VpnManager.shared.start()
-                self.menu?.toOnState()
+                DispatchQueue.main.async { self.menu?.toOnState() }
             } catch {
                 logger.error("VPN start failed: \(error.localizedDescription)")
-                self.menu?.toOffState()
+                DispatchQueue.main.async { self.menu?.toOffState() }
             }
         }
     }

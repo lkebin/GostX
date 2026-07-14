@@ -1,6 +1,7 @@
 // macos/GostX/VpnManager.swift
 import Foundation
 import NetworkExtension
+import os
 
 /// 管理 NETunnelProviderManager 生命周期：加载/保存 VPN 配置、启停连接。
 @MainActor
@@ -47,8 +48,13 @@ class VpnManager: ObservableObject {
     // MARK: - Control
 
     func start() async throws {
-        guard let m = manager else { return }
+        guard let m = manager else {
+            os_log(.error, "[GostX] VpnManager.start: manager is nil")
+            return
+        }
+        os_log(.default, "[GostX] VpnManager.start: calling startVPNTunnel, status=%d", m.connection.status.rawValue)
         try m.connection.startVPNTunnel()
+        os_log(.default, "[GostX] VpnManager.start: startVPNTunnel returned, status=%d", m.connection.status.rawValue)
     }
 
     func stop() {
