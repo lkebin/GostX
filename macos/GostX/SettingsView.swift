@@ -36,18 +36,9 @@ struct SettingsView: View {
 
     private var profilesTab: some View {
         NavigationSplitView {
-            VStack(spacing: 0) {
-                List(selection: $selectedProfileId) {
-                    ForEach(repo.profiles) { profile in
-                        HStack(spacing: 8) {
-                            Image(systemName: "doc.text")
-                                .foregroundColor(.secondary)
-                                .font(.system(size: 13))
-                            Text(profile.name)
-                                .font(.system(size: 13))
-                                .lineLimit(1)
-                        }
-                        .padding(.vertical, 3)
+            List(selection: $selectedProfileId) {
+                ForEach(repo.profiles) { profile in
+                    Label(profile.name, systemImage: "doc.text")
                         .tag(profile.id)
                         .contextMenu {
                             Button(NSLocalizedString("Rename...", comment: "")) {
@@ -60,24 +51,19 @@ struct SettingsView: View {
                                 repo.deleteProfile(profile.id)
                             }
                         }
-                    }
                 }
-                .listStyle(.sidebar)
-                .scrollContentBackground(.hidden)
-
+            }
+            .listStyle(.plain)
+            .safeAreaInset(edge: .bottom) {
                 Divider()
-
                 Button(action: { showAddSheet = true }) {
                     Label(NSLocalizedString("Add Profile", comment: ""), systemImage: "plus")
-                        .font(.system(size: 12))
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .buttonStyle(.borderless)
                 .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.vertical, 6)
             }
-            .frame(minWidth: 200)
-            .background(Color(nsColor: .textBackgroundColor))
             .navigationSplitViewColumnWidth(min: 180, ideal: 220)
         } detail: {
             if let profileId = selectedProfileId {
