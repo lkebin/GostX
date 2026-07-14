@@ -311,6 +311,7 @@ private struct FileManageAlertModifier: ViewModifier {
 
 // MARK: - Overwrite Sheet Modifier
 
+@available(macOS 14.0, *)
 private struct OverwriteSheetModifier: ViewModifier {
     @ObservedObject var vm: FileManageViewModel
 
