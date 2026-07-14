@@ -156,7 +156,6 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
         }
         settingsHostingController = NSHostingController(rootView: AnyView(SettingsView()))
         let window = NSWindow(contentViewController: settingsHostingController!)
-        window.title = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "GostX"
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
         window.titlebarSeparatorStyle = .automatic
