@@ -16,6 +16,7 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
     public var statusActionOnItem: NSMenuItem
     public var statusActionOffItem: NSMenuItem
     public var statusActionRestartItem: NSMenuItem
+    public var statusListenItem: NSMenuItem
     public var profileMenuItem: NSMenuItem = NSMenuItem()
 
     private var menu: NSMenu = NSMenu()
@@ -40,6 +41,7 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
         statusActionOnItem = NSMenuItem()
         statusActionOffItem = NSMenuItem()
         statusActionRestartItem = NSMenuItem()
+        statusListenItem = NSMenuItem()
 
         super.init()
 
@@ -52,6 +54,12 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
     private func createMenu() {
         menu.delegate = self
         menu.autoenablesItems = false
+
+        // Listening status
+        statusListenItem.isEnabled = false
+        menu.addItem(statusListenItem)
+
+        menu.addItem(.separator())
 
         // Actions
         statusActionOnItem.title = NSLocalizedString("Start", comment: "start the service")
@@ -181,6 +189,15 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
     @objc private func onRestartClick(_ sender: Any?) {
         delegate.stop()
         delegate.start()
+    }
+
+    public func updateListen(_ listen: String?) {
+        if listen == nil {
+            statusListenItem.isHidden = true
+            return
+        }
+        statusListenItem.isHidden = false
+        statusListenItem.attributedTitle = NSAttributedString(string: "\(listen!.replacingOccurrences(of: ";", with: "\n"))")
     }
 
     public func toOffState() {

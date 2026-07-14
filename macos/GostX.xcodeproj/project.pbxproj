@@ -7,14 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0874FE9F0ADC49BBB6CD3626 /* PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 296DECB2BD4347C19DFD902E /* PacketTunnelProvider.swift */; };
+		2FA7674F8D9746F99910289A /* VpnManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F188A4B6A6F14F1D867F7D30 /* VpnManager.swift */; };
 		430349443004D3A000FD9EE9 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 430349433004D3A000FD9EE9 /* NetworkExtension.framework */; };
 		4303494C3004D3A000FD9EE9 /* GostXTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 430349423004D3A000FD9EE9 /* GostXTunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		2FA7674F8D9746F99910289A /* VpnManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F188A4B6A6F14F1D867F7D30 /* VpnManager.swift */; };
-		0874FE9F0ADC49BBB6CD3626 /* PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 296DECB2BD4347C19DFD902E /* PacketTunnelProvider.swift */; };
 		4303495A3004D6B700FD9EE9 /* AppGroupConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 430349593004D6B700FD9EE9 /* AppGroupConfig.swift */; };
 		4303495B3004D6D500FD9EE9 /* AppGroupConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 430349593004D6B700FD9EE9 /* AppGroupConfig.swift */; };
 		4303495D3004D78100FD9EE9 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
-		EA7823795D8442489C72D878 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
 		B523FCA529E169180050578C /* HighlightedTextEditor in Frameworks */ = {isa = PBXBuildFile; productRef = B523FCA429E169180050578C /* HighlightedTextEditor */; };
 		B532A66A285B528900159BAC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = B532A669285B528900159BAC /* main.swift */; };
 		B532A66E285B528D00159BAC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B532A66D285B528D00159BAC /* Assets.xcassets */; };
@@ -29,6 +28,8 @@
 		B5B1C1A329DD6E90008AA943 /* FileRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B1C1A429DD6E90008AA944 /* FileRepository.swift */; };
 		B5C1CF1429DD6E7C008AA934 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = B5C1CF1629DD6E7C008AA934 /* Localizable.stringsdict */; };
 		B5F6387929DEFF31009A1287 /* Arguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F6387829DEFF31009A1287 /* Arguments.swift */; };
+		E086218C337C33C8BB4052CA /* ConfigRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D840A91D1C37F07D57AD8A1 /* ConfigRepository.swift */; };
+		EA7823795D8442489C72D878 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,12 +71,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		296DECB2BD4347C19DFD902E /* PacketTunnelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PacketTunnelProvider.swift; path = GostXTunnel/PacketTunnelProvider.swift; sourceTree = "<group>"; };
 		430349423004D3A000FD9EE9 /* GostXTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GostXTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		430349433004D3A000FD9EE9 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
 		430349593004D6B700FD9EE9 /* AppGroupConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppGroupConfig.swift; path = GostX/AppGroupConfig.swift; sourceTree = "<group>"; };
-		F188A4B6A6F14F1D867F7D30 /* VpnManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnManager.swift; sourceTree = "<group>"; };
-		296DECB2BD4347C19DFD902E /* PacketTunnelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PacketTunnelProvider.swift; path = GostXTunnel/PacketTunnelProvider.swift; sourceTree = "<group>"; };
 		4303495C3004D78100FD9EE9 /* Libgost.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Libgost.xcframework; path = Frameworks/Libgost.xcframework; sourceTree = "<group>"; };
+		5D840A91D1C37F07D57AD8A1 /* ConfigRepository.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConfigRepository.swift; sourceTree = "<group>"; };
 		B532A666285B528900159BAC /* GostX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GostX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B532A669285B528900159BAC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		B532A66D285B528D00159BAC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -94,10 +95,11 @@
 		B5C1CF1529DD6E7C008AA934 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 		B5C1CF1729DD6E90008AA934 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.stringsdict"; sourceTree = "<group>"; };
 		B5F6387829DEFF31009A1287 /* Arguments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Arguments.swift; sourceTree = "<group>"; };
+		F188A4B6A6F14F1D867F7D30 /* VpnManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		430349503004D3A000FD9EE9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		430349503004D3A000FD9EE9 /* Exceptions for "GostXTunnel" folder in "GostXTunnel" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -107,7 +109,18 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		430349453004D3A000FD9EE9 /* GostXTunnel */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (430349503004D3A000FD9EE9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = GostXTunnel; sourceTree = "<group>"; };
+		430349453004D3A000FD9EE9 /* GostXTunnel */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				430349503004D3A000FD9EE9 /* Exceptions for "GostXTunnel" folder in "GostXTunnel" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = GostXTunnel;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -185,6 +198,7 @@
 				B5F6387829DEFF31009A1287 /* Arguments.swift */,
 				B5B1C1A229DD6E90008AA942 /* FileManageView.swift */,
 				B5B1C1A429DD6E90008AA944 /* FileRepository.swift */,
+				5D840A91D1C37F07D57AD8A1 /* ConfigRepository.swift */,
 			);
 			path = GostX;
 			sourceTree = "<group>";
@@ -242,8 +256,6 @@
 				430349453004D3A000FD9EE9 /* GostXTunnel */,
 			);
 			name = GostXTunnel;
-			packageProductDependencies = (
-			);
 			productName = GostXTunnel;
 			productReference = 430349423004D3A000FD9EE9 /* GostXTunnel.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -414,6 +426,7 @@
 				B5B0E074285B62B80035A6F2 /* MacExtrasConfigurator.swift in Sources */,
 				2FA7674F8D9746F99910289A /* VpnManager.swift in Sources */,
 				B532A66A285B528900159BAC /* main.swift in Sources */,
+				E086218C337C33C8BB4052CA /* ConfigRepository.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -691,9 +704,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 1.0.0;
-				OTHER_LDFLAGS = (
-					"-lresolv",
-				);
+				OTHER_LDFLAGS = "-lresolv";
 				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.gostx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -732,9 +743,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 1.0.0;
-				OTHER_LDFLAGS = (
-					"-lresolv",
-				);
+				OTHER_LDFLAGS = "-lresolv";
 				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.gostx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
