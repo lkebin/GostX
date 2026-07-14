@@ -163,7 +163,7 @@ func startVPNSingTun(fd, mtu int, chainName, dnsServiceAddr string) error {
 		router:         router,
 		dnsServiceAddr: dnsServiceAddr,
 	}
-	stack, err := singtun.NewStack("system", singtun.StackOptions{
+	stack, err := singtun.NewStack(tunStackType, singtun.StackOptions{
 		Context:    ctx,
 		Tun:        device,
 		TunOptions: tunOptions,
