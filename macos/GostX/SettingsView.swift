@@ -31,6 +31,7 @@ struct SettingsView: View {
                 }
                 .tag(1)
         }
+        .navigationTitle(Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "GostX")
         .frame(minWidth: 700, minHeight: 440)
     }
 
@@ -85,7 +86,6 @@ struct SettingsView: View {
                 .padding(.top, 8)
             }
         }
-        .navigationTitle(Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "GostX")
         .onAppear {
             if selectedProfileId == nil, let first = repo.profiles.first {
                 selectedProfileId = first.id
