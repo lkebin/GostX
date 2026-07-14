@@ -36,24 +36,36 @@ struct SettingsView: View {
 
     private var profilesTab: some View {
         NavigationSplitView {
-            List(selection: $selectedProfileId) {
-                ForEach(repo.profiles) { profile in
-                    Label(profile.name, systemImage: "doc.text")
-                        .tag(profile.id)
-                        .contextMenu {
-                            Button(NSLocalizedString("Rename...", comment: "")) {
-                                renameTargetId = profile.id
-                                newProfileName = profile.name
-                                showRenameSheet = true
+            VStack(spacing: 0) {
+                List(selection: $selectedProfileId) {
+                    ForEach(repo.profiles) { profile in
+                        Label(profile.name, systemImage: "doc.text")
+                            .tag(profile.id)
+                            .contextMenu {
+                                Button(NSLocalizedString("Rename...", comment: "")) {
+                                    renameTargetId = profile.id
+                                    newProfileName = profile.name
+                                    showRenameSheet = true
+                                }
+                                Divider()
+                                Button(NSLocalizedString("Delete...", comment: ""), role: .destructive) {
+                                    repo.deleteProfile(profile.id)
+                                }
                             }
-                            Divider()
-                            Button(NSLocalizedString("Delete...", comment: ""), role: .destructive) {
-                                repo.deleteProfile(profile.id)
-                            }
-                        }
+                    }
                 }
+                .listStyle(.plain)
+
+                Divider()
+
+                Button(action: { showAddSheet = true }) {
+                    Label(NSLocalizedString("Add Profile", comment: ""), systemImage: "plus")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.borderless)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
             }
-            .listStyle(.plain)
             .navigationSplitViewColumnWidth(min: 180, ideal: 220)
         } detail: {
             if let profileId = selectedProfileId {
@@ -74,13 +86,6 @@ struct SettingsView: View {
             }
         }
         .navigationTitle(Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "GostX")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { showAddSheet = true }) {
-                    Label(NSLocalizedString("Add Profile", comment: ""), systemImage: "plus")
-                }
-            }
-        }
         .onAppear {
             if selectedProfileId == nil, let first = repo.profiles.first {
                 selectedProfileId = first.id
@@ -178,6 +183,7 @@ struct YamlEditorView: View {
                 .onChange(of: yamlText) { newValue in
                     save()
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             Divider()
 
