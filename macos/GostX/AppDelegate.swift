@@ -79,7 +79,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             LibgostStopGost(nil)
         }
-        self.menu?.updateListen(nil)
         self.menu?.toOffState()
     }
 
@@ -121,8 +120,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        let statusJSON = LibgostGetStatus()
-        self.menu?.updateListen(statusJSON)
         self.menu?.toOnState()
     }
 }
