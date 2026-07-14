@@ -63,6 +63,7 @@ struct SettingsView: View {
                     }
                 }
                 .listStyle(.sidebar)
+                .scrollContentBackground(.hidden)
 
                 Divider()
 

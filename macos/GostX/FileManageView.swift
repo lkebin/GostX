@@ -175,24 +175,6 @@ struct FileManageView: View {
 
     private var fileListView: some View {
         VStack(spacing: 0) {
-            // Toolbar
-            HStack {
-                Text(NSLocalizedString("Bypass Files", comment: ""))
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.secondary)
-                Spacer()
-                Button(action: { showImporter = true }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .buttonStyle(.borderless)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-
-            Divider()
-
-            // File List
             List {
                 ForEach(vm.files) { file in
                     FileRowView(
@@ -213,7 +195,20 @@ struct FileManageView: View {
                     )
                 }
             }
-            .listStyle(.inset)
+            .listStyle(.plain)
+
+            Divider()
+
+            HStack {
+                Button(action: { showImporter = true }) {
+                    Label(NSLocalizedString("Import File", comment: ""), systemImage: "plus")
+                        .font(.system(size: 12))
+                }
+                .buttonStyle(.borderless)
+                Spacer()
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
         }
         .frame(minWidth: 300, minHeight: 200)
         .fileExporter(
@@ -266,23 +261,15 @@ private struct FileRowView: View {
             }
 
             Spacer()
-
-            // Context menu via right-click
-            Menu {
-                Button(NSLocalizedString("Export...", comment: "")) { onExport() }
-                Button(NSLocalizedString("Rename...", comment: "")) { onRename() }
-                Button(NSLocalizedString("Copy Path", comment: "")) { onCopyPath() }
-                Divider()
-                Button(NSLocalizedString("Delete...", comment: ""), role: .destructive) { onDelete() }
-            } label: {
-                Image(systemName: "ellipsis.circle")
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-            }
-            .menuStyle(.borderlessButton)
-            .frame(width: 24)
         }
         .padding(.vertical, 4)
+        .contextMenu {
+            Button(NSLocalizedString("Export...", comment: "")) { onExport() }
+            Button(NSLocalizedString("Rename...", comment: "")) { onRename() }
+            Button(NSLocalizedString("Copy Path", comment: "")) { onCopyPath() }
+            Divider()
+            Button(NSLocalizedString("Delete...", comment: ""), role: .destructive) { onDelete() }
+        }
     }
 }
 
