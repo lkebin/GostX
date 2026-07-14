@@ -131,10 +131,10 @@ func startVPNSingTun(fd, mtu int, chainName, dnsServiceAddr string) error {
 		if chainer == nil {
 			logrus.Warnf("chain %q not found in registry – traffic will route directly", chainName)
 		} else {
-			logrus.Infof("chain %q found, sing-tun system stack starting (fd=%d mtu=%d)", chainName, fd, mtu)
+			logrus.Infof("chain %q found, sing-tun stack starting (fd=%d mtu=%d type=%s)", chainName, fd, mtu, tunStackType)
 		}
 	} else {
-		logrus.Infof("no chain name – system stack will route directly (fd=%d mtu=%d)", fd, mtu)
+		logrus.Infof("no chain name – stack will route directly (fd=%d mtu=%d type=%s)", fd, mtu, tunStackType)
 	}
 	router := xchain.NewRouter(
 		gostchain.ChainRouterOption(chainer),
@@ -182,7 +182,7 @@ func startVPNSingTun(fd, mtu int, chainName, dnsServiceAddr string) error {
 		device.Close()
 		return fmt.Errorf("start sing-tun stack: %w", err)
 	}
-	logrus.Infof("sing-tun system stack started (tcp_listener=%s/24, dns=%s)",
+	logrus.Infof("sing-tun stack started (type=%s iface=%s tcp_listener=%s, dns=%s)", tunStackType, device.Name(),
 		tunVPNPrefix, dnsServiceAddr)
 
 	tunStack = stack
