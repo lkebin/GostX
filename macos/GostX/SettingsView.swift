@@ -69,6 +69,7 @@ struct SettingsView: View {
             if let profileId = selectedProfileId {
                 YamlEditorView(profileId: profileId)
                     .id(profileId)
+                    .padding(.top, 8)
             } else {
                 VStack {
                     Image(systemName: "doc.text.magnifyingglass")
@@ -79,6 +80,7 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.top, 8)
             }
         }
         .navigationTitle(Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "GostX")
