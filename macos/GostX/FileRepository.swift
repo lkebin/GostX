@@ -14,13 +14,13 @@ class FileRepository {
     init?() {
         guard let container = AppGroupConfig.containerURL else { return nil }
         workDir = container.appendingPathComponent("files")
-        ensureDir()
+        try? ensureDir()
     }
 
     // MARK: - Directory
 
-    func ensureDir() {
-        try? FileManager.default.createDirectory(at: workDir,
+    func ensureDir() throws {
+        try FileManager.default.createDirectory(at: workDir,
             withIntermediateDirectories: true, attributes: nil)
     }
 
@@ -74,6 +74,14 @@ class FileRepository {
         guard !isDir.boolValue else {
             throw FileRepositoryError.notAFile(name)
         }
+
+        // Security-scoped bookmark: .fileImporter provides URLs that require
+        // explicit access in sandboxed apps.
+        let accessed = sourceURL.startAccessingSecurityScopedResource()
+        defer { if accessed { sourceURL.stopAccessingSecurityScopedResource() } }
+
+        // Ensure the files/ directory exists before copying.
+        try ensureDir()
 
         let target = workDir.appendingPathComponent(trimmed)
         // Remove existing file before copy
