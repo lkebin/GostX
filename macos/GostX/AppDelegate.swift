@@ -113,6 +113,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func startProxyMode() {
         let yaml = UserDefaults.standard.string(forKey: defaultsYamlKey) ?? defaultGostYAML
 
+        // Set work dir to App Group container so gost can find imported bypass files
+        if let containerURL = AppGroupConfig.containerURL {
+            let filesDir = containerURL.appendingPathComponent("files")
+            try? FileManager.default.createDirectory(at: filesDir,
+                withIntermediateDirectories: true, attributes: nil)
+            LibgostSetWorkDir(filesDir.path, nil)
+        }
+
         var err: NSError?
         if !LibgostStartGost(yaml, "", &err), let err {
             logger.error("gost start failed: \(err.localizedDescription)")
