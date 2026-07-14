@@ -156,10 +156,8 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
         }
         settingsHostingController = NSHostingController(rootView: AnyView(SettingsView()))
         let window = NSWindow(contentViewController: settingsHostingController!)
-        window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
-        window.titlebarAppearsTransparent = true
-        window.titlebarSeparatorStyle = .automatic
-        window.toolbarStyle = .unified
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        window.title = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "GostX"
         window.setContentSize(NSSize(width: 780, height: 500))
         window.center()
         window.orderFrontRegardless()
