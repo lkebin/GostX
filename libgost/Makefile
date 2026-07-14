@@ -53,7 +53,7 @@ debug-symbols:
 macos-xcframework:
 	CGO_ENABLED=1 GOFLAGS="-buildvcs=false" $(GOMOBILE) bind \
 	  -tags with_gvisor \
-	  -target macos \
+	  -target macos/arm64 \
 	  -trimpath -ldflags="-s -w" \
 	  -o Libgost.xcframework \
 	  .

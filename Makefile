@@ -9,7 +9,7 @@ android-release: libgost/libgost.aar
 	cd android && ./gradlew assembleRelease bundleRelease
 
 macos: macos/Frameworks/Libgost.xcframework
-	cd macos && xcodebuild -project GostX.xcodeproj -scheme GostX -configuration Release -derivedDataPath build build
+	cd macos && xcodebuild -project GostX.xcodeproj -scheme GostX -configuration Release -derivedDataPath build ONLY_ACTIVE_ARCH=YES build
 
 libgost/libgost.aar:
 	cd libgost && $(MAKE) libgost.aar
