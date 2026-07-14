@@ -63,7 +63,6 @@ struct SettingsView: View {
                     }
                 }
                 .listStyle(.sidebar)
-                .scrollContentBackground(.hidden)
 
                 Divider()
 
@@ -94,13 +93,7 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .navigationTitle("")
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text(Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "GostX")
-                    .font(.system(size: 13, weight: .semibold))
-            }
-        }
+        .navigationTitle(Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "GostX")
         .onAppear {
             if selectedProfileId == nil, let first = repo.profiles.first {
                 selectedProfileId = first.id
