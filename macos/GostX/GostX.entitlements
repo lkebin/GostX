@@ -4,13 +4,19 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.cn.liukebin.gostx</string>
+	</array>
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
 	<key>com.apple.security.network.server</key>
 	<true/>
-	<key>com.apple.security.application-groups</key>
+	<key>com.apple.developer.networking.networkextension</key>
 	<array>
-		<string>group.cn.liukebin.gostx</string>
+		<string>packet-tunnel-provider</string>
 	</array>
 </dict>
 </plist>
