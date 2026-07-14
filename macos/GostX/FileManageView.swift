@@ -196,6 +196,7 @@ struct FileManageView: View {
                 }
             }
             .listStyle(.plain)
+            .scrollContentBackground(.hidden)
 
             Divider()
 

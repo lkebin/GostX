@@ -66,6 +66,7 @@ struct SettingsView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
             }
+            .frame(maxHeight: .infinity)
             .navigationSplitViewColumnWidth(min: 180, ideal: 220)
         } detail: {
             if let profileId = selectedProfileId {
