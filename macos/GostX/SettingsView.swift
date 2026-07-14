@@ -63,6 +63,8 @@ struct SettingsView: View {
                     }
                 }
                 .listStyle(.sidebar)
+                .scrollContentBackground(.hidden)
+                .background(Color(nsColor: .textBackgroundColor))
 
                 Divider()
 
@@ -81,6 +83,7 @@ struct SettingsView: View {
             if let profileId = selectedProfileId {
                 YamlEditorView(profileId: profileId)
                     .id(profileId)
+                    .background(Color(nsColor: .textBackgroundColor))
             } else {
                 VStack {
                     Image(systemName: "doc.text.magnifyingglass")
@@ -91,6 +94,7 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(nsColor: .textBackgroundColor))
             }
         }
         .navigationTitle(Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "GostX")
