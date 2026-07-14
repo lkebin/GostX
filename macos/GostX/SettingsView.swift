@@ -62,7 +62,7 @@ struct SettingsView: View {
                         }
                     }
                 }
-                .listStyle(.sidebar)
+                .listStyle(.plain)
                 .scrollContentBackground(.hidden)
 
                 Divider()
@@ -94,9 +94,7 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .navigationTitle(selectedProfileId.flatMap { id in
-            repo.profiles.first { $0.id == id }?.name
-        } ?? NSLocalizedString("Settings", comment: ""))
+        .navigationTitle(Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "GostX")
         .toolbar { ToolbarItem { Spacer() } }
         .onAppear {
             if selectedProfileId == nil, let first = repo.profiles.first {
