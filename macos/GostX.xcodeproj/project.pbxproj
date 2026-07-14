@@ -72,6 +72,7 @@
 
 /* Begin PBXFileReference section */
 		296DECB2BD4347C19DFD902E /* PacketTunnelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PacketTunnelProvider.swift; path = GostXTunnel/PacketTunnelProvider.swift; sourceTree = "<group>"; };
+		AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = DevelopmentTeam.xcconfig; sourceTree = "<group>"; };
 		430349423004D3A000FD9EE9 /* GostXTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GostXTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		430349433004D3A000FD9EE9 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
 		430349593004D6B700FD9EE9 /* AppGroupConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppGroupConfig.swift; path = GostX/AppGroupConfig.swift; sourceTree = "<group>"; };
@@ -163,6 +164,7 @@
 			isa = PBXGroup;
 			children = (
 				430349593004D6B700FD9EE9 /* AppGroupConfig.swift */,
+				AD12003F3005000100FD9EE9 /* Configuration */,
 				B532A668285B528900159BAC /* GostX */,
 				B532A67A285B528D00159BAC /* GostXTests */,
 				B532A684285B528D00159BAC /* GostXUITests */,
@@ -226,6 +228,14 @@
 				B532A687285B528D00159BAC /* GostXUITestsLaunchTests.swift */,
 			);
 			path = GostXUITests;
+			sourceTree = "<group>";
+		};
+		AD12003F3005000100FD9EE9 /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */,
+			);
+			path = Configuration;
 			sourceTree = "<group>";
 		};
 		B5AF722B28634A6500BB5F98 /* Frameworks */ = {
@@ -482,13 +492,13 @@
 /* Begin XCBuildConfiguration section */
 		4303494E3004D3A000FD9EE9 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CODE_SIGN_ENTITLEMENTS = GostXTunnel/GostXTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -521,13 +531,13 @@
 		};
 		4303494F3004D3A000FD9EE9 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CODE_SIGN_ENTITLEMENTS = GostXTunnel/GostXTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -678,6 +688,7 @@
 		};
 		B532A68C285B528D00159BAC /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -688,7 +699,6 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"GostX/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -716,6 +726,7 @@
 		};
 		B532A68D285B528D00159BAC /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -727,7 +738,6 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"GostX/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
