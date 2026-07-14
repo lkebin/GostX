@@ -182,7 +182,8 @@ func startVPNSingTun(fd, mtu int, chainName, dnsServiceAddr string) error {
 		device.Close()
 		return fmt.Errorf("start sing-tun stack: %w", err)
 	}
-	logrus.Infof("sing-tun stack started (type=%s iface=%s tcp_listener=%s, dns=%s)", tunStackType, device.Name(),
+	ifaceName, _ := device.Name()
+	logrus.Infof("sing-tun stack started (type=%s iface=%s tcp_listener=%s, dns=%s)", tunStackType, ifaceName,
 		tunVPNPrefix, dnsServiceAddr)
 
 	tunStack = stack
