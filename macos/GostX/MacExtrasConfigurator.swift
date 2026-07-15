@@ -174,7 +174,7 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
         }
         settingsHostingController = NSHostingController(rootView: AnyView(SettingsView()))
         let window = NSWindow(contentViewController: settingsHostingController!)
-        window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .unifiedTitleAndToolbar]
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
         window.toolbarStyle = .unified
         window.title = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "GostX"
