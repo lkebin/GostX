@@ -45,11 +45,6 @@ struct ProfileListView: View {
             .padding(.vertical, 6)
             .frame(height: 32)
         }
-        .onAppear {
-            if selectedProfileId == nil, let first = repo.profiles.first {
-                selectedProfileId = first.id
-            }
-        }
         .sheet(isPresented: $showAddSheet) {
             addProfileSheet
         }
