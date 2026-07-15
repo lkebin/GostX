@@ -8,43 +8,6 @@ struct LogContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Toolbar
-            HStack(spacing: 8) {
-                Button(action: { vm.isFollowing.toggle() }) {
-                    Image(systemName: vm.isFollowing ? "pause.fill" : "play.fill")
-                }
-                .buttonStyle(.borderless)
-                .help(vm.isFollowing
-                    ? NSLocalizedString("Pause auto-scroll", comment: "")
-                    : NSLocalizedString("Resume auto-scroll", comment: ""))
-
-                Divider()
-                    .frame(height: 16)
-
-                Button(action: { vm.copyAll() }) {
-                    Image(systemName: "doc.on.doc")
-                }
-                .buttonStyle(.borderless)
-                .help(NSLocalizedString("Copy all", comment: ""))
-
-                Button(action: { vm.clearLog() }) {
-                    Image(systemName: "trash")
-                }
-                .buttonStyle(.borderless)
-                .help(NSLocalizedString("Clear log", comment: ""))
-
-                Spacer()
-
-                Text("\(vm.lines.count) lines")
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .frame(height: 32)
-
-            Divider()
-
             // Content
             if !loggingEnabled {
                 VStack {
@@ -86,7 +49,47 @@ struct LogContentView: View {
                     .onAppear { vm.scrollProxy = proxy }
                 }
             }
+
+            // Bottom toolbar (only when logging is on)
+            if loggingEnabled {
+                Divider()
+
+                HStack(spacing: 8) {
+                    Button(action: { vm.isFollowing.toggle() }) {
+                        Image(systemName: vm.isFollowing ? "pause.fill" : "play.fill")
+                    }
+                    .buttonStyle(.borderless)
+                    .help(vm.isFollowing
+                        ? NSLocalizedString("Pause auto-scroll", comment: "")
+                        : NSLocalizedString("Resume auto-scroll", comment: ""))
+
+                    Divider()
+                        .frame(height: 16)
+
+                    Button(action: { vm.copyAll() }) {
+                        Image(systemName: "doc.on.doc")
+                    }
+                    .buttonStyle(.borderless)
+                    .help(NSLocalizedString("Copy all", comment: ""))
+
+                    Button(action: { vm.clearLog() }) {
+                        Image(systemName: "trash")
+                    }
+                    .buttonStyle(.borderless)
+                    .help(NSLocalizedString("Clear log", comment: ""))
+
+                    Spacer()
+
+                    Text("\(vm.lines.count) lines")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .frame(height: 32)
+            }
         }
+        .ignoresSafeArea(.container, edges: .top)
         .onAppear { vm.onAppear() }
         .onDisappear { vm.onDisappear() }
         .onChange(of: vm.isFollowing) { _ in
