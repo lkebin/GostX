@@ -75,6 +75,7 @@ struct SettingsView: View {
                 if let profileId = selectedProfileId {
                     YamlEditorView(profileId: profileId)
                         .id(profileId)
+                        .ignoresSafeArea(.container, edges: .top)
                 } else {
                     placeholderView(
                         icon: "doc.text.magnifyingglass",
