@@ -1,175 +1,114 @@
 // macos/GostX/SettingsView.swift
 import SwiftUI
 
+// MARK: - Category
+
+enum SettingsCategory: String, CaseIterable, Identifiable {
+    case profiles
+    case files
+    case logs
+
+    var id: Self { self }
+
+    var icon: String {
+        switch self {
+        case .profiles: return "doc.text"
+        case .files: return "folder"
+        case .logs: return "text.alignleft"
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .profiles: return NSLocalizedString("Profiles", comment: "")
+        case .files: return NSLocalizedString("Files", comment: "")
+        case .logs: return NSLocalizedString("Logs", comment: "")
+        }
+    }
+}
+
+// MARK: - SettingsView
+
 @available(macOS 14.0, *)
 struct SettingsView: View {
-    @StateObject private var repo = ConfigRepository.shared
+    @State private var selectedCategory: SettingsCategory = .profiles
+
+    // Profiles
     @State private var selectedProfileId: String? = nil
-    @State private var showAddSheet = false
-    @State private var showRenameSheet = false
-    @State private var newProfileName = ""
-    @State private var renameTargetId: String? = nil
-    @State private var selectedTab = 0
+
+    // Files
+    @StateObject private var fileVM = FileManageViewModel()
+
+    // Logs
+    @StateObject private var logVM = LogViewModel()
+    @State private var loggingEnabled = AppGroupConfig.loggingEnabled
 
     var body: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 0) {
-                HStack(spacing: 0) {
-                    tabItem(icon: "doc.text", title: NSLocalizedString("Profiles", comment: ""), index: 0)
-                    tabItem(icon: "folder", title: NSLocalizedString("Files", comment: ""), index: 1)
-                    tabItem(icon: "text.alignleft", title: NSLocalizedString("Logs", comment: ""), index: 2)
+        NavigationSplitView {
+            // Sidebar
+            List(selection: $selectedCategory) {
+                ForEach(SettingsCategory.allCases) { category in
+                    Label(category.label, systemImage: category.icon)
+                        .tag(category)
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 4)
             }
-
-            Divider()
-
-            if selectedTab == 0 {
-                profilesTab
-            } else if selectedTab == 1 {
-                FileManageView()
-            } else {
-                LogView()
+            .listStyle(.sidebar)
+            .navigationSplitViewColumnWidth(min: 140, ideal: 160, max: 200)
+        } content: {
+            // Content
+            switch selectedCategory {
+            case .profiles:
+                ProfileListView(selectedProfileId: $selectedProfileId)
+                    .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 300)
+            case .files:
+                FileListView(vm: fileVM)
+                    .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 300)
+            case .logs:
+                LogOptionsView()
+                    .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 300)
+            }
+        } detail: {
+            // Detail
+            switch selectedCategory {
+            case .profiles:
+                if let profileId = selectedProfileId {
+                    YamlEditorView(profileId: profileId)
+                        .id(profileId)
+                } else {
+                    placeholderView(
+                        icon: "doc.text.magnifyingglass",
+                        text: NSLocalizedString("Select a profile to edit", comment: "")
+                    )
+                }
+            case .files:
+                if fileVM.selectedFileName != nil {
+                    FileContentView(vm: fileVM)
+                } else {
+                    placeholderView(
+                        icon: "doc.text.magnifyingglass",
+                        text: NSLocalizedString("Select a file to view", comment: "")
+                    )
+                }
+            case .logs:
+                LogContentView(vm: logVM, loggingEnabled: loggingEnabled)
+                    .onAppear {
+                        loggingEnabled = AppGroupConfig.loggingEnabled
+                    }
             }
         }
         .frame(minWidth: 700, minHeight: 440)
     }
 
-    private func tabItem(icon: String, title: String, index: Int) -> some View {
-        let isSelected = selectedTab == index
-        return Button(action: { selectedTab = index }) {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 18, weight: .regular))
-                Text(title)
-                    .font(.system(size: 10))
-            }
-            .frame(width: 68)
-            .padding(.vertical, 6)
-            .contentShape(Rectangle())
-            .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .foregroundColor(isSelected ? Color.accentColor : .secondary)
+    private func placeholderView(icon: String, text: String) -> some View {
+        VStack {
+            Image(systemName: icon)
+                .font(.system(size: 28))
+                .foregroundColor(Color(nsColor: .tertiaryLabelColor))
+            Text(text)
+                .font(.system(size: 13))
+                .foregroundColor(.secondary)
         }
-        .buttonStyle(.plain)
-    }
-
-    private var profilesTab: some View {
-        HStack(spacing: 0) {
-            VStack(spacing: 0) {
-                List(selection: $selectedProfileId) {
-                    ForEach(repo.profiles) { profile in
-                        Label(profile.name, systemImage: "doc.text")
-                            .tag(profile.id)
-                            .contextMenu {
-                                Button(NSLocalizedString("Rename...", comment: "")) {
-                                    renameTargetId = profile.id
-                                    newProfileName = profile.name
-                                    showRenameSheet = true
-                                }
-                                Divider()
-                                Button(NSLocalizedString("Delete...", comment: ""), role: .destructive) {
-                                    repo.deleteProfile(profile.id)
-                                }
-                            }
-                    }
-                }
-                .listStyle(.plain)
-
-                Divider()
-
-                HStack {
-                    Button(action: { showAddSheet = true }) {
-                        Label(NSLocalizedString("Add Profile", comment: ""), systemImage: "plus")
-                    }
-                    .buttonStyle(.borderless)
-                    Spacer()
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .frame(height: 32)
-            }
-            .frame(width: 200)
-
-            Divider()
-
-            if let profileId = selectedProfileId {
-                YamlEditorView(profileId: profileId)
-                    .id(profileId)
-            } else {
-                VStack {
-                    Image(systemName: "doc.text.magnifyingglass")
-                        .font(.system(size: 28))
-                        .foregroundColor(Color(nsColor: .tertiaryLabelColor))
-                    Text(NSLocalizedString("Select a profile to edit", comment: ""))
-                        .font(.system(size: 13))
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-        }
-        .onAppear {
-            if selectedProfileId == nil, let first = repo.profiles.first {
-                selectedProfileId = first.id
-            }
-        }
-        .sheet(isPresented: $showAddSheet) {
-            addProfileSheet
-        }
-        .sheet(isPresented: $showRenameSheet) {
-            renameProfileSheet
-        }
-    }
-
-    private var addProfileSheet: some View {
-        VStack(spacing: 16) {
-            Text(NSLocalizedString("New Profile", comment: "")).font(.headline)
-            TextField(NSLocalizedString("Profile name", comment: ""), text: $newProfileName)
-                .textFieldStyle(.roundedBorder)
-                .frame(width: 250)
-            HStack {
-                Button(NSLocalizedString("Cancel", comment: "")) { showAddSheet = false }
-                    .keyboardShortcut(.cancelAction)
-                Button(NSLocalizedString("Add", comment: "")) {
-                    if !newProfileName.isEmpty {
-                        let newId = repo.addProfile(name: newProfileName)
-                        if let id = newId { selectedProfileId = id }
-                        newProfileName = ""
-                        showAddSheet = false
-                    }
-                }
-                .keyboardShortcut(.defaultAction)
-                .disabled(newProfileName.isEmpty)
-            }
-        }
-        .padding()
-        .frame(width: 300, height: 140)
-    }
-
-    private var renameProfileSheet: some View {
-        VStack(spacing: 16) {
-            Text(NSLocalizedString("Rename Profile", comment: "")).font(.headline)
-            TextField(NSLocalizedString("Profile name", comment: ""), text: $newProfileName)
-                .textFieldStyle(.roundedBorder)
-                .frame(width: 250)
-            HStack {
-                Button(NSLocalizedString("Cancel", comment: "")) { showRenameSheet = false }
-                    .keyboardShortcut(.cancelAction)
-                Button(NSLocalizedString("Rename", comment: "")) {
-                    if let id = renameTargetId, !newProfileName.isEmpty {
-                        _ = repo.renameProfile(id, newName: newProfileName)
-                        newProfileName = ""
-                        renameTargetId = nil
-                        showRenameSheet = false
-                    }
-                }
-                .keyboardShortcut(.defaultAction)
-                .disabled(newProfileName.isEmpty)
-            }
-        }
-        .padding()
-        .frame(width: 300, height: 140)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
