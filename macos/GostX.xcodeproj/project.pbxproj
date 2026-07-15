@@ -10,7 +10,6 @@
 		0874FE9F0ADC49BBB6CD3626 /* PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 296DECB2BD4347C19DFD902E /* PacketTunnelProvider.swift */; };
 		110C2C030865F24C8C297E45 /* LogOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F0072E6B1705600E6B4FA5B /* LogOptionsView.swift */; };
 		112569258691CDCE54D5D03B /* LogContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19495E70527B5668EC230C85 /* LogContentView.swift */; };
-		22929EC8453A4E408A3AEF79 /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64B1478690C1481980B302A8 /* LogView.swift */; };
 		2FA7674F8D9746F99910289A /* VpnManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F188A4B6A6F14F1D867F7D30 /* VpnManager.swift */; };
 		430349443004D3A000FD9EE9 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 430349433004D3A000FD9EE9 /* NetworkExtension.framework */; };
 		4303494C3004D3A000FD9EE9 /* GostXTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 430349423004D3A000FD9EE9 /* GostXTunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -18,6 +17,7 @@
 		4303495B3004D6D500FD9EE9 /* AppGroupConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 430349593004D6B700FD9EE9 /* AppGroupConfig.swift */; };
 		4303495D3004D78100FD9EE9 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
 		539C284B9A34F4EEB926B517 /* FileListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1099D8C22BC993593DE940 /* FileListView.swift */; };
+		5B773BD6DC67E0481B3E9F01 /* FileManageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B40B99520AC17D0C83EEFF5 /* FileManageViewModel.swift */; };
 		661952039FA5490CAD5BBB39 /* YamlEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CA10536E0954A81A09F6F24 /* YamlEditorView.swift */; };
 		80502C1365AFE6E9D0EBCE67 /* ProfileListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D241A5E3ABD1C9E90BA745A /* ProfileListView.swift */; };
 		B532A66A285B528900159BAC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = B532A669285B528900159BAC /* main.swift */; };
@@ -29,7 +29,6 @@
 		B5AEDDB12864920800C09ED6 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5AEDDB02864920800C09ED6 /* AppDelegate.swift */; };
 		B5B0E074285B62B80035A6F2 /* MacExtrasConfigurator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B0E073285B62B80035A6F2 /* MacExtrasConfigurator.swift */; };
 		B5B0E07A285C63080035A6F2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B0E079285C63080035A6F2 /* SettingsView.swift */; };
-		B5B1C1A129DD6E90008AA941 /* FileManageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B1C1A229DD6E90008AA942 /* FileManageView.swift */; };
 		B5B1C1A329DD6E90008AA943 /* FileRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B1C1A429DD6E90008AA944 /* FileRepository.swift */; };
 		B5C1CF1429DD6E7C008AA934 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = B5C1CF1629DD6E7C008AA934 /* Localizable.stringsdict */; };
 		B5F6387929DEFF31009A1287 /* Arguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F6387829DEFF31009A1287 /* Arguments.swift */; };
@@ -91,7 +90,7 @@
 		430349593004D6B700FD9EE9 /* AppGroupConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppGroupConfig.swift; path = GostX/AppGroupConfig.swift; sourceTree = "<group>"; };
 		4303495C3004D78100FD9EE9 /* Libgost.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Libgost.xcframework; path = Frameworks/Libgost.xcframework; sourceTree = "<group>"; };
 		5D840A91D1C37F07D57AD8A1 /* ConfigRepository.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConfigRepository.swift; sourceTree = "<group>"; };
-		64B1478690C1481980B302A8 /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
+		6B40B99520AC17D0C83EEFF5 /* FileManageViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FileManageViewModel.swift; sourceTree = "<group>"; };
 		8BFCA548038B9C1B568E78C0 /* LogViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LogViewModel.swift; sourceTree = "<group>"; };
 		AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = DevelopmentTeam.xcconfig; sourceTree = "<group>"; };
 		B532A666285B528900159BAC /* GostX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GostX.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -107,7 +106,6 @@
 		B5AEDDB02864920800C09ED6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B5B0E073285B62B80035A6F2 /* MacExtrasConfigurator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacExtrasConfigurator.swift; sourceTree = "<group>"; };
 		B5B0E079285C63080035A6F2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		B5B1C1A229DD6E90008AA942 /* FileManageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileManageView.swift; sourceTree = "<group>"; };
 		B5B1C1A429DD6E90008AA944 /* FileRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileRepository.swift; sourceTree = "<group>"; };
 		B5C1CF1529DD6E7C008AA934 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 		B5C1CF1729DD6E90008AA934 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.stringsdict"; sourceTree = "<group>"; };
@@ -231,10 +229,8 @@
 				B5B0E079285C63080035A6F2 /* SettingsView.swift */,
 				1CA10536E0954A81A09F6F24 /* YamlEditorView.swift */,
 				16E9D6522B494B409C95F0FE /* AppLogger.swift */,
-				64B1478690C1481980B302A8 /* LogView.swift */,
 				B5AEDDB02864920800C09ED6 /* AppDelegate.swift */,
 				B5F6387829DEFF31009A1287 /* Arguments.swift */,
-				B5B1C1A229DD6E90008AA942 /* FileManageView.swift */,
 				B5B1C1A429DD6E90008AA944 /* FileRepository.swift */,
 				5D840A91D1C37F07D57AD8A1 /* ConfigRepository.swift */,
 				8BFCA548038B9C1B568E78C0 /* LogViewModel.swift */,
@@ -243,6 +239,7 @@
 				1D241A5E3ABD1C9E90BA745A /* ProfileListView.swift */,
 				CC1099D8C22BC993593DE940 /* FileListView.swift */,
 				041916CF79F25CAF1E21B685 /* FileContentView.swift */,
+				6B40B99520AC17D0C83EEFF5 /* FileManageViewModel.swift */,
 			);
 			path = GostX;
 			sourceTree = "<group>";
@@ -461,8 +458,6 @@
 				B5B0E07A285C63080035A6F2 /* SettingsView.swift in Sources */,
 				661952039FA5490CAD5BBB39 /* YamlEditorView.swift in Sources */,
 				EBCBCEB114E34B4BB5D68150 /* AppLogger.swift in Sources */,
-				22929EC8453A4E408A3AEF79 /* LogView.swift in Sources */,
-				B5B1C1A129DD6E90008AA941 /* FileManageView.swift in Sources */,
 				B5B1C1A329DD6E90008AA943 /* FileRepository.swift in Sources */,
 				B5B0E074285B62B80035A6F2 /* MacExtrasConfigurator.swift in Sources */,
 				2FA7674F8D9746F99910289A /* VpnManager.swift in Sources */,
@@ -474,6 +469,7 @@
 				80502C1365AFE6E9D0EBCE67 /* ProfileListView.swift in Sources */,
 				539C284B9A34F4EEB926B517 /* FileListView.swift in Sources */,
 				BA165896763DA2BA6B8AE650 /* FileContentView.swift in Sources */,
+				5B773BD6DC67E0481B3E9F01 /* FileManageViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
