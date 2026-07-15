@@ -173,8 +173,13 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
             return
         }
         settingsHostingController = NSHostingController(rootView: AnyView(SettingsView()))
+        let toolbar = NSToolbar(identifier: "SettingsToolbar")
+        toolbar.displayMode = .iconOnly
+        toolbar.delegate = ToolbarDelegate.shared
+
         let window = NSWindow(contentViewController: settingsHostingController!)
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        window.toolbar = toolbar
         window.title = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "GostX"
         window.setContentSize(NSSize(width: 780, height: 500))
         window.center()
@@ -217,5 +222,23 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
 
     func menuWillOpen(_ menu: NSMenu) {
         rebuildProfileSubmenu()
+    }
+}
+
+@available(macOS 14.0, *)
+final class ToolbarDelegate: NSObject, NSToolbarDelegate {
+    static let shared = ToolbarDelegate()
+
+    func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier itemIdentifier: NSToolbarItem.Identifier, willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
+        let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+        return item
+    }
+
+    func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+        [.flexibleSpace]
+    }
+
+    func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+        [.flexibleSpace]
     }
 }
