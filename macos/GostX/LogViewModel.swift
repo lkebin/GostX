@@ -53,11 +53,7 @@ class LogViewModel: ObservableObject {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self else { return }
             DispatchQueue.main.async {
-                let oldCount = self.lines.count
                 self.loadLog()
-                if self.isFollowing, self.lines.count > oldCount, let proxy = self.scrollProxy {
-                    proxy.scrollTo(self.lines.count - 1, anchor: .bottom)
-                }
             }
         }
     }

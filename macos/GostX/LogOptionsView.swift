@@ -8,10 +8,10 @@ struct LogOptionsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(NSLocalizedString("Logging", comment: ""))
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.primary)
-                .padding(.horizontal, 12)
+//            Text(NSLocalizedString("Logging", comment: ""))
+//                .font(.system(size: 13, weight: .semibold))
+//                .foregroundColor(.primary)
+//                .padding(.horizontal, 12)
 
             VStack(spacing: 0) {
                 // Enable Logging toggle row

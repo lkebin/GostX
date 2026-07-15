@@ -97,5 +97,10 @@ struct LogContentView: View {
                 proxy.scrollTo(vm.lines.count - 1, anchor: .bottom)
             }
         }
+        .onChange(of: vm.lines.count) { _ in
+            if vm.isFollowing, let proxy = vm.scrollProxy, !vm.lines.isEmpty {
+                proxy.scrollTo(vm.lines.count - 1, anchor: .bottom)
+            }
+        }
     }
 }
