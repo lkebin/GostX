@@ -39,16 +39,15 @@ class GostXTests: XCTestCase {
 class LogViewModelTests: XCTestCase {
     var vm: LogViewModel!
     var tempDir: URL!
+    var tempLogURL: URL!
 
     override func setUpWithError() throws {
         tempDir = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-        // Write a known log file
-        let log = tempDir.appendingPathComponent("gost.log")
-        try "line one\nline two\nline three\n".write(to: log, atomically: true, encoding: .utf8)
-        // Override containerURL to return our temp dir
-        // We test load/clear/copy independently by writing to a temp file
-        vm = LogViewModel()
+        tempLogURL = tempDir.appendingPathComponent("gost.log")
+        try "line one\nline two\nline three\n".write(to: tempLogURL, atomically: true, encoding: .utf8)
+        vm = LogViewModel(logFileURL: tempLogURL)
+        vm.onAppear()
     }
 
     override func tearDownWithError() throws {
@@ -57,22 +56,30 @@ class LogViewModelTests: XCTestCase {
         vm = nil
     }
 
-    func testInitialState() {
-        XCTAssertTrue(vm.isFollowing)
-        // lines depend on file existence; without a real log file they start empty
+    func testLoadsLinesFromFile() {
+        XCTAssertEqual(vm.lines.count, 3)
+        XCTAssertEqual(vm.lines[0], "line one")
+        XCTAssertEqual(vm.lines[1], "line two")
+        XCTAssertEqual(vm.lines[2], "line three")
     }
 
-    func testClearLog() {
+    func testInitialState() {
+        XCTAssertTrue(vm.isFollowing)
+    }
+
+    func testClearLogTruncatesFile() {
         vm.clearLog()
-        // After clear, lines should be empty
         XCTAssertEqual(vm.lines.count, 0)
+        // Verify the temp file was truncated, not the real one
+        let content = try? String(contentsOf: tempLogURL, encoding: .utf8)
+        XCTAssertEqual(content, "")
     }
 
     func testCopyAll() {
-        // lines is empty by default in unit test env (no App Group file)
         vm.copyAll()
-        // Pasteboard should contain empty string
-        XCTAssertEqual(NSPasteboard.general.string(forType: .string), "")
+        let pb = NSPasteboard.general.string(forType: .string)
+        XCTAssertTrue(pb?.contains("line one") ?? false)
+        XCTAssertTrue(pb?.contains("line three") ?? false)
     }
 
     func testIsFollowingToggle() {

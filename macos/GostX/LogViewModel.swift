@@ -9,9 +9,10 @@ class LogViewModel: ObservableObject {
 
     var scrollProxy: ScrollViewProxy?
     private var timer: Timer?
+    private let logFileURL: URL?
 
-    private var logFileURL: URL? {
-        AppGroupConfig.containerURL?.appendingPathComponent("gost.log")
+    init(logFileURL: URL? = nil) {
+        self.logFileURL = logFileURL ?? AppGroupConfig.containerURL?.appendingPathComponent("gost.log")
     }
 
     func onAppear() {
