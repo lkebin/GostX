@@ -22,17 +22,14 @@ struct LogOptionsView: View {
             }
 
             if loggingEnabled {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(NSLocalizedString("Log Level", comment: ""))
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-
+                LabeledContent(NSLocalizedString("Log Level", comment: "")) {
                     Picker("", selection: $logLevel) {
                         ForEach(AppGroupConfig.logLevelOptions, id: \.self) { level in
                             Text(level.capitalized).tag(level)
                         }
                     }
-                    .pickerStyle(.radioGroup)
+                    .pickerStyle(.menu)
+                    .labelsHidden()
                     .onChange(of: logLevel) { newValue in
                         AppGroupConfig.logLevel = newValue
                         AppLogger.log(.info, "Log level: \(newValue)")

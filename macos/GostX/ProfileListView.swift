@@ -30,6 +30,7 @@ struct ProfileListView: View {
                 }
             }
             .listStyle(.plain)
+            .padding(.horizontal, 8)
 
             Divider()
 
