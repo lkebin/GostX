@@ -141,6 +141,29 @@ class FileRepository {
         try FileManager.default.removeItem(at: url)
     }
 
+    // MARK: - Read / Write
+
+    func createFile(_ name: String) throws {
+        let trimmed = try validateName(name)
+        let url = workDir.appendingPathComponent(trimmed)
+        if FileManager.default.fileExists(atPath: url.path) {
+            throw FileRepositoryError.fileAlreadyExists(trimmed)
+        }
+        try "".write(to: url, atomically: true, encoding: .utf8)
+    }
+
+    func readFileContent(_ name: String) -> String? {
+        guard let trimmed = try? validateName(name) else { return nil }
+        let url = workDir.appendingPathComponent(trimmed)
+        return try? String(contentsOf: url, encoding: .utf8)
+    }
+
+    func writeFileContent(_ name: String, content: String) throws {
+        let trimmed = try validateName(name)
+        let url = workDir.appendingPathComponent(trimmed)
+        try content.write(to: url, atomically: true, encoding: .utf8)
+    }
+
     // MARK: - Path
 
     func filePath(_ name: String) -> String {

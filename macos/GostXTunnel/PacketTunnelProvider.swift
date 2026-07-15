@@ -107,8 +107,14 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         try? FileManager.default.createDirectory(at: filesDir,
             withIntermediateDirectories: true, attributes: nil)
         LibgostSetWorkDir(filesDir.path, nil)
+
+        // Read logging preferences from shared UserDefaults
+        let level = AppGroupConfig.loggingEnabled ? AppGroupConfig.logLevel : "off"
         let logFile = containerURL.appendingPathComponent("gost.log").path
+        LibgostSetLogMaxSize(2 * 1024 * 1024)
         LibgostSetLogFile(logFile, nil)
-        LibgostSetLogLevel("info")
+        LibgostSetLogLevel(level)
+        os_log(.default, "[GostX] logging: enabled=%{public}@ level=%{public}@",
+               AppGroupConfig.loggingEnabled ? "yes" : "no", level)
     }
 }

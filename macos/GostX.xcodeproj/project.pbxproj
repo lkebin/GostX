@@ -8,13 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		0874FE9F0ADC49BBB6CD3626 /* PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 296DECB2BD4347C19DFD902E /* PacketTunnelProvider.swift */; };
+		22929EC8453A4E408A3AEF79 /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64B1478690C1481980B302A8 /* LogView.swift */; };
 		2FA7674F8D9746F99910289A /* VpnManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F188A4B6A6F14F1D867F7D30 /* VpnManager.swift */; };
 		430349443004D3A000FD9EE9 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 430349433004D3A000FD9EE9 /* NetworkExtension.framework */; };
 		4303494C3004D3A000FD9EE9 /* GostXTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 430349423004D3A000FD9EE9 /* GostXTunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4303495A3004D6B700FD9EE9 /* AppGroupConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 430349593004D6B700FD9EE9 /* AppGroupConfig.swift */; };
 		4303495B3004D6D500FD9EE9 /* AppGroupConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 430349593004D6B700FD9EE9 /* AppGroupConfig.swift */; };
 		4303495D3004D78100FD9EE9 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
-		B523FCA529E169180050578C /* HighlightedTextEditor in Frameworks */ = {isa = PBXBuildFile; productRef = B523FCA429E169180050578C /* HighlightedTextEditor */; };
+		661952039FA5490CAD5BBB39 /* YamlEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CA10536E0954A81A09F6F24 /* YamlEditorView.swift */; };
 		B532A66A285B528900159BAC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = B532A669285B528900159BAC /* main.swift */; };
 		B532A66E285B528D00159BAC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B532A66D285B528D00159BAC /* Assets.xcassets */; };
 		B532A671285B528D00159BAC /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B532A670285B528D00159BAC /* Preview Assets.xcassets */; };
@@ -30,6 +31,7 @@
 		B5F6387929DEFF31009A1287 /* Arguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F6387829DEFF31009A1287 /* Arguments.swift */; };
 		E086218C337C33C8BB4052CA /* ConfigRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D840A91D1C37F07D57AD8A1 /* ConfigRepository.swift */; };
 		EA7823795D8442489C72D878 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
+		EBCBCEB114E34B4BB5D68150 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16E9D6522B494B409C95F0FE /* AppLogger.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -71,13 +73,16 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		16E9D6522B494B409C95F0FE /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
+		1CA10536E0954A81A09F6F24 /* YamlEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YamlEditorView.swift; sourceTree = "<group>"; };
 		296DECB2BD4347C19DFD902E /* PacketTunnelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PacketTunnelProvider.swift; path = GostXTunnel/PacketTunnelProvider.swift; sourceTree = "<group>"; };
-		AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = DevelopmentTeam.xcconfig; sourceTree = "<group>"; };
 		430349423004D3A000FD9EE9 /* GostXTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GostXTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		430349433004D3A000FD9EE9 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
 		430349593004D6B700FD9EE9 /* AppGroupConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppGroupConfig.swift; path = GostX/AppGroupConfig.swift; sourceTree = "<group>"; };
 		4303495C3004D78100FD9EE9 /* Libgost.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Libgost.xcframework; path = Frameworks/Libgost.xcframework; sourceTree = "<group>"; };
 		5D840A91D1C37F07D57AD8A1 /* ConfigRepository.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConfigRepository.swift; sourceTree = "<group>"; };
+		64B1478690C1481980B302A8 /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
+		AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = DevelopmentTeam.xcconfig; sourceTree = "<group>"; };
 		B532A666285B528900159BAC /* GostX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GostX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B532A669285B528900159BAC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		B532A66D285B528D00159BAC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -100,7 +105,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		430349503004D3A000FD9EE9 /* Exceptions for "GostXTunnel" folder in "GostXTunnel" target */ = {
+		430349503004D3A000FD9EE9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -110,18 +115,7 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		430349453004D3A000FD9EE9 /* GostXTunnel */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				430349503004D3A000FD9EE9 /* Exceptions for "GostXTunnel" folder in "GostXTunnel" target */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = GostXTunnel;
-			sourceTree = "<group>";
-		};
+		430349453004D3A000FD9EE9 /* GostXTunnel */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (430349503004D3A000FD9EE9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = GostXTunnel; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -138,7 +132,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B523FCA529E169180050578C /* HighlightedTextEditor in Frameworks */,
 				EA7823795D8442489C72D878 /* Libgost.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -160,6 +153,22 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		43F701153007C22A00E70769 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				296DECB2BD4347C19DFD902E /* PacketTunnelProvider.swift */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
+		AD12003F3005000100FD9EE9 /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */,
+			);
+			path = Configuration;
+			sourceTree = "<group>";
+		};
 		B532A65D285B528900159BAC = {
 			isa = PBXGroup;
 			children = (
@@ -171,6 +180,7 @@
 				430349453004D3A000FD9EE9 /* GostXTunnel */,
 				B532A667285B528900159BAC /* Products */,
 				B5AF722B28634A6500BB5F98 /* Frameworks */,
+				43F701153007C22A00E70769 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -196,6 +206,9 @@
 				B5B0E073285B62B80035A6F2 /* MacExtrasConfigurator.swift */,
 				F188A4B6A6F14F1D867F7D30 /* VpnManager.swift */,
 				B5B0E079285C63080035A6F2 /* SettingsView.swift */,
+				1CA10536E0954A81A09F6F24 /* YamlEditorView.swift */,
+				16E9D6522B494B409C95F0FE /* AppLogger.swift */,
+				64B1478690C1481980B302A8 /* LogView.swift */,
 				B5AEDDB02864920800C09ED6 /* AppDelegate.swift */,
 				B5F6387829DEFF31009A1287 /* Arguments.swift */,
 				B5B1C1A229DD6E90008AA942 /* FileManageView.swift */,
@@ -228,14 +241,6 @@
 				B532A687285B528D00159BAC /* GostXUITestsLaunchTests.swift */,
 			);
 			path = GostXUITests;
-			sourceTree = "<group>";
-		};
-		AD12003F3005000100FD9EE9 /* Configuration */ = {
-			isa = PBXGroup;
-			children = (
-				AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */,
-			);
-			path = Configuration;
 			sourceTree = "<group>";
 		};
 		B5AF722B28634A6500BB5F98 /* Frameworks */ = {
@@ -286,7 +291,6 @@
 			);
 			name = GostX;
 			packageProductDependencies = (
-				B523FCA429E169180050578C /* HighlightedTextEditor */,
 			);
 			productName = GostX;
 			productReference = B532A666285B528900159BAC /* GostX.app */;
@@ -365,7 +369,6 @@
 			);
 			mainGroup = B532A65D285B528900159BAC;
 			packageReferences = (
-				B523FCA329E169180050578C /* XCRemoteSwiftPackageReference "HighlightedTextEditor" */,
 			);
 			productRefGroup = B532A667285B528900159BAC /* Products */;
 			projectDirPath = "";
@@ -431,6 +434,9 @@
 				B5F6387929DEFF31009A1287 /* Arguments.swift in Sources */,
 				B5AEDDB12864920800C09ED6 /* AppDelegate.swift in Sources */,
 				B5B0E07A285C63080035A6F2 /* SettingsView.swift in Sources */,
+				661952039FA5490CAD5BBB39 /* YamlEditorView.swift in Sources */,
+				EBCBCEB114E34B4BB5D68150 /* AppLogger.swift in Sources */,
+				22929EC8453A4E408A3AEF79 /* LogView.swift in Sources */,
 				B5B1C1A129DD6E90008AA941 /* FileManageView.swift in Sources */,
 				B5B1C1A329DD6E90008AA943 /* FileRepository.swift in Sources */,
 				B5B0E074285B62B80035A6F2 /* MacExtrasConfigurator.swift in Sources */,
@@ -885,25 +891,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		B523FCA329E169180050578C /* XCRemoteSwiftPackageReference "HighlightedTextEditor" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/kyle-n/HighlightedTextEditor";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.0.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		B523FCA429E169180050578C /* HighlightedTextEditor */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = B523FCA329E169180050578C /* XCRemoteSwiftPackageReference "HighlightedTextEditor" */;
-			productName = HighlightedTextEditor;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B532A65E285B528900159BAC /* Project object */;
 }

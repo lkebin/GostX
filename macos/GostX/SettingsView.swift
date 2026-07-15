@@ -1,12 +1,5 @@
 // macos/GostX/SettingsView.swift
 import SwiftUI
-import HighlightedTextEditor
-
-let reOpts = NSRegularExpression.Options([.anchorsMatchLines])
-let yamlKeyRule   = try! NSRegularExpression(
-    pattern: "^(\\s*)(services|chains|hops|name|addr|handler|listener|connector|dialer|type|chain|auth|tls|metadata|bypass|resolver|hosts|retries|timeout)\\s*:",
-    options: reOpts)
-let yamlCommentRule = try! NSRegularExpression(pattern: "^\\s*#.*", options: reOpts)
 
 @available(macOS 14.0, *)
 struct SettingsView: View {
@@ -19,23 +12,51 @@ struct SettingsView: View {
     @State private var selectedTab = 0
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            profilesTab
-                .tabItem {
-                    Label(NSLocalizedString("Profiles", comment: ""), systemImage: "doc.text")
+        VStack(spacing: 0) {
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    tabItem(icon: "doc.text", title: NSLocalizedString("Profiles", comment: ""), index: 0)
+                    tabItem(icon: "folder", title: NSLocalizedString("Files", comment: ""), index: 1)
+                    tabItem(icon: "text.alignleft", title: NSLocalizedString("Logs", comment: ""), index: 2)
                 }
-                .tag(0)
-            FileManageView()
-                .tabItem {
-                    Label(NSLocalizedString("Files", comment: ""), systemImage: "folder")
-                }
-                .tag(1)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 4)
+            }
+
+            Divider()
+
+            if selectedTab == 0 {
+                profilesTab
+            } else if selectedTab == 1 {
+                FileManageView()
+            } else {
+                LogView()
+            }
         }
         .frame(minWidth: 700, minHeight: 440)
     }
 
+    private func tabItem(icon: String, title: String, index: Int) -> some View {
+        let isSelected = selectedTab == index
+        return Button(action: { selectedTab = index }) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .regular))
+                Text(title)
+                    .font(.system(size: 10))
+            }
+            .frame(width: 68)
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+            .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .foregroundColor(isSelected ? Color.accentColor : .secondary)
+        }
+        .buttonStyle(.plain)
+    }
+
     private var profilesTab: some View {
-        NavigationSplitView {
+        HStack(spacing: 0) {
             VStack(spacing: 0) {
                 List(selection: $selectedProfileId) {
                     ForEach(repo.profiles) { profile in
@@ -58,17 +79,21 @@ struct SettingsView: View {
 
                 Divider()
 
-                Button(action: { showAddSheet = true }) {
-                    Label(NSLocalizedString("Add Profile", comment: ""), systemImage: "plus")
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                HStack {
+                    Button(action: { showAddSheet = true }) {
+                        Label(NSLocalizedString("Add Profile", comment: ""), systemImage: "plus")
+                    }
+                    .buttonStyle(.borderless)
+                    Spacer()
                 }
-                .buttonStyle(.borderless)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
+                .frame(height: 32)
             }
-            .frame(maxHeight: .infinity)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 220)
-        } detail: {
+            .frame(width: 200)
+
+            Divider()
+
             if let profileId = selectedProfileId {
                 YamlEditorView(profileId: profileId)
                     .id(profileId)
@@ -155,44 +180,40 @@ struct YamlEditorView: View {
     let profileId: String
     @StateObject private var repo = ConfigRepository.shared
     @State private var yamlText: String = ""
-
-    private let rules: [HighlightRule] = [
-        HighlightRule(
-            pattern: yamlCommentRule,
-            formattingRule: TextFormattingRule(key: .foregroundColor, value: NSColor.systemGray)
-        ),
-        HighlightRule(
-            pattern: yamlKeyRule,
-            formattingRules: [
-                TextFormattingRule(fontTraits: .bold),
-                TextFormattingRule(key: .foregroundColor, value: NSColor.systemBlue),
-            ]
-        ),
-    ]
+    @State private var isDirty = false
+    @State private var originalText: String = ""
 
     var body: some View {
         VStack(spacing: 0) {
-            HighlightedTextEditor(text: $yamlText, highlightRules: rules)
-                .introspect { editor in
-                    editor.textView.allowsUndo = true
-                    editor.textView.breakUndoCoalescing()
-                    editor.textView.font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
-                }
+            YamlTextView(text: $yamlText)
                 .onChange(of: yamlText) { newValue in
-                    save()
+                    isDirty = newValue != originalText
+                }
+                .onAppear {
+                    let text = repo.getConfig(profileId)
+                    yamlText = text
+                    originalText = text
+                    isDirty = false
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             Divider()
 
-            Text("gost v3 YAML configuration — https://gost.run/docs/")
-                .font(.system(size: 10))
-                .foregroundColor(Color(nsColor: .tertiaryLabelColor))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-        }
-        .onAppear {
-            yamlText = repo.getConfig(profileId)
+            HStack {
+                Spacer()
+                Button(action: {
+                    save()
+                    originalText = yamlText
+                    isDirty = false
+                }) {
+                    Label(NSLocalizedString("Save", comment: ""), systemImage: "square.and.arrow.down")
+                }
+                .buttonStyle(.borderless)
+                .disabled(!isDirty)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .frame(height: 32)
         }
     }
 

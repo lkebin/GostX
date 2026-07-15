@@ -1,7 +1,7 @@
 // macos/GostX/AppGroupConfig.swift
 import Foundation
 
-/// 通过 App Group 容器在主 App 和 Extension 之间共享 YAML 配置。
+/// 通过 App Group 容器在主 App 和 Extension 之间共享 YAML 配置和日志设置。
 struct AppGroupConfig {
     static let groupId = "group.cn.liukebin.gostx"
     static let yamlFileName = "gost.yaml"
@@ -29,4 +29,22 @@ struct AppGroupConfig {
         guard let url = yamlFileURL else { return }
         try? yaml.write(to: url, atomically: true, encoding: .utf8)
     }
+
+    // MARK: - Logging Settings
+
+    private static var sharedDefaults: UserDefaults? {
+        UserDefaults(suiteName: groupId)
+    }
+
+    static var loggingEnabled: Bool {
+        get { sharedDefaults?.bool(forKey: "logging_enabled") ?? true }
+        set { sharedDefaults?.set(newValue, forKey: "logging_enabled") }
+    }
+
+    static var logLevel: String {
+        get { sharedDefaults?.string(forKey: "log_level") ?? "info" }
+        set { sharedDefaults?.set(newValue, forKey: "log_level") }
+    }
+
+    static let logLevelOptions = ["error", "warn", "info", "debug", "trace"]
 }

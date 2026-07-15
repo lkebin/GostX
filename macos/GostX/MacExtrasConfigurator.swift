@@ -8,6 +8,7 @@
 import Foundation
 import AppKit
 import SwiftUI
+import NetworkExtension
 
 class MacExtrasConfigurator: NSObject, NSMenuDelegate {
     private var delegate: AppDelegate
@@ -42,6 +43,23 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
         statusActionRestartItem = NSMenuItem()
 
         super.init()
+
+        // Observe VPN status changes from system (covers toggling from System Settings)
+        NotificationCenter.default.addObserver(
+            forName: .NEVPNStatusDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let connection = notification.object as? NEVPNConnection else { return }
+            switch connection.status {
+            case .connected:
+                self?.toOnState()
+            case .disconnected, .invalid:
+                self?.toOffState()
+            default:
+                break
+            }
+        }
 
         createMenu()
         toOffState()

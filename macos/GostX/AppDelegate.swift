@@ -47,6 +47,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.mainMenu()
         self.menu = MacExtrasConfigurator(delegate: self)
 
+        // Configure unified logging for the main app
+        if let containerURL = AppGroupConfig.containerURL {
+            AppLogger.configure(containerURL: containerURL)
+        }
+
         Task {
             await VpnManager.shared.setup()
         }
@@ -75,15 +80,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func stop() {
+        AppLogger.log(.info, "Stopping...")
         if vpnMode {
             Task { @MainActor in VpnManager.shared.stop() }
         } else {
             LibgostStopGost(nil)
         }
         self.menu?.toOffState()
+        AppLogger.log(.info, "Stopped")
     }
 
     func start() {
+        AppLogger.log(.info, "Starting...")
         if vpnMode {
             startVpnMode()
         } else {
@@ -94,6 +102,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - VPN Mode
 
     private func startVpnMode() {
+        AppLogger.log(.info, "Starting VPN mode")
         // 同步 YAML 到 App Group
         let yaml = UserDefaults.standard.string(forKey: defaultsYamlKey) ?? defaultGostYAML
         AppGroupConfig.writeYaml(yaml)
@@ -102,8 +111,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             do {
                 try await VpnManager.shared.start()
                 DispatchQueue.main.async { self.menu?.toOnState() }
+                AppLogger.log(.info, "VPN started")
             } catch {
                 logger.error("VPN start failed: \(error.localizedDescription)")
+                AppLogger.log(.error, "VPN start failed: \(error.localizedDescription)")
                 DispatchQueue.main.async { self.menu?.toOffState() }
             }
         }
@@ -112,6 +123,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Proxy Mode (non-VPN)
 
     private func startProxyMode() {
+        AppLogger.log(.info, "Starting proxy mode")
         let yaml = UserDefaults.standard.string(forKey: defaultsYamlKey) ?? defaultGostYAML
 
         // Set work dir to App Group container so gost can find imported bypass files
@@ -125,10 +137,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         var err: NSError?
         if !LibgostStartGost(yaml, "", &err), let err {
             logger.error("gost start failed: \(err.localizedDescription)")
+            AppLogger.log(.error, "gost start failed: \(err.localizedDescription)")
             self.menu?.toOffState()
             return
         }
 
         self.menu?.toOnState()
+        AppLogger.log(.info, "Proxy started")
     }
 }

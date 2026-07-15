@@ -25,6 +25,10 @@ class FileManageViewModel: ObservableObject {
     @Published var files: [FileInfo] = []
     @Published var alertMessage: String?
     @Published var pendingOverwrite: (sourceURL: URL, fileName: String)?
+    @Published var selectedFileName: String?
+    @Published var fileContent: String = ""
+    @Published var isFileDirty: Bool = false
+    var originalContent: String = ""
 
     private let repo: FileRepository?
 
@@ -37,6 +41,36 @@ class FileManageViewModel: ObservableObject {
 
     func refresh() {
         files = repo?.listFiles() ?? []
+    }
+
+    func selectFile(_ name: String) {
+        selectedFileName = name
+        let content = repo?.readFileContent(name) ?? ""
+        originalContent = content
+        fileContent = content
+        isFileDirty = false
+    }
+
+    func saveFileContent() {
+        guard let repo, let name = selectedFileName else { return }
+        do {
+            try repo.writeFileContent(name, content: fileContent)
+            originalContent = fileContent
+            isFileDirty = false
+            refresh()
+        } catch {
+            alertMessage = error.localizedDescription
+        }
+    }
+
+    func createFile(_ name: String) {
+        guard let repo else { return }
+        do {
+            try repo.createFile(name)
+            refresh()
+        } catch {
+            alertMessage = error.localizedDescription
+        }
     }
 
     func importFile(from sourceURL: URL) {
@@ -75,6 +109,10 @@ class FileManageViewModel: ObservableObject {
         guard let repo else { return }
         do {
             try repo.renameFile(oldName, to: newName)
+            if selectedFileName == oldName {
+                selectedFileName = newName
+                fileContent = repo.readFileContent(newName) ?? ""
+            }
             refresh()
         } catch {
             alertMessage = error.localizedDescription
@@ -85,6 +123,10 @@ class FileManageViewModel: ObservableObject {
         guard let repo else { return }
         do {
             try repo.deleteFile(name)
+            if selectedFileName == name {
+                selectedFileName = nil
+                fileContent = ""
+            }
             refresh()
         } catch {
             alertMessage = error.localizedDescription
@@ -120,15 +162,19 @@ struct FileManageView: View {
     @State private var renameText: String = ""
     @State private var deleteTarget: FileInfo?
     @State private var showDeleteConfirm = false
+    @State private var showNewFileSheet = false
+    @State private var newFileName = ""
 
     var body: some View {
-        Group {
+        HStack(spacing: 0) {
             if !vm.isAvailable {
                 unavailableView
-            } else if vm.files.isEmpty {
-                emptyView
             } else {
-                fileListView
+                fileSidebar
+
+                Divider()
+
+                fileDetail
             }
         }
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.data, .plainText, .text]) { result in
@@ -136,82 +182,95 @@ struct FileManageView: View {
                 vm.importFile(from: url)
             }
         }
-    }
-
-    // MARK: - Unavailable
-
-    private var unavailableView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 32))
-                .foregroundColor(.secondary)
-            Text(NSLocalizedString("App Group container not available.", comment: ""))
-                .font(.system(size: 13))
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    // MARK: - Empty
-
-    private var emptyView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "folder")
-                .font(.system(size: 36))
-                .foregroundColor(Color(nsColor: .tertiaryLabelColor))
-            Text(NSLocalizedString("No files. Click + to import.", comment: ""))
-                .font(.system(size: 13))
-                .foregroundColor(.secondary)
-            Button(action: { showImporter = true }) {
-                Label(NSLocalizedString("Import File", comment: ""), systemImage: "plus")
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .modifier(FileManageAlertModifier(vm: vm))
-        .modifier(OverwriteSheetModifier(vm: vm))
-    }
-
-    // MARK: - List
-
-    private var fileListView: some View {
-        VStack(spacing: 0) {
-            List {
-                ForEach(vm.files) { file in
-                    FileRowView(
-                        file: file,
-                        onExport: {
-                            exportName = file.name
-                            showExporter = true
-                        },
-                        onRename: {
-                            renameTarget = file
-                            renameText = file.name
-                        },
-                        onCopyPath: { vm.copyPath(file.name) },
-                        onDelete: {
-                            deleteTarget = file
-                            showDeleteConfirm = true
-                        }
-                    )
+        .sheet(isPresented: $showNewFileSheet) {
+            VStack(spacing: 16) {
+                Text(NSLocalizedString("New File", comment: "")).font(.headline)
+                TextField(NSLocalizedString("File name", comment: ""), text: $newFileName)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 250)
+                HStack {
+                    Button(NSLocalizedString("Cancel", comment: "")) {
+                        showNewFileSheet = false
+                        newFileName = ""
+                    }
+                    .keyboardShortcut(.cancelAction)
+                    Button(NSLocalizedString("Create", comment: "")) {
+                        vm.createFile(newFileName)
+                        newFileName = ""
+                        showNewFileSheet = false
+                    }
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(newFileName.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
+            .padding()
+            .frame(width: 300, height: 140)
+        }
+    }
+
+    // MARK: - Sidebar
+
+    private var fileSidebar: some View {
+        VStack(spacing: 0) {
+            if vm.files.isEmpty {
+                VStack(spacing: 8) {
+                    Spacer()
+                    Text(NSLocalizedString("No files", comment: ""))
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+            } else {
+                List(selection: Binding(
+                    get: { vm.selectedFileName },
+                    set: { name in
+                        DispatchQueue.main.async {
+                            vm.selectedFileName = name
+                            if let name { vm.selectFile(name) }
+                        }
+                    }
+                )) {
+                    ForEach(vm.files) { file in
+                        FileRowView(
+                            file: file,
+                            onExport: {
+                                exportName = file.name
+                                showExporter = true
+                            },
+                            onRename: {
+                                renameTarget = file
+                                renameText = file.name
+                            },
+                            onCopyPath: { vm.copyPath(file.name) },
+                            onDelete: {
+                                deleteTarget = file
+                                showDeleteConfirm = true
+                            }
+                        )
+                        .tag(file.name)
+                    }
+                }
+                .listStyle(.plain)
+            }
 
             Divider()
 
             HStack {
-                Button(action: { showImporter = true }) {
-                    Label(NSLocalizedString("Import File", comment: ""), systemImage: "plus")
-                        .font(.system(size: 12))
+                Button(action: { showNewFileSheet = true }) {
+                    Label(NSLocalizedString("New File", comment: ""), systemImage: "doc.badge.plus")
                 }
                 .buttonStyle(.borderless)
                 Spacer()
+                Button(action: { showImporter = true }) {
+                    Label(NSLocalizedString("Import", comment: ""), systemImage: "square.and.arrow.up")
+                }
+                .buttonStyle(.borderless)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
+            .frame(height: 32)
         }
-        .frame(minWidth: 300, minHeight: 200)
+        .frame(width: 200)
         .fileExporter(
             isPresented: $showExporter,
             item: exportName ?? "",
@@ -233,6 +292,63 @@ struct FileManageView: View {
             vm: vm
         ))
     }
+
+    // MARK: - Detail
+
+    private var fileDetail: some View {
+        Group {
+            if let _ = vm.selectedFileName {
+                VStack(spacing: 0) {
+                    TextEditor(text: $vm.fileContent)
+                        .font(.system(size: 12, design: .monospaced))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .onChange(of: vm.fileContent) { _ in
+                            DispatchQueue.main.async {
+                                vm.isFileDirty = vm.fileContent != vm.originalContent
+                            }
+                        }
+
+                    Divider()
+
+                    HStack {
+                        Spacer()
+                        Button(action: { vm.saveFileContent() }) {
+                            Label(NSLocalizedString("Save", comment: ""), systemImage: "square.and.arrow.down")
+                        }
+                        .buttonStyle(.borderless)
+                        .disabled(!vm.isFileDirty)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .frame(height: 32)
+                }
+            } else {
+                VStack {
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .font(.system(size: 28))
+                        .foregroundColor(Color(nsColor: .tertiaryLabelColor))
+                    Text(NSLocalizedString("Select a file to view", comment: ""))
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+    }
+
+    // MARK: - Unavailable
+
+    private var unavailableView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 32))
+                .foregroundColor(.secondary)
+            Text(NSLocalizedString("App Group container not available.", comment: ""))
+                .font(.system(size: 13))
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
 }
 
 // MARK: - FileRowView
@@ -252,12 +368,15 @@ private struct FileRowView: View {
                 .foregroundColor(.secondary)
                 .frame(width: 20)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(file.name)
                     .font(.system(size: 13))
                     .lineLimit(1)
-                Text("\(formatFileSize(file.sizeBytes)) — \(formatFileDate(file.lastModified))")
-                    .font(.system(size: 11))
+                Text(formatFileSize(file.sizeBytes))
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+                Text(formatFileDate(file.lastModified))
+                    .font(.system(size: 10))
                     .foregroundColor(.secondary)
             }
 
