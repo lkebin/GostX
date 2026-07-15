@@ -97,7 +97,6 @@ struct SettingsView: View {
                     }
             }
         }
-        .ignoresSafeArea(.container, edges: .top)
         .frame(minWidth: 700, minHeight: 440)
     }
 
