@@ -34,6 +34,7 @@
 		B5C1CF1429DD6E7C008AA934 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = B5C1CF1629DD6E7C008AA934 /* Localizable.stringsdict */; };
 		B5F6387929DEFF31009A1287 /* Arguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F6387829DEFF31009A1287 /* Arguments.swift */; };
 		B949D5D298F19829F1C9EBAB /* LogViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFCA548038B9C1B568E78C0 /* LogViewModel.swift */; };
+		BA165896763DA2BA6B8AE650 /* FileContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041916CF79F25CAF1E21B685 /* FileContentView.swift */; };
 		E086218C337C33C8BB4052CA /* ConfigRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D840A91D1C37F07D57AD8A1 /* ConfigRepository.swift */; };
 		EA7823795D8442489C72D878 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
 		EBCBCEB114E34B4BB5D68150 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16E9D6522B494B409C95F0FE /* AppLogger.swift */; };
@@ -78,6 +79,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		041916CF79F25CAF1E21B685 /* FileContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FileContentView.swift; sourceTree = "<group>"; };
 		16E9D6522B494B409C95F0FE /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
 		19495E70527B5668EC230C85 /* LogContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LogContentView.swift; sourceTree = "<group>"; };
 		1CA10536E0954A81A09F6F24 /* YamlEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YamlEditorView.swift; sourceTree = "<group>"; };
@@ -240,6 +242,7 @@
 				19495E70527B5668EC230C85 /* LogContentView.swift */,
 				1D241A5E3ABD1C9E90BA745A /* ProfileListView.swift */,
 				CC1099D8C22BC993593DE940 /* FileListView.swift */,
+				041916CF79F25CAF1E21B685 /* FileContentView.swift */,
 			);
 			path = GostX;
 			sourceTree = "<group>";
@@ -470,6 +473,7 @@
 				112569258691CDCE54D5D03B /* LogContentView.swift in Sources */,
 				80502C1365AFE6E9D0EBCE67 /* ProfileListView.swift in Sources */,
 				539C284B9A34F4EEB926B517 /* FileListView.swift in Sources */,
+				BA165896763DA2BA6B8AE650 /* FileContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
