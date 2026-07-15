@@ -90,7 +90,7 @@ struct LogContentView: View {
             }
         }
         .ignoresSafeArea(.container, edges: .top)
-        .onAppear { vm.onAppear() }
+        .onAppear { vm.onAppear(loggingEnabled: loggingEnabled) }
         .onDisappear { vm.onDisappear() }
         .onChange(of: vm.isFollowing) { _ in
             if vm.isFollowing, let proxy = vm.scrollProxy, !vm.lines.isEmpty {

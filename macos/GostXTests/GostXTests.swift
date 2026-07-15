@@ -47,7 +47,7 @@ class LogViewModelTests: XCTestCase {
         tempLogURL = tempDir.appendingPathComponent("gost.log")
         try "line one\nline two\nline three\n".write(to: tempLogURL, atomically: true, encoding: .utf8)
         vm = LogViewModel(logFileURL: tempLogURL)
-        vm.onAppear()
+        vm.onAppear(loggingEnabled: true)
     }
 
     override func tearDownWithError() throws {
@@ -64,7 +64,7 @@ class LogViewModelTests: XCTestCase {
     }
 
     func testInitialState() {
-        XCTAssertTrue(vm.isFollowing)
+        XCTAssertFalse(vm.isFollowing)
     }
 
     func testClearLogTruncatesFile() {

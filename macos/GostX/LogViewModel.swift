@@ -5,7 +5,7 @@ import Combine
 @MainActor
 class LogViewModel: ObservableObject {
     @Published var lines: [String] = []
-    @Published var isFollowing = true
+    @Published var isFollowing = false
 
     var scrollProxy: ScrollViewProxy?
     private var timer: Timer?
@@ -15,9 +15,11 @@ class LogViewModel: ObservableObject {
         self.logFileURL = logFileURL ?? AppGroupConfig.containerURL?.appendingPathComponent("gost.log")
     }
 
-    func onAppear() {
+    func onAppear(loggingEnabled: Bool) {
         loadLog()
-        startPolling()
+        if loggingEnabled {
+            startPolling()
+        }
     }
 
     func onDisappear() {
