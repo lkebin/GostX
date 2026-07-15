@@ -178,7 +178,9 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
         toolbar.delegate = ToolbarDelegate.shared
 
         let window = NSWindow(contentViewController: settingsHostingController!)
-        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+        window.titlebarAppearsTransparent = true
+        window.toolbarStyle = .unified
         window.toolbar = toolbar
         window.title = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "GostX"
         window.setContentSize(NSSize(width: 780, height: 500))
