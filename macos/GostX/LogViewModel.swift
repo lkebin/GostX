@@ -1,0 +1,68 @@
+// macos/GostX/LogViewModel.swift
+import SwiftUI
+import Combine
+
+@MainActor
+class LogViewModel: ObservableObject {
+    @Published var lines: [String] = []
+    @Published var isFollowing = true
+
+    var scrollProxy: ScrollViewProxy?
+    private var timer: Timer?
+
+    private var logFileURL: URL? {
+        AppGroupConfig.containerURL?.appendingPathComponent("gost.log")
+    }
+
+    func onAppear() {
+        loadLog()
+        startPolling()
+    }
+
+    func onDisappear() {
+        stopPolling()
+    }
+
+    func copyAll() {
+        let text = lines.joined(separator: "\n")
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
+
+    func clearLog() {
+        guard let url = logFileURL else { return }
+        try? "".write(to: url, atomically: true, encoding: .utf8)
+        lines = []
+    }
+
+    // MARK: - Private
+
+    private func loadLog() {
+        guard let url = logFileURL,
+              FileManager.default.fileExists(atPath: url.path),
+              let content = try? String(contentsOf: url, encoding: .utf8)
+        else {
+            lines = []
+            return
+        }
+        lines = content.components(separatedBy: "\n").filter { !$0.isEmpty }
+    }
+
+    private func startPolling() {
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            DispatchQueue.main.async {
+                let oldCount = self.lines.count
+                self.loadLog()
+                if self.isFollowing, self.lines.count > oldCount, let proxy = self.scrollProxy {
+                    proxy.scrollTo(self.lines.count - 1, anchor: .bottom)
+                }
+            }
+        }
+    }
+
+    private func stopPolling() {
+        timer?.invalidate()
+        timer = nil
+    }
+}

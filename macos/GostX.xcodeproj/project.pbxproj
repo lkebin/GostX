@@ -29,6 +29,7 @@
 		B5B1C1A329DD6E90008AA943 /* FileRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B1C1A429DD6E90008AA944 /* FileRepository.swift */; };
 		B5C1CF1429DD6E7C008AA934 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = B5C1CF1629DD6E7C008AA934 /* Localizable.stringsdict */; };
 		B5F6387929DEFF31009A1287 /* Arguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F6387829DEFF31009A1287 /* Arguments.swift */; };
+		B949D5D298F19829F1C9EBAB /* LogViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFCA548038B9C1B568E78C0 /* LogViewModel.swift */; };
 		E086218C337C33C8BB4052CA /* ConfigRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D840A91D1C37F07D57AD8A1 /* ConfigRepository.swift */; };
 		EA7823795D8442489C72D878 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
 		EBCBCEB114E34B4BB5D68150 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16E9D6522B494B409C95F0FE /* AppLogger.swift */; };
@@ -82,6 +83,7 @@
 		4303495C3004D78100FD9EE9 /* Libgost.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Libgost.xcframework; path = Frameworks/Libgost.xcframework; sourceTree = "<group>"; };
 		5D840A91D1C37F07D57AD8A1 /* ConfigRepository.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConfigRepository.swift; sourceTree = "<group>"; };
 		64B1478690C1481980B302A8 /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
+		8BFCA548038B9C1B568E78C0 /* LogViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LogViewModel.swift; sourceTree = "<group>"; };
 		AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = DevelopmentTeam.xcconfig; sourceTree = "<group>"; };
 		B532A666285B528900159BAC /* GostX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GostX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B532A669285B528900159BAC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
@@ -105,7 +107,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		430349503004D3A000FD9EE9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		430349503004D3A000FD9EE9 /* Exceptions for "GostXTunnel" folder in "GostXTunnel" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -115,7 +117,18 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		430349453004D3A000FD9EE9 /* GostXTunnel */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (430349503004D3A000FD9EE9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = GostXTunnel; sourceTree = "<group>"; };
+		430349453004D3A000FD9EE9 /* GostXTunnel */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				430349503004D3A000FD9EE9 /* Exceptions for "GostXTunnel" folder in "GostXTunnel" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = GostXTunnel;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -214,6 +227,7 @@
 				B5B1C1A229DD6E90008AA942 /* FileManageView.swift */,
 				B5B1C1A429DD6E90008AA944 /* FileRepository.swift */,
 				5D840A91D1C37F07D57AD8A1 /* ConfigRepository.swift */,
+				8BFCA548038B9C1B568E78C0 /* LogViewModel.swift */,
 			);
 			path = GostX;
 			sourceTree = "<group>";
@@ -290,8 +304,6 @@
 				4303494B3004D3A000FD9EE9 /* PBXTargetDependency */,
 			);
 			name = GostX;
-			packageProductDependencies = (
-			);
 			productName = GostX;
 			productReference = B532A666285B528900159BAC /* GostX.app */;
 			productType = "com.apple.product-type.application";
@@ -368,8 +380,6 @@
 				"zh-Hans",
 			);
 			mainGroup = B532A65D285B528900159BAC;
-			packageReferences = (
-			);
 			productRefGroup = B532A667285B528900159BAC /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -443,6 +453,7 @@
 				2FA7674F8D9746F99910289A /* VpnManager.swift in Sources */,
 				B532A66A285B528900159BAC /* main.swift in Sources */,
 				E086218C337C33C8BB4052CA /* ConfigRepository.swift in Sources */,
+				B949D5D298F19829F1C9EBAB /* LogViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
