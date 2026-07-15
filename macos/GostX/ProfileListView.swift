@@ -29,8 +29,8 @@ struct ProfileListView: View {
                         }
                 }
             }
-            .listStyle(.plain)
-            .padding(.horizontal, 8)
+            .listStyle(.automatic)
+            .padding(.horizontal, 4)
 
             Divider()
 

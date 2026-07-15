@@ -97,8 +97,8 @@ struct FileListView: View {
                         .tag(file.name)
                     }
                 }
-                .listStyle(.plain)
-                .padding(.horizontal, 8)
+                .listStyle(.automatic)
+                .padding(.horizontal, 4)
             }
 
             Divider()
