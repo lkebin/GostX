@@ -34,6 +34,26 @@ struct FileListView: View {
     @State private var newFileName = ""
 
     var body: some View {
+        if !vm.isAvailable {
+            unavailableView
+        } else {
+            listContent
+        }
+    }
+
+    private var unavailableView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 32))
+                .foregroundColor(.secondary)
+            Text(NSLocalizedString("App Group container not available.", comment: ""))
+                .font(.system(size: 13))
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var listContent: some View {
         VStack(spacing: 0) {
             if vm.files.isEmpty {
                 VStack(spacing: 8) {

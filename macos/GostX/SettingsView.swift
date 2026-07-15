@@ -42,6 +42,7 @@ struct SettingsView: View {
     // Logs
     @StateObject private var logVM = LogViewModel()
     @State private var loggingEnabled = AppGroupConfig.loggingEnabled
+    @State private var logLevel = AppGroupConfig.logLevel
 
     var body: some View {
         NavigationSplitView {
@@ -64,7 +65,7 @@ struct SettingsView: View {
                 FileListView(vm: fileVM)
                     .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 300)
             case .logs:
-                LogOptionsView()
+                LogOptionsView(loggingEnabled: $loggingEnabled, logLevel: $logLevel)
                     .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 300)
             }
         } detail: {

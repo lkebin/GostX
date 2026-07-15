@@ -3,8 +3,8 @@ import SwiftUI
 
 @available(macOS 14.0, *)
 struct LogOptionsView: View {
-    @State private var loggingEnabled = AppGroupConfig.loggingEnabled
-    @State private var logLevel = AppGroupConfig.logLevel
+    @Binding var loggingEnabled: Bool
+    @Binding var logLevel: String
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
