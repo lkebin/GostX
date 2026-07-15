@@ -18,6 +18,7 @@
 		4303495B3004D6D500FD9EE9 /* AppGroupConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 430349593004D6B700FD9EE9 /* AppGroupConfig.swift */; };
 		4303495D3004D78100FD9EE9 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
 		661952039FA5490CAD5BBB39 /* YamlEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CA10536E0954A81A09F6F24 /* YamlEditorView.swift */; };
+		80502C1365AFE6E9D0EBCE67 /* ProfileListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D241A5E3ABD1C9E90BA745A /* ProfileListView.swift */; };
 		B532A66A285B528900159BAC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = B532A669285B528900159BAC /* main.swift */; };
 		B532A66E285B528D00159BAC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B532A66D285B528D00159BAC /* Assets.xcassets */; };
 		B532A671285B528D00159BAC /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B532A670285B528D00159BAC /* Preview Assets.xcassets */; };
@@ -79,6 +80,7 @@
 		16E9D6522B494B409C95F0FE /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
 		19495E70527B5668EC230C85 /* LogContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LogContentView.swift; sourceTree = "<group>"; };
 		1CA10536E0954A81A09F6F24 /* YamlEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YamlEditorView.swift; sourceTree = "<group>"; };
+		1D241A5E3ABD1C9E90BA745A /* ProfileListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileListView.swift; sourceTree = "<group>"; };
 		296DECB2BD4347C19DFD902E /* PacketTunnelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PacketTunnelProvider.swift; path = GostXTunnel/PacketTunnelProvider.swift; sourceTree = "<group>"; };
 		2F0072E6B1705600E6B4FA5B /* LogOptionsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LogOptionsView.swift; sourceTree = "<group>"; };
 		430349423004D3A000FD9EE9 /* GostXTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GostXTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -234,6 +236,7 @@
 				8BFCA548038B9C1B568E78C0 /* LogViewModel.swift */,
 				2F0072E6B1705600E6B4FA5B /* LogOptionsView.swift */,
 				19495E70527B5668EC230C85 /* LogContentView.swift */,
+				1D241A5E3ABD1C9E90BA745A /* ProfileListView.swift */,
 			);
 			path = GostX;
 			sourceTree = "<group>";
@@ -462,6 +465,7 @@
 				B949D5D298F19829F1C9EBAB /* LogViewModel.swift in Sources */,
 				110C2C030865F24C8C297E45 /* LogOptionsView.swift in Sources */,
 				112569258691CDCE54D5D03B /* LogContentView.swift in Sources */,
+				80502C1365AFE6E9D0EBCE67 /* ProfileListView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
