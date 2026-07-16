@@ -3,11 +3,23 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 55;
+	objectVersion = 70;
 	objects = {
-
 /* Begin PBXBuildFile section */
-		B523FCA529E169180050578C /* HighlightedTextEditor in Frameworks */ = {isa = PBXBuildFile; productRef = B523FCA429E169180050578C /* HighlightedTextEditor */; };
+		0874FE9F0ADC49BBB6CD3626 /* PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 296DECB2BD4347C19DFD902E /* PacketTunnelProvider.swift */; };
+		110C2C030865F24C8C297E45 /* LogOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F0072E6B1705600E6B4FA5B /* LogOptionsView.swift */; };
+		112569258691CDCE54D5D03B /* LogContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19495E70527B5668EC230C85 /* LogContentView.swift */; };
+		2FA7674F8D9746F99910289A /* VpnManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F188A4B6A6F14F1D867F7D30 /* VpnManager.swift */; };
+		430349443004D3A000FD9EE9 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 430349433004D3A000FD9EE9 /* NetworkExtension.framework */; };
+		4303494C3004D3A000FD9EE9 /* GostXTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 430349423004D3A000FD9EE9 /* GostXTunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		4303495A3004D6B700FD9EE9 /* AppGroupConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 430349593004D6B700FD9EE9 /* AppGroupConfig.swift */; };
+		4303495B3004D6D500FD9EE9 /* AppGroupConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 430349593004D6B700FD9EE9 /* AppGroupConfig.swift */; };
+		43F7013E300838C000E70769 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
+		43F70141300838DC00E70769 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
+		539C284B9A34F4EEB926B517 /* FileListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1099D8C22BC993593DE940 /* FileListView.swift */; };
+		5B773BD6DC67E0481B3E9F01 /* FileManageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B40B99520AC17D0C83EEFF5 /* FileManageViewModel.swift */; };
+		661952039FA5490CAD5BBB39 /* YamlEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CA10536E0954A81A09F6F24 /* YamlEditorView.swift */; };
+		80502C1365AFE6E9D0EBCE67 /* ProfileListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D241A5E3ABD1C9E90BA745A /* ProfileListView.swift */; };
 		B532A66A285B528900159BAC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = B532A669285B528900159BAC /* main.swift */; };
 		B532A66E285B528D00159BAC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B532A66D285B528D00159BAC /* Assets.xcassets */; };
 		B532A671285B528D00159BAC /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B532A670285B528D00159BAC /* Preview Assets.xcassets */; };
@@ -17,11 +29,22 @@
 		B5AEDDB12864920800C09ED6 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5AEDDB02864920800C09ED6 /* AppDelegate.swift */; };
 		B5B0E074285B62B80035A6F2 /* MacExtrasConfigurator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B0E073285B62B80035A6F2 /* MacExtrasConfigurator.swift */; };
 		B5B0E07A285C63080035A6F2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B0E079285C63080035A6F2 /* SettingsView.swift */; };
+		B5B1C1A329DD6E90008AA943 /* FileRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B1C1A429DD6E90008AA944 /* FileRepository.swift */; };
 		B5C1CF1429DD6E7C008AA934 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = B5C1CF1629DD6E7C008AA934 /* Localizable.stringsdict */; };
 		B5F6387929DEFF31009A1287 /* Arguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F6387829DEFF31009A1287 /* Arguments.swift */; };
+		B949D5D298F19829F1C9EBAB /* LogViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFCA548038B9C1B568E78C0 /* LogViewModel.swift */; };
+		BA165896763DA2BA6B8AE650 /* FileContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041916CF79F25CAF1E21B685 /* FileContentView.swift */; };
+		E086218C337C33C8BB4052CA /* ConfigRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D840A91D1C37F07D57AD8A1 /* ConfigRepository.swift */; };
+		EBCBCEB114E34B4BB5D68150 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16E9D6522B494B409C95F0FE /* AppLogger.swift */; };
 /* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
+		4303494A3004D3A000FD9EE9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B532A65E285B528900159BAC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 430349413004D3A000FD9EE9;
+			remoteInfo = GostXTunnel;
+		};
 		B532A678285B528D00159BAC /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = B532A65E285B528900159BAC /* Project object */;
@@ -37,8 +60,35 @@
 			remoteInfo = GostX;
 		};
 /* End PBXContainerItemProxy section */
-
+/* Begin PBXCopyFilesBuildPhase section */
+		4303494D3004D3A000FD9EE9 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				4303494C3004D3A000FD9EE9 /* GostXTunnel.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 /* Begin PBXFileReference section */
+		041916CF79F25CAF1E21B685 /* FileContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FileContentView.swift; sourceTree = "<group>"; };
+		16E9D6522B494B409C95F0FE /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
+		19495E70527B5668EC230C85 /* LogContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LogContentView.swift; sourceTree = "<group>"; };
+		1CA10536E0954A81A09F6F24 /* YamlEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YamlEditorView.swift; sourceTree = "<group>"; };
+		1D241A5E3ABD1C9E90BA745A /* ProfileListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileListView.swift; sourceTree = "<group>"; };
+		296DECB2BD4347C19DFD902E /* PacketTunnelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PacketTunnelProvider.swift; path = GostXTunnel/PacketTunnelProvider.swift; sourceTree = "<group>"; };
+		2F0072E6B1705600E6B4FA5B /* LogOptionsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LogOptionsView.swift; sourceTree = "<group>"; };
+		430349423004D3A000FD9EE9 /* GostXTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GostXTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		430349433004D3A000FD9EE9 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
+		430349593004D6B700FD9EE9 /* AppGroupConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppGroupConfig.swift; path = GostX/AppGroupConfig.swift; sourceTree = "<group>"; };
+		4303495C3004D78100FD9EE9 /* Libgost.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Libgost.xcframework; path = Frameworks/Libgost.xcframework; sourceTree = "<group>"; };
+		5D840A91D1C37F07D57AD8A1 /* ConfigRepository.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConfigRepository.swift; sourceTree = "<group>"; };
+		6B40B99520AC17D0C83EEFF5 /* FileManageViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FileManageViewModel.swift; sourceTree = "<group>"; };
+		8BFCA548038B9C1B568E78C0 /* LogViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LogViewModel.swift; sourceTree = "<group>"; };
+		AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = DevelopmentTeam.xcconfig; sourceTree = "<group>"; };
 		B532A666285B528900159BAC /* GostX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GostX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B532A669285B528900159BAC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		B532A66D285B528D00159BAC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -52,17 +102,40 @@
 		B5AEDDB02864920800C09ED6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B5B0E073285B62B80035A6F2 /* MacExtrasConfigurator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacExtrasConfigurator.swift; sourceTree = "<group>"; };
 		B5B0E079285C63080035A6F2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B5B1C1A429DD6E90008AA944 /* FileRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileRepository.swift; sourceTree = "<group>"; };
 		B5C1CF1529DD6E7C008AA934 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 		B5C1CF1729DD6E90008AA934 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.stringsdict"; sourceTree = "<group>"; };
 		B5F6387829DEFF31009A1287 /* Arguments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Arguments.swift; sourceTree = "<group>"; };
+		CC1099D8C22BC993593DE940 /* FileListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FileListView.swift; sourceTree = "<group>"; };
+		F188A4B6A6F14F1D867F7D30 /* VpnManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		430349503004D3A000FD9EE9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 430349413004D3A000FD9EE9 /* GostXTunnel */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		430349453004D3A000FD9EE9 /* GostXTunnel */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (430349503004D3A000FD9EE9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = GostXTunnel; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 /* Begin PBXFrameworksBuildPhase section */
+		4303493F3004D3A000FD9EE9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				43F7013E300838C000E70769 /* Libgost.xcframework in Frameworks */,
+				430349443004D3A000FD9EE9 /* NetworkExtension.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B532A663285B528900159BAC /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B523FCA529E169180050578C /* HighlightedTextEditor in Frameworks */,
+				43F70141300838DC00E70769 /* Libgost.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -81,16 +154,35 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
-
 /* Begin PBXGroup section */
+		43F701153007C22A00E70769 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				296DECB2BD4347C19DFD902E /* PacketTunnelProvider.swift */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
+		AD12003F3005000100FD9EE9 /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */,
+			);
+			path = Configuration;
+			sourceTree = "<group>";
+		};
 		B532A65D285B528900159BAC = {
 			isa = PBXGroup;
 			children = (
+				430349593004D6B700FD9EE9 /* AppGroupConfig.swift */,
+				AD12003F3005000100FD9EE9 /* Configuration */,
 				B532A668285B528900159BAC /* GostX */,
 				B532A67A285B528D00159BAC /* GostXTests */,
 				B532A684285B528D00159BAC /* GostXUITests */,
+				430349453004D3A000FD9EE9 /* GostXTunnel */,
 				B532A667285B528900159BAC /* Products */,
 				B5AF722B28634A6500BB5F98 /* Frameworks */,
+				43F701153007C22A00E70769 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -100,6 +192,7 @@
 				B532A666285B528900159BAC /* GostX.app */,
 				B532A677285B528D00159BAC /* GostXTests.xctest */,
 				B532A681285B528D00159BAC /* GostXUITests.xctest */,
+				430349423004D3A000FD9EE9 /* GostXTunnel.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -113,9 +206,21 @@
 				B532A672285B528D00159BAC /* GostX.entitlements */,
 				B532A66F285B528D00159BAC /* Preview Content */,
 				B5B0E073285B62B80035A6F2 /* MacExtrasConfigurator.swift */,
+				F188A4B6A6F14F1D867F7D30 /* VpnManager.swift */,
 				B5B0E079285C63080035A6F2 /* SettingsView.swift */,
+				1CA10536E0954A81A09F6F24 /* YamlEditorView.swift */,
+				16E9D6522B494B409C95F0FE /* AppLogger.swift */,
 				B5AEDDB02864920800C09ED6 /* AppDelegate.swift */,
 				B5F6387829DEFF31009A1287 /* Arguments.swift */,
+				B5B1C1A429DD6E90008AA944 /* FileRepository.swift */,
+				5D840A91D1C37F07D57AD8A1 /* ConfigRepository.swift */,
+				8BFCA548038B9C1B568E78C0 /* LogViewModel.swift */,
+				2F0072E6B1705600E6B4FA5B /* LogOptionsView.swift */,
+				19495E70527B5668EC230C85 /* LogContentView.swift */,
+				1D241A5E3ABD1C9E90BA745A /* ProfileListView.swift */,
+				CC1099D8C22BC993593DE940 /* FileListView.swift */,
+				041916CF79F25CAF1E21B685 /* FileContentView.swift */,
+				6B40B99520AC17D0C83EEFF5 /* FileManageViewModel.swift */,
 			);
 			path = GostX;
 			sourceTree = "<group>";
@@ -148,13 +253,34 @@
 		B5AF722B28634A6500BB5F98 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				4303495C3004D78100FD9EE9 /* Libgost.xcframework */,
+				430349433004D3A000FD9EE9 /* NetworkExtension.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
-
 /* Begin PBXNativeTarget section */
+		430349413004D3A000FD9EE9 /* GostXTunnel */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 430349513004D3A000FD9EE9 /* Build configuration list for PBXNativeTarget "GostXTunnel" */;
+			buildPhases = (
+				4303493E3004D3A000FD9EE9 /* Sources */,
+				4303493F3004D3A000FD9EE9 /* Frameworks */,
+				430349403004D3A000FD9EE9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				430349453004D3A000FD9EE9 /* GostXTunnel */,
+			);
+			name = GostXTunnel;
+			productName = GostXTunnel;
+			productReference = 430349423004D3A000FD9EE9 /* GostXTunnel.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		B532A665285B528900159BAC /* GostX */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = B532A68B285B528D00159BAC /* Build configuration list for PBXNativeTarget "GostX" */;
@@ -162,15 +288,14 @@
 				B532A662285B528900159BAC /* Sources */,
 				B532A663285B528900159BAC /* Frameworks */,
 				B532A664285B528900159BAC /* Resources */,
+				4303494D3004D3A000FD9EE9 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				4303494B3004D3A000FD9EE9 /* PBXTargetDependency */,
 			);
 			name = GostX;
-			packageProductDependencies = (
-				B523FCA429E169180050578C /* HighlightedTextEditor */,
-			);
 			productName = GostX;
 			productReference = B532A666285B528900159BAC /* GostX.app */;
 			productType = "com.apple.product-type.application";
@@ -212,15 +337,17 @@
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
-
 /* Begin PBXProject section */
 		B532A65E285B528900159BAC /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1340;
-				LastUpgradeCheck = 1430;
+				LastSwiftUpdateCheck = 2650;
+				LastUpgradeCheck = 2650;
 				TargetAttributes = {
+					430349413004D3A000FD9EE9 = {
+						CreatedOnToolsVersion = 26.5;
+					};
 					B532A665285B528900159BAC = {
 						CreatedOnToolsVersion = 13.4.1;
 					};
@@ -244,9 +371,6 @@
 				"zh-Hans",
 			);
 			mainGroup = B532A65D285B528900159BAC;
-			packageReferences = (
-				B523FCA329E169180050578C /* XCRemoteSwiftPackageReference "HighlightedTextEditor" */,
-			);
 			productRefGroup = B532A667285B528900159BAC /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -254,11 +378,18 @@
 				B532A665285B528900159BAC /* GostX */,
 				B532A676285B528D00159BAC /* GostXTests */,
 				B532A680285B528D00159BAC /* GostXUITests */,
+				430349413004D3A000FD9EE9 /* GostXTunnel */,
 			);
 		};
 /* End PBXProject section */
-
 /* Begin PBXResourcesBuildPhase section */
+		430349403004D3A000FD9EE9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B532A664285B528900159BAC /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -284,17 +415,38 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
+		4303493E3004D3A000FD9EE9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4303495B3004D6D500FD9EE9 /* AppGroupConfig.swift in Sources */,
+				0874FE9F0ADC49BBB6CD3626 /* PacketTunnelProvider.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B532A662285B528900159BAC /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4303495A3004D6B700FD9EE9 /* AppGroupConfig.swift in Sources */,
 				B5F6387929DEFF31009A1287 /* Arguments.swift in Sources */,
 				B5AEDDB12864920800C09ED6 /* AppDelegate.swift in Sources */,
 				B5B0E07A285C63080035A6F2 /* SettingsView.swift in Sources */,
+				661952039FA5490CAD5BBB39 /* YamlEditorView.swift in Sources */,
+				EBCBCEB114E34B4BB5D68150 /* AppLogger.swift in Sources */,
+				B5B1C1A329DD6E90008AA943 /* FileRepository.swift in Sources */,
 				B5B0E074285B62B80035A6F2 /* MacExtrasConfigurator.swift in Sources */,
+				2FA7674F8D9746F99910289A /* VpnManager.swift in Sources */,
 				B532A66A285B528900159BAC /* main.swift in Sources */,
+				E086218C337C33C8BB4052CA /* ConfigRepository.swift in Sources */,
+				B949D5D298F19829F1C9EBAB /* LogViewModel.swift in Sources */,
+				110C2C030865F24C8C297E45 /* LogOptionsView.swift in Sources */,
+				112569258691CDCE54D5D03B /* LogContentView.swift in Sources */,
+				80502C1365AFE6E9D0EBCE67 /* ProfileListView.swift in Sources */,
+				539C284B9A34F4EEB926B517 /* FileListView.swift in Sources */,
+				BA165896763DA2BA6B8AE650 /* FileContentView.swift in Sources */,
+				5B773BD6DC67E0481B3E9F01 /* FileManageViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -316,8 +468,12 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
 /* Begin PBXTargetDependency section */
+		4303494B3004D3A000FD9EE9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 430349413004D3A000FD9EE9 /* GostXTunnel */;
+			targetProxy = 4303494A3004D3A000FD9EE9 /* PBXContainerItemProxy */;
+		};
 		B532A679285B528D00159BAC /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = B532A665285B528900159BAC /* GostX */;
@@ -329,7 +485,6 @@
 			targetProxy = B532A682285B528D00159BAC /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
-
 /* Begin PBXVariantGroup section */
 		B5C1CF1629DD6E7C008AA934 /* Localizable.stringsdict */ = {
 			isa = PBXVariantGroup;
@@ -341,8 +496,84 @@
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
-
 /* Begin XCBuildConfiguration section */
+		4303494E3004D3A000FD9EE9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = GostXTunnel/GostXTunnel.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GostXTunnel/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "GostX Tunnel";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-lresolv";
+				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.gostx.tunnel;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		4303494F3004D3A000FD9EE9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = GostXTunnel/GostXTunnel.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GostXTunnel/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "GostX Tunnel";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-lresolv";
+				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.gostx.tunnel;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 		B532A689285B528D00159BAC /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -400,6 +631,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -451,10 +683,12 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				EXCLUDED_ARCHS = x86_64;
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 			};
@@ -462,17 +696,17 @@
 		};
 		B532A68C285B528D00159BAC /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = GostX/GostX.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"GostX/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -486,15 +720,12 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../go/";
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 1.0.0;
-				OTHER_LDFLAGS = (
-					"-lgost",
-					"-lresolv",
-				);
+				OTHER_LDFLAGS = "-lresolv";
 				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.gostx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/../go/";
 				SWIFT_VERSION = 5.0;
@@ -503,19 +734,18 @@
 		};
 		B532A68D285B528D00159BAC /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = GostX/GostX.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"GostX/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
-				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GostX/Info.plist;
@@ -528,15 +758,12 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../go/";
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 1.0.0;
-				OTHER_LDFLAGS = (
-					"-lgost",
-					"-lresolv",
-				);
+				OTHER_LDFLAGS = "-lresolv";
 				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.gostx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/../go/";
 				SWIFT_VERSION = 5.0;
@@ -546,7 +773,6 @@
 		B532A68F285B528D00159BAC /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
@@ -567,7 +793,6 @@
 		B532A690285B528D00159BAC /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -587,7 +812,6 @@
 		B532A692285B528D00159BAC /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
@@ -605,7 +829,6 @@
 		B532A693285B528D00159BAC /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
@@ -621,8 +844,16 @@
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
-
 /* Begin XCConfigurationList section */
+		430349513004D3A000FD9EE9 /* Build configuration list for PBXNativeTarget "GostXTunnel" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4303494E3004D3A000FD9EE9 /* Debug */,
+				4303494F3004D3A000FD9EE9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		B532A661285B528900159BAC /* Build configuration list for PBXProject "GostX" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -660,25 +891,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		B523FCA329E169180050578C /* XCRemoteSwiftPackageReference "HighlightedTextEditor" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/kyle-n/HighlightedTextEditor";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.0.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		B523FCA429E169180050578C /* HighlightedTextEditor */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = B523FCA329E169180050578C /* XCRemoteSwiftPackageReference "HighlightedTextEditor" */;
-			productName = HighlightedTextEditor;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B532A65E285B528900159BAC /* Project object */;
 }

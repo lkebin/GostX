@@ -2,6 +2,10 @@
 
 A gost client for Android.
 
+<a href="https://play.google.com/store/apps/details?id=cn.liukebin.gostx">
+  <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" width="180" />
+</a>
+
 ## Features
 
 - **TUN** — Stream traffic through a Gost proxy chain via TUN device

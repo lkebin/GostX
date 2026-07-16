@@ -8,7 +8,7 @@
 import SwiftUI
 import Cocoa
 import os
-import Gost
+import Libgost
 
 let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "runtime")
 
@@ -19,14 +19,17 @@ let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "runtime
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var menu: MacExtrasConfigurator?
-    private var logPipe: Pipe?
-    
+    /// 自动检测 YAML 是否包含 tungo 服务
+    private var vpnMode: Bool {
+        ConfigRepository.shared.activeConfig.contains("type: tungo")
+    }
+
     func mainMenu() {
         let mainMenu = NSMenu(title: "MainMenu")
         var menuItem = mainMenu.addItem(withTitle: "", action: nil, keyEquivalent: "")
         var submenu = NSMenu(title: "Application")
         mainMenu.setSubmenu(submenu, for: menuItem)
-        
+
         menuItem = mainMenu.addItem(withTitle:"Edit", action:nil, keyEquivalent:"")
         submenu = NSMenu(title:NSLocalizedString("Edit", comment:"Edit menu"))
         submenu.addItem(withTitle: "Undo", action: #selector(EditMenuActions.undo(_:)), keyEquivalent: "z")
@@ -36,87 +39,110 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         submenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
         submenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         mainMenu.setSubmenu(submenu, for: menuItem)
-        
+
         NSApp.mainMenu = mainMenu
     }
-    
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         self.mainMenu()
         self.menu = MacExtrasConfigurator(delegate: self)
-        self.logPipe = pipe()
-        self.start()
+
+        // Configure unified logging for the main app
+        if let containerURL = AppGroupConfig.containerURL {
+            AppLogger.configure(containerURL: containerURL)
+        }
+
+        Task {
+            await VpnManager.shared.setup()
+        }
+
+        // Auto-start based on saved state
+        if UserDefaults.standard.bool(forKey: "last_vpn_running") {
+            self.start()
+        }
     }
-    
+
     func applicationWillTerminate(_ notification: Notification) {
         self.stop()
     }
-    
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         NSApp.setActivationPolicy(.accessory)
-        
         return false
     }
-    
+
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
         return true
     }
-    
+
     func quit() {
         NSApp.terminate(self)
     }
-    
-    func stop() {
-        gostStop()
-        self.menu?.updateListen(nil)
-        self.menu?.toOffState()
-    }
-    
-    func start() {
-        let yaml = UserDefaults.standard.string(forKey: defaultsArgumentsKey) ?? defaultGostYAML
 
-        var fd = self.logPipe?.fileHandleForWriting.fileDescriptor
-        let fdPtr = UnsafeMutablePointer<CLong>.allocate(capacity: 1)
-        withUnsafeMutablePointer(to: &fd) { ptr in
-            fdPtr.initialize(to: CLong(ptr.pointee!))
+    func stop() {
+        AppLogger.log(.info, "Stopping...")
+        if vpnMode {
+            Task { @MainActor in VpnManager.shared.stop() }
+        } else {
+            LibgostStopGost(nil)
+        }
+        self.menu?.toOffState()
+        AppLogger.log(.info, "Stopped")
+    }
+
+    func start() {
+        AppLogger.log(.info, "Starting...")
+        if vpnMode {
+            startVpnMode()
+        } else {
+            startProxyMode()
+        }
+    }
+
+    // MARK: - VPN Mode
+
+    private func startVpnMode() {
+        AppLogger.log(.info, "Starting VPN mode")
+        // 同步 YAML 到 App Group
+        let yaml = UserDefaults.standard.string(forKey: defaultsYamlKey) ?? defaultGostYAML
+        AppGroupConfig.writeYaml(yaml)
+
+        Task {
+            do {
+                try await VpnManager.shared.start()
+                DispatchQueue.main.async { self.menu?.toOnState() }
+                AppLogger.log(.info, "VPN started")
+            } catch {
+                logger.error("VPN start failed: \(error.localizedDescription)")
+                AppLogger.log(.error, "VPN start failed: \(error.localizedDescription)")
+                DispatchQueue.main.async { self.menu?.toOffState() }
+            }
+        }
+    }
+
+    // MARK: - Proxy Mode (non-VPN)
+
+    private func startProxyMode() {
+        AppLogger.log(.info, "Starting proxy mode")
+        let yaml = UserDefaults.standard.string(forKey: defaultsYamlKey) ?? defaultGostYAML
+
+        // Set work dir to App Group container so gost can find imported bypass files
+        if let containerURL = AppGroupConfig.containerURL {
+            let filesDir = containerURL.appendingPathComponent("files")
+            try? FileManager.default.createDirectory(at: filesDir,
+                withIntermediateDirectories: true, attributes: nil)
+            LibgostSetWorkDir(filesDir.path, nil)
         }
 
-        let isFailed = gostRunYaml(
-            UnsafeMutablePointer<CChar>(mutating: (yaml as NSString).utf8String),
-            UnsafeMutablePointer<CLong>(mutating: fdPtr)
-        )
-
-        if isFailed != 0 {
+        var err: NSError?
+        if !LibgostStartGost(yaml, "", &err), let err {
+            logger.error("gost start failed: \(err.localizedDescription)")
+            AppLogger.log(.error, "gost start failed: \(err.localizedDescription)")
             self.menu?.toOffState()
-            stop()
             return
         }
 
-        if let infoPtr = gostInfo() {
-            let statusJSON = String(cString: infoPtr.pointee.status_json)
-            self.menu?.updateListen(statusJSON)
-            infoPtr.deallocate()
-        }
         self.menu?.toOnState()
-    }
-    
-    private func pipe() -> Pipe {
-        let p = Pipe()
-        p.fileHandleForReading.readabilityHandler = { handle in
-            let data = handle.availableData
-            if data.count == 0 {
-                // No data available means EOF; we must unregister ourselves
-                // in order to not immediately be called again.
-                handle.readabilityHandler = nil
-                return
-            }
-
-            guard let str = String(data: data, encoding: .utf8) else {
-                // Non-UTF-8 data from Syncthing should never happen.
-                return
-            }
-
-            logger.log("\(str, privacy: .public)")
-        }
-        return p
+        AppLogger.log(.info, "Proxy started")
     }
 }
