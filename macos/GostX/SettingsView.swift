@@ -1,60 +1,173 @@
 // macos/GostX/SettingsView.swift
 import SwiftUI
-import HighlightedTextEditor
 
-let reOpts = NSRegularExpression.Options([.anchorsMatchLines])
-let yamlKeyRule   = try! NSRegularExpression(
-    pattern: "^(\\s*)(services|chains|hops|name|addr|handler|listener|connector|dialer|type|chain|auth|tls|metadata|bypass|resolver|hosts|retries|timeout)\\s*:",
-    options: reOpts)
-let yamlCommentRule = try! NSRegularExpression(pattern: "^\\s*#.*", options: reOpts)
+// MARK: - Category
 
+enum SettingsCategory: String, CaseIterable, Identifiable {
+    case profiles
+    case files
+    case logs
+
+    var id: Self { self }
+
+    var icon: String {
+        switch self {
+        case .profiles: return "doc.text"
+        case .files: return "folder"
+        case .logs: return "text.alignleft"
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .profiles: return NSLocalizedString("Profiles", comment: "")
+        case .files: return NSLocalizedString("Files", comment: "")
+        case .logs: return NSLocalizedString("Logs", comment: "")
+        }
+    }
+}
+
+// MARK: - SettingsView
+
+@available(macOS 14.0, *)
 struct SettingsView: View {
+    @State private var selectedCategory: SettingsCategory = .profiles
+
+    // Profiles
+    @State private var selectedProfileId: String? = nil
+
+    // Files
+    @StateObject private var fileVM = FileManageViewModel()
+
+    // Logs
+    @StateObject private var logVM = LogViewModel()
+    @State private var loggingEnabled = AppGroupConfig.loggingEnabled
+    @State private var logLevel = AppGroupConfig.logLevel
+
     var body: some View {
-        TabView {
-            YamlConfigView()
-                .tabItem {
-                    Label(NSLocalizedString("Configuration", comment: ""), systemImage: "doc.text")
+        NavigationSplitView {
+            // Sidebar
+            List(selection: $selectedCategory) {
+                ForEach(SettingsCategory.allCases) { category in
+                    Label(category.label, systemImage: category.icon)
+                        .tag(category)
                 }
-                .tag("config")
+            }
+            .listStyle(.sidebar)
+            .navigationSplitViewColumnWidth(min: 140, ideal: 160, max: 200)
+        } content: {
+            // Content
+            switch selectedCategory {
+            case .profiles:
+                ProfileListView(selectedProfileId: $selectedProfileId)
+                    .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 300)
+            case .files:
+                FileListView(vm: fileVM)
+                    .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 300)
+            case .logs:
+                LogOptionsView(loggingEnabled: $loggingEnabled, logLevel: $logLevel)
+                    .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 300)
+            }
+        } detail: {
+            // Detail
+            switch selectedCategory {
+            case .profiles:
+                if let profileId = selectedProfileId {
+                    YamlEditorView(profileId: profileId)
+                        .id(profileId)
+                        .ignoresSafeArea(.container, edges: .top)
+                } else {
+                    placeholderView(
+                        icon: "doc.text.magnifyingglass",
+                        text: NSLocalizedString("Select a profile to edit", comment: "")
+                    )
+                }
+            case .files:
+                if fileVM.selectedFileName != nil {
+                    FileContentView(vm: fileVM)
+                } else {
+                    placeholderView(
+                        icon: "doc.text.magnifyingglass",
+                        text: NSLocalizedString("Select a file to view", comment: "")
+                    )
+                }
+            case .logs:
+                LogContentView(vm: logVM, loggingEnabled: loggingEnabled)
+                    .onAppear {
+                        loggingEnabled = AppGroupConfig.loggingEnabled
+                    }
+            }
         }
-        .padding(5)
+        .ignoresSafeArea(.container, edges: .top)
+        .frame(minWidth: 700, minHeight: 440)
     }
-}
 
-struct YamlConfigView: View {
-    @AppStorage(defaultsArgumentsKey)
-    private var yamlConfig = defaultGostYAML
-
-    private let rules: [HighlightRule] = [
-        HighlightRule(
-            pattern: yamlCommentRule,
-            formattingRule: TextFormattingRule(key: .foregroundColor, value: NSColor.systemGray)
-        ),
-        HighlightRule(
-            pattern: yamlKeyRule,
-            formattingRules: [
-                TextFormattingRule(fontTraits: .bold),
-                TextFormattingRule(key: .foregroundColor, value: NSColor.systemBlue),
-            ]
-        ),
-    ]
-
-    var body: some View {
+    private func placeholderView(icon: String, text: String) -> some View {
         VStack {
-            HighlightedTextEditor(text: $yamlConfig, highlightRules: rules)
-                .introspect { editor in
-                    editor.textView.allowsUndo = true
-                    editor.textView.breakUndoCoalescing()
-                    editor.textView.font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
+            Image(systemName: icon)
+                .font(.system(size: 28))
+                .foregroundColor(Color(nsColor: .tertiaryLabelColor))
+            Text(text)
+                .font(.system(size: 13))
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// MARK: - YAML Editor View
+
+@available(macOS 14.0, *)
+struct YamlEditorView: View {
+    let profileId: String
+    @StateObject private var repo = ConfigRepository.shared
+    @State private var yamlText: String = ""
+    @State private var isDirty = false
+    @State private var originalText: String = ""
+
+    var body: some View {
+        VStack(spacing: 0) {
+            YamlTextView(text: $yamlText)
+                .onChange(of: yamlText) { newValue in
+                    isDirty = newValue != originalText
                 }
-            Text("gost v3 YAML configuration — https://gost.run/docs/")
-                .padding(.horizontal, 5)
-                .font(Font.system(size: 12))
-                .foregroundColor(.gray)
+                .onAppear {
+                    let text = repo.getConfig(profileId)
+                    yamlText = text
+                    originalText = text
+                    isDirty = false
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            Divider()
+
+            HStack {
+                Spacer()
+                Button(action: {
+                    save()
+                    originalText = yamlText
+                    isDirty = false
+                }) {
+                    Label(NSLocalizedString("Save", comment: ""), systemImage: "square.and.arrow.down")
+                }
+                .buttonStyle(.borderless)
+                .disabled(!isDirty)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .frame(height: 32)
+        }
+    }
+
+    private func save() {
+        repo.saveConfig(profileId, yaml: yamlText)
+        if profileId == repo.activeProfileId {
+            AppGroupConfig.writeYaml(yamlText)
         }
     }
 }
 
+@available(macOS 14.0, *)
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
         SettingsView()

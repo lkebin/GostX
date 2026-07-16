@@ -1,0 +1,4 @@
+// macOS signing configuration — copy to DevelopmentTeam.xcconfig and fill in your Team ID
+// Go to https://developer.apple.com/account to find your Team ID
+
+DEVELOPMENT_TEAM = YOUR_TEAM_ID

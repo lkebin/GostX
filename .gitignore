@@ -9,8 +9,14 @@ libgost/*.h
 libgost/*.a
 libgost/*.aar
 libgost/*.jar
+libgost/*.xcframework
 libgost/build/
 
 # 个人配置（含敏感信息，不提交）
 android/config-templates/*.yaml
+macos/Configuration/*.xcconfig
+!macos/Configuration/*.example.xcconfig
 android/app/libs/libgost*.aar
+.pi-subagents/
+macos/Frameworks/
+macos/build/

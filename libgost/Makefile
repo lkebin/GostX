@@ -1,7 +1,7 @@
 GO       := go
 GOMOBILE := gomobile
 
-.PHONY: all clean debug-symbols
+.PHONY: all clean debug-symbols macos-xcframework
 
 all: libgost.aar
 
@@ -47,6 +47,18 @@ debug-symbols:
 	@rm -f libgost_debug.aar
 	@echo "Debug symbols written to debug-symbols.zip"
 
+# macOS .xcframework via gomobile bind
+# Produces Libgost.xcframework with macos-arm64_x86_64 slices.
+# Xcode links this into the PacketTunnelProvider Extension target.
+macos-xcframework:
+	CGO_ENABLED=1 GOFLAGS="-buildvcs=false" $(GOMOBILE) bind \
+	  -tags with_gvisor \
+	  -target macos/arm64 \
+	  -trimpath -ldflags="-s -w" \
+	  -o Libgost.xcframework \
+	  .
+
 clean:
 	rm -f libgost.aar libgost_debug.aar libgost-sources.jar debug-symbols.zip
+	rm -rf Libgost.xcframework
 	rm -rf _debug_tmp
