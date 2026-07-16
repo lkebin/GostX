@@ -34,3 +34,58 @@ class GostXTests: XCTestCase {
     }
 
 }
+
+@MainActor
+class LogViewModelTests: XCTestCase {
+    var vm: LogViewModel!
+    var tempDir: URL!
+    var tempLogURL: URL!
+
+    override func setUpWithError() throws {
+        tempDir = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        tempLogURL = tempDir.appendingPathComponent("gost.log")
+        try "line one\nline two\nline three\n".write(to: tempLogURL, atomically: true, encoding: .utf8)
+        vm = LogViewModel(logFileURL: tempLogURL)
+        vm.onAppear(loggingEnabled: true)
+    }
+
+    override func tearDownWithError() throws {
+        vm.onDisappear()
+        try? FileManager.default.removeItem(at: tempDir)
+        vm = nil
+    }
+
+    func testLoadsLinesFromFile() {
+        XCTAssertEqual(vm.lines.count, 3)
+        XCTAssertEqual(vm.lines[0], "line one")
+        XCTAssertEqual(vm.lines[1], "line two")
+        XCTAssertEqual(vm.lines[2], "line three")
+    }
+
+    func testInitialState() {
+        XCTAssertFalse(vm.isFollowing)
+    }
+
+    func testClearLogTruncatesFile() {
+        vm.clearLog()
+        XCTAssertEqual(vm.lines.count, 0)
+        // Verify the temp file was truncated, not the real one
+        let content = try? String(contentsOf: tempLogURL, encoding: .utf8)
+        XCTAssertEqual(content, "")
+    }
+
+    func testCopyAll() {
+        vm.copyAll()
+        let pb = NSPasteboard.general.string(forType: .string)
+        XCTAssertTrue(pb?.contains("line one") ?? false)
+        XCTAssertTrue(pb?.contains("line three") ?? false)
+    }
+
+    func testIsFollowingToggle() {
+        vm.isFollowing = false
+        XCTAssertFalse(vm.isFollowing)
+        vm.isFollowing = true
+        XCTAssertTrue(vm.isFollowing)
+    }
+}

@@ -13,3 +13,12 @@ services:
     listener:
       type: tcp
 """
+
+// YAML 持久化 key（UserDefaults）
+let defaultsYamlKey = "gost_yaml_config"
+
+// VPN 模式 key
+let defaultsVpnModeKey = "gost_vpn_mode_enabled"
+
+// App Group 容器目录下 YAML 文件名
+let appGroupYamlFileName = "gost.yaml"
