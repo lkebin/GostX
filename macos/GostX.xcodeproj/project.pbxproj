@@ -15,7 +15,8 @@
 		4303494C3004D3A000FD9EE9 /* GostXTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 430349423004D3A000FD9EE9 /* GostXTunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4303495A3004D6B700FD9EE9 /* AppGroupConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 430349593004D6B700FD9EE9 /* AppGroupConfig.swift */; };
 		4303495B3004D6D500FD9EE9 /* AppGroupConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 430349593004D6B700FD9EE9 /* AppGroupConfig.swift */; };
-		4303495D3004D78100FD9EE9 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
+		43F7013E300838C000E70769 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
+		43F70141300838DC00E70769 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
 		539C284B9A34F4EEB926B517 /* FileListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1099D8C22BC993593DE940 /* FileListView.swift */; };
 		5B773BD6DC67E0481B3E9F01 /* FileManageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B40B99520AC17D0C83EEFF5 /* FileManageViewModel.swift */; };
 		661952039FA5490CAD5BBB39 /* YamlEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CA10536E0954A81A09F6F24 /* YamlEditorView.swift */; };
@@ -35,7 +36,6 @@
 		B949D5D298F19829F1C9EBAB /* LogViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFCA548038B9C1B568E78C0 /* LogViewModel.swift */; };
 		BA165896763DA2BA6B8AE650 /* FileContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041916CF79F25CAF1E21B685 /* FileContentView.swift */; };
 		E086218C337C33C8BB4052CA /* ConfigRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D840A91D1C37F07D57AD8A1 /* ConfigRepository.swift */; };
-		EA7823795D8442489C72D878 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
 		EBCBCEB114E34B4BB5D68150 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16E9D6522B494B409C95F0FE /* AppLogger.swift */; };
 /* End PBXBuildFile section */
 
@@ -115,7 +115,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		430349503004D3A000FD9EE9 /* Exceptions for "GostXTunnel" folder in "GostXTunnel" target */ = {
+		430349503004D3A000FD9EE9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -125,18 +125,7 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		430349453004D3A000FD9EE9 /* GostXTunnel */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				430349503004D3A000FD9EE9 /* Exceptions for "GostXTunnel" folder in "GostXTunnel" target */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = GostXTunnel;
-			sourceTree = "<group>";
-		};
+		430349453004D3A000FD9EE9 /* GostXTunnel */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (430349503004D3A000FD9EE9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = GostXTunnel; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,7 +133,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4303495D3004D78100FD9EE9 /* Libgost.xcframework in Frameworks */,
+				43F7013E300838C000E70769 /* Libgost.xcframework in Frameworks */,
 				430349443004D3A000FD9EE9 /* NetworkExtension.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -153,7 +142,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EA7823795D8442489C72D878 /* Libgost.xcframework in Frameworks */,
+				43F70141300838DC00E70769 /* Libgost.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -709,6 +698,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				EXCLUDED_ARCHS = x86_64;
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
