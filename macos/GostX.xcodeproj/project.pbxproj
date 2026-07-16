@@ -5,7 +5,6 @@
 	};
 	objectVersion = 70;
 	objects = {
-
 /* Begin PBXBuildFile section */
 		0874FE9F0ADC49BBB6CD3626 /* PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 296DECB2BD4347C19DFD902E /* PacketTunnelProvider.swift */; };
 		110C2C030865F24C8C297E45 /* LogOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F0072E6B1705600E6B4FA5B /* LogOptionsView.swift */; };
@@ -38,7 +37,6 @@
 		E086218C337C33C8BB4052CA /* ConfigRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D840A91D1C37F07D57AD8A1 /* ConfigRepository.swift */; };
 		EBCBCEB114E34B4BB5D68150 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16E9D6522B494B409C95F0FE /* AppLogger.swift */; };
 /* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
 		4303494A3004D3A000FD9EE9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -62,7 +60,6 @@
 			remoteInfo = GostX;
 		};
 /* End PBXContainerItemProxy section */
-
 /* Begin PBXCopyFilesBuildPhase section */
 		4303494D3004D3A000FD9EE9 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -76,7 +73,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
 		041916CF79F25CAF1E21B685 /* FileContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FileContentView.swift; sourceTree = "<group>"; };
 		16E9D6522B494B409C95F0FE /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
@@ -113,7 +109,6 @@
 		CC1099D8C22BC993593DE940 /* FileListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FileListView.swift; sourceTree = "<group>"; };
 		F188A4B6A6F14F1D867F7D30 /* VpnManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
 		430349503004D3A000FD9EE9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -123,11 +118,9 @@
 			target = 430349413004D3A000FD9EE9 /* GostXTunnel */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		430349453004D3A000FD9EE9 /* GostXTunnel */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (430349503004D3A000FD9EE9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = GostXTunnel; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
-
 /* Begin PBXFrameworksBuildPhase section */
 		4303493F3004D3A000FD9EE9 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -161,7 +154,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
-
 /* Begin PBXGroup section */
 		43F701153007C22A00E70769 /* Recovered References */ = {
 			isa = PBXGroup;
@@ -268,7 +260,6 @@
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
-
 /* Begin PBXNativeTarget section */
 		430349413004D3A000FD9EE9 /* GostXTunnel */ = {
 			isa = PBXNativeTarget;
@@ -346,7 +337,6 @@
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
-
 /* Begin PBXProject section */
 		B532A65E285B528900159BAC /* Project object */ = {
 			isa = PBXProject;
@@ -392,7 +382,6 @@
 			);
 		};
 /* End PBXProject section */
-
 /* Begin PBXResourcesBuildPhase section */
 		430349403004D3A000FD9EE9 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
@@ -426,7 +415,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
 		4303493E3004D3A000FD9EE9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -480,7 +468,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
 /* Begin PBXTargetDependency section */
 		4303494B3004D3A000FD9EE9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -498,7 +485,6 @@
 			targetProxy = B532A682285B528D00159BAC /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
-
 /* Begin PBXVariantGroup section */
 		B5C1CF1629DD6E7C008AA934 /* Localizable.stringsdict */ = {
 			isa = PBXVariantGroup;
@@ -510,7 +496,6 @@
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
-
 /* Begin XCBuildConfiguration section */
 		4303494E3004D3A000FD9EE9 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -754,14 +739,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = GostX/GostX.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"GostX/Preview Content\"";
-				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GostX/Info.plist;
@@ -860,7 +844,6 @@
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
-
 /* Begin XCConfigurationList section */
 		430349513004D3A000FD9EE9 /* Build configuration list for PBXNativeTarget "GostXTunnel" */ = {
 			isa = XCConfigurationList;
