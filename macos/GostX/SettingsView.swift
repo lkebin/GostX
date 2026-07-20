@@ -172,6 +172,12 @@ struct SettingsView: View {
         }
         .ignoresSafeArea(.container, edges: .top)
         .frame(minWidth: 700, minHeight: 440)
+        .background(WindowCloseHandler(
+            isDirty: isCurrentEditorDirty,
+            saveHandler: { [isCurrentEditorDirty, saveCurrentEditor] in
+                if isCurrentEditorDirty { saveCurrentEditor() }
+            }
+        ))
         .alert(NSLocalizedString("Unsaved Changes", comment: ""),
                isPresented: $showDiscardAlert) {
             Button(NSLocalizedString("Save", comment: "")) {
@@ -253,6 +259,53 @@ struct YamlEditorView: View {
             AppGroupConfig.writeYaml(yamlText)
         }
     }
+}
+
+// MARK: - Window Close Handler
+
+/// Intercepts window close to prompt for unsaved changes.
+private struct WindowCloseHandler: NSViewRepresentable {
+    let isDirty: Bool
+    let saveHandler: (() -> Void)?
+
+    class Coordinator: NSObject, NSWindowDelegate {
+        var onClose: (() -> Bool)?
+
+        func windowShouldClose(_ sender: NSWindow) -> Bool {
+            onClose?() ?? true
+        }
+    }
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            view.window?.delegate = context.coordinator
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        context.coordinator.onClose = { [isDirty, saveHandler] in
+            guard isDirty else { return true }
+            let alert = NSAlert()
+            alert.messageText = NSLocalizedString("Unsaved Changes", comment: "")
+            alert.informativeText = NSLocalizedString("Do you want to save the changes you made before closing?", comment: "")
+            alert.addButton(withTitle: NSLocalizedString("Save", comment: ""))
+            alert.addButton(withTitle: NSLocalizedString("Discard", comment: ""))
+            alert.addButton(withTitle: NSLocalizedString("Cancel", comment: ""))
+            switch alert.runModal() {
+            case .alertFirstButtonReturn:
+                saveHandler?()
+                return true
+            case .alertSecondButtonReturn:
+                return true
+            default:
+                return false
+            }
+        }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
 }
 
 @available(macOS 14.0, *)
