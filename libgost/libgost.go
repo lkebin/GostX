@@ -131,6 +131,7 @@ func Start(yamlConfig string) (err error) {
 		return fmt.Errorf("invalid YAML config: %w", err)
 	}
 	ensureServiceNames(cfg)
+	normalizeDNSAddrsInConfig(cfg)
 	loadCfg := *cfg
 	loadCfg.Services = nil
 	if err := loader.Load(&loadCfg); err != nil {
@@ -158,6 +159,27 @@ func Start(yamlConfig string) (err error) {
 	logrus.Infof("gost started: services=%d chains=%d hops=%d bypasses=%d",
 		len(cfg.Services), len(cfg.Chains), len(cfg.Hops), len(cfg.Bypasses))
 	return nil
+}
+
+// normalizeDNSAddrsInConfig rewrites DNS service addresses from the wildcard
+// ("" or "0.0.0.0") to 127.0.0.1 so the listener binds to IPv4 loopback.
+// Without this, "addr: :10053" becomes "[::]:10053" on macOS (IPv6 any),
+// and the DNS handler cannot send UDP responses back to IPv4 clients
+// (can't assign requested address) because macOS defaults IPV6_V6ONLY=1.
+func normalizeDNSAddrsInConfig(cfg *config.Config) {
+	for _, svc := range cfg.Services {
+		if svc == nil || svc.Handler == nil || svc.Handler.Type != "dns" {
+			continue
+		}
+		host, port, err := net.SplitHostPort(svc.Addr)
+		if err != nil {
+			continue
+		}
+		if host == "" || host == "0.0.0.0" {
+			svc.Addr = net.JoinHostPort("127.0.0.1", port)
+			logrus.Infof("DNS service %q: addr normalized to %s", svc.Name, svc.Addr)
+		}
+	}
 }
 
 // normalizeDNSAddr replaces an empty or "0.0.0.0" host with "127.0.0.1" so
@@ -197,11 +219,13 @@ func StartGost(yamlConfig string, systemDNS string) (err error) {
 			buf := make([]byte, 4096)
 			n := runtime.Stack(buf, false)
 			err = fmt.Errorf("panic in StartGost: %v\n%s", r, buf[:n])
+			logrus.Errorf("StartGost: panic recovered: %v\n%s", r, buf[:n])
 		}
 	}()
 
 	cfg := &config.Config{}
 	if err := yaml.Unmarshal([]byte(yamlConfig), cfg); err != nil {
+		logrus.Errorf("StartGost: invalid YAML config: %v", err)
 		return fmt.Errorf("invalid YAML config: %w", err)
 	}
 
@@ -212,6 +236,7 @@ func StartGost(yamlConfig string, systemDNS string) (err error) {
 
 	chainName, filtered := extractTungoService(cfg)
 	if chainName == "" {
+		logrus.Error("StartGost: config must contain a tungo service for VPN mode")
 		return fmt.Errorf("config must contain a tungo service for VPN mode")
 	}
 
@@ -224,9 +249,14 @@ func StartGost(yamlConfig string, systemDNS string) (err error) {
 
 	b, err := yaml.Marshal(filtered)
 	if err != nil {
+		logrus.Errorf("StartGost: marshal filtered config: %v", err)
 		return err
 	}
-	return Start(string(b))
+	if err := Start(string(b)); err != nil {
+		logrus.Errorf("StartGost: start failed: %v", err)
+		return err
+	}
+	return nil
 }
 
 // extractTungoService scans cfg for a service whose handler type is "tungo",
