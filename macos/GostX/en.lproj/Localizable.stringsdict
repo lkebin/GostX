@@ -18,6 +18,16 @@
 	<string>Restart</string>
 	<key>Start</key>
 	<string>Start</string>
+	<key>Discard</key>
+	<string>Discard</string>
+	<key>Do you want to save the changes you made before closing?</key>
+	<string>Do you want to save the changes you made before closing?</string>
+	<key>Do you want to save the changes you made before leaving?</key>
+	<string>Do you want to save the changes you made before leaving?</string>
+	<key>Do you want to save the changes you made to this file?</key>
+	<string>Do you want to save the changes you made to this file?</string>
+	<key>Unsaved Changes</key>
+	<string>Unsaved Changes</string>
 	<key>StringKey</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

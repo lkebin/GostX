@@ -18,6 +18,16 @@
 	<string>重启</string>
 	<key>Start</key>
 	<string>启动</string>
+	<key>Discard</key>
+	<string>丢弃</string>
+	<key>Do you want to save the changes you made before closing?</key>
+	<string>关闭前是否保存更改？</string>
+	<key>Do you want to save the changes you made before leaving?</key>
+	<string>离开前是否保存更改？</string>
+	<key>Do you want to save the changes you made to this file?</key>
+	<string>是否保存对此文件的更改？</string>
+	<key>Unsaved Changes</key>
+	<string>未保存的更改</string>
 	<key>StringKey</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
