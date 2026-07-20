@@ -99,12 +99,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Restart: stops, waits for disconnection, then starts.
+    func restart() {
+        AppLogger.log(.info, "Restarting...")
+        if vpnMode {
+            Task { @MainActor in
+                await VpnManager.shared.stopAndWait()
+                self.startVpnMode()
+            }
+        } else {
+            stop()
+            startProxyMode()
+        }
+    }
+
     // MARK: - VPN Mode
 
     private func startVpnMode() {
         AppLogger.log(.info, "Starting VPN mode")
-        // 同步 YAML 到 App Group
-        let yaml = UserDefaults.standard.string(forKey: defaultsYamlKey) ?? defaultGostYAML
+        // 从 ConfigRepository 读取当前配置，同步到 App Group
+        let yaml = ConfigRepository.shared.activeConfig
         AppGroupConfig.writeYaml(yaml)
 
         Task {
@@ -124,7 +138,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func startProxyMode() {
         AppLogger.log(.info, "Starting proxy mode")
-        let yaml = UserDefaults.standard.string(forKey: defaultsYamlKey) ?? defaultGostYAML
+        let yaml = ConfigRepository.shared.activeConfig
 
         // Set work dir to App Group container so gost can find imported bypass files
         if let containerURL = AppGroupConfig.containerURL {
