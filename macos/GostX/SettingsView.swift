@@ -120,9 +120,9 @@ struct SettingsView: View {
 @available(macOS 14.0, *)
 struct YamlEditorView: View {
     let profileId: String
+    @Binding var isDirty: Bool
+    @Binding var yamlText: String
     @StateObject private var repo = ConfigRepository.shared
-    @State private var yamlText: String = ""
-    @State private var isDirty = false
     @State private var originalText: String = ""
 
     var body: some View {
