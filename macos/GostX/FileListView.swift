@@ -67,12 +67,30 @@ struct FileListView: View {
                 List(selection: Binding(
                     get: { vm.selectedFileName },
                     set: { name in
-                        DispatchQueue.main.async {
-                            if let name {
+                        if let name, vm.isFileDirty, name != vm.selectedFileName {
+                            let alert = NSAlert()
+                            alert.messageText = NSLocalizedString("Unsaved Changes", comment: "")
+                            alert.informativeText = NSLocalizedString("Do you want to save the changes you made to this file?", comment: "")
+                            alert.addButton(withTitle: NSLocalizedString("Save", comment: ""))
+                            alert.addButton(withTitle: NSLocalizedString("Discard", comment: ""))
+                            alert.addButton(withTitle: NSLocalizedString("Cancel", comment: ""))
+                            switch alert.runModal() {
+                            case .alertFirstButtonReturn: // Save
+                                vm.saveFileContent()
                                 vm.selectFile(name)
-                            } else {
-                                vm.selectedFileName = nil
-                                vm.fileContent = ""
+                            case .alertSecondButtonReturn: // Discard
+                                vm.selectFile(name)
+                            default: // Cancel
+                                break
+                            }
+                        } else {
+                            DispatchQueue.main.async {
+                                if let name {
+                                    vm.selectFile(name)
+                                } else {
+                                    vm.selectedFileName = nil
+                                    vm.fileContent = ""
+                                }
                             }
                         }
                     }
