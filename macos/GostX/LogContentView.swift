@@ -1,5 +1,115 @@
 // macos/GostX/LogContentView.swift
 import SwiftUI
+import AppKit
+
+// MARK: - NSTextView Wrapper
+
+/// Read-only NSTextView with monospaced font, native scrolling and text selection.
+@available(macOS 14.0, *)
+private struct LogTextView: NSViewRepresentable {
+    @Binding var text: String
+    var isFollowing: Bool
+    var onScrollToTop: () -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onScrollToTop: onScrollToTop)
+    }
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSTextView.scrollableTextView()
+        let textView = scrollView.documentView as! NSTextView
+
+        let defaultAttrs: [NSAttributedString.Key: Any] = [
+            .foregroundColor: NSColor.textColor,
+            .font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular),
+        ]
+        context.coordinator.defaultAttrs = defaultAttrs
+
+        textView.backgroundColor = .textBackgroundColor
+        textView.isEditable = false
+        textView.isSelectable = true
+        textView.isRichText = false
+        textView.textContainerInset = NSSize(width: 8, height: 8)
+        textView.textContainer?.widthTracksTextView = true
+        textView.textContainer?.containerSize = NSSize(
+            width: CGFloat.greatestFiniteMagnitude,
+            height: CGFloat.greatestFiniteMagnitude
+        )
+
+        context.coordinator.scrollView = scrollView
+
+        // Track scroll position for infinite scroll up
+        scrollView.contentView.postsBoundsChangedNotifications = true
+        NotificationCenter.default.addObserver(
+            context.coordinator,
+            selector: #selector(Coordinator.boundsDidChange(_:)),
+            name: NSView.boundsDidChangeNotification,
+            object: scrollView.contentView
+        )
+
+        return scrollView
+    }
+
+    func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        let textView = scrollView.documentView as! NSTextView
+        let oldText = textView.string
+        guard oldText != text else { return }
+
+        // Fast path: new text extends old text (polling append)
+        if text.hasPrefix(oldText) {
+            let suffix = String(text.dropFirst(oldText.count))
+            textView.textStorage?.append(NSAttributedString(string: suffix, attributes: context.coordinator.defaultAttrs))
+            if isFollowing {
+                context.coordinator.scrollToBottom()
+            }
+            return
+        }
+
+        // Slow path: full replace (initial load, truncation, history prepend)
+        let oldHeight = scrollView.contentView.bounds.height
+        let oldScrollY = scrollView.contentView.bounds.origin.y
+        let wasAtTop = oldScrollY <= 0
+
+        textView.textStorage?.setAttributedString(NSAttributedString(string: text, attributes: context.coordinator.defaultAttrs))
+
+        if !wasAtTop {
+            let newHeight = scrollView.contentView.bounds.height
+            let delta = newHeight - oldHeight
+            scrollView.contentView.scroll(to: NSPoint(x: 0, y: oldScrollY + delta))
+        } else if isFollowing {
+            context.coordinator.scrollToBottom()
+        }
+    }
+
+    class Coordinator: NSObject {
+        let onScrollToTop: () -> Void
+        private var lastScrollY: CGFloat = 0
+        weak var scrollView: NSScrollView?
+        var defaultAttrs: [NSAttributedString.Key: Any] = [:]
+
+        init(onScrollToTop: @escaping () -> Void) {
+            self.onScrollToTop = onScrollToTop
+        }
+
+        func scrollToBottom() {
+            guard let sv = scrollView,
+                  let textView = sv.documentView as? NSTextView else { return }
+            let maxY = max(0, textView.bounds.height - sv.contentView.bounds.height)
+            sv.contentView.scroll(to: NSPoint(x: 0, y: maxY))
+        }
+
+        @objc func boundsDidChange(_ notification: Notification) {
+            guard let clipView = notification.object as? NSClipView else { return }
+            let scrollY = clipView.bounds.origin.y
+            if scrollY <= 5 && lastScrollY > 5 {
+                onScrollToTop()
+            }
+            lastScrollY = scrollY
+        }
+    }
+}
+
+// MARK: - Log Content View
 
 @available(macOS 14.0, *)
 struct LogContentView: View {
@@ -8,49 +118,22 @@ struct LogContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Content
             if !loggingEnabled {
-                VStack {
-                    Spacer()
-                    Image(systemName: "text.alignleft")
-                        .font(.system(size: 28))
-                        .foregroundColor(Color(nsColor: .tertiaryLabelColor))
-                    Text(NSLocalizedString("Logging is off", comment: ""))
-                        .font(.system(size: 13))
-                        .foregroundColor(.secondary)
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                LogPlaceholder(icon: "text.alignleft", text: NSLocalizedString("Logging is off", comment: ""))
             } else if vm.lines.isEmpty {
-                VStack {
-                    Spacer()
-                    Image(systemName: "text.alignleft")
-                        .font(.system(size: 28))
-                        .foregroundColor(Color(nsColor: .tertiaryLabelColor))
-                    Text(NSLocalizedString("No logs", comment: ""))
-                        .font(.system(size: 13))
-                        .foregroundColor(.secondary)
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                LogPlaceholder(icon: "text.alignleft", text: NSLocalizedString("No logs", comment: ""))
             } else {
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 1) {
-                            ForEach(Array(vm.lines.enumerated()), id: \.offset) { _, line in
-                                Text(line)
-                                    .font(.system(size: 11, design: .monospaced))
-                                    .textSelection(.enabled)
-                            }
-                        }
-                        .padding(8)
-                    }
-                    .background(Color(nsColor: .textBackgroundColor))
-                    .onAppear { vm.scrollProxy = proxy }
-                }
+                LogTextView(
+                    text: Binding(
+                        get: { vm.lines.joined(separator: "\n") },
+                        set: { _ in }
+                    ),
+                    isFollowing: vm.isFollowing,
+                    onScrollToTop: { vm.loadMoreHistory() }
+                )
             }
 
-            // Bottom toolbar (only when logging is on)
+            // Bottom toolbar
             if loggingEnabled {
                 Divider()
 
@@ -92,15 +175,25 @@ struct LogContentView: View {
         .ignoresSafeArea(.container, edges: .top)
         .onAppear { vm.onAppear(loggingEnabled: loggingEnabled) }
         .onDisappear { vm.onDisappear() }
-        .onChange(of: vm.isFollowing) { _ in
-            if vm.isFollowing, let proxy = vm.scrollProxy, !vm.lines.isEmpty {
-                proxy.scrollTo(vm.lines.count - 1, anchor: .bottom)
-            }
+    }
+}
+
+@available(macOS 14.0, *)
+private struct LogPlaceholder: View {
+    let icon: String
+    let text: String
+
+    var body: some View {
+        VStack {
+            Spacer()
+            Image(systemName: icon)
+                .font(.system(size: 28))
+                .foregroundColor(Color(nsColor: .tertiaryLabelColor))
+            Text(text)
+                .font(.system(size: 13))
+                .foregroundColor(.secondary)
+            Spacer()
         }
-        .onChange(of: vm.lines.count) { _ in
-            if vm.isFollowing, let proxy = vm.scrollProxy, !vm.lines.isEmpty {
-                proxy.scrollTo(vm.lines.count - 1, anchor: .bottom)
-            }
-        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
