@@ -167,9 +167,13 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
 
     @objc private func onSettingsClick(_ sender: Any?) {
         guard #available(macOS 14.0, *) else { return }
+
+        // Show in Dock / Cmd+Tab while Settings window is open
+        NSApp.setActivationPolicy(.regular)
+
         if let window = settingsWindow, window.isVisible {
-            window.orderFrontRegardless()
-            window.makeKey()
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
             return
         }
         settingsHostingController = NSHostingController(rootView: AnyView(SettingsView()))
@@ -185,10 +189,10 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
         window.title = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "GostX"
         window.setContentSize(NSSize(width: 780, height: 500))
         window.center()
-        window.orderFrontRegardless()
-        window.makeKey()
         window.isReleasedWhenClosed = false
         settingsWindow = window
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     @objc private func onQuitClick(_ sender: Any?) {
@@ -204,8 +208,7 @@ class MacExtrasConfigurator: NSObject, NSMenuDelegate {
     }
 
     @objc private func onRestartClick(_ sender: Any?) {
-        delegate.stop()
-        delegate.start()
+        delegate.restart()
     }
 
     public func toOffState() {

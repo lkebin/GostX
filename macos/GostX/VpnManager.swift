@@ -61,6 +61,23 @@ class VpnManager: ObservableObject {
         manager?.connection.stopVPNTunnel()
     }
 
+    /// Stops the tunnel and waits until it reaches `.disconnected` or `.invalid`.
+    func stopAndWait() async {
+        guard let conn = manager?.connection else { return }
+
+        // Already stopped — nothing to do.
+        if conn.status == .disconnected || conn.status == .invalid { return }
+
+        stop()
+
+        // Poll for disconnection with a timeout so we never hang.
+        for _ in 0..<50 {  // 5 seconds max
+            try? await Task.sleep(nanoseconds: 100_000_000)  // 100ms
+            if conn.status == .disconnected || conn.status == .invalid { return }
+        }
+        os_log(.error, "[GostX] VpnManager.stopAndWait: timed out waiting for disconnect, status=%d", conn.status.rawValue)
+    }
+
     // MARK: - Status observation
 
     private func observeStatus() {

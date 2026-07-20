@@ -161,11 +161,13 @@ func Start(yamlConfig string) (err error) {
 	return nil
 }
 
-// normalizeDNSAddrsInConfig rewrites DNS service addresses from the wildcard
-// ("" or "0.0.0.0") to 127.0.0.1 so the listener binds to IPv4 loopback.
-// Without this, "addr: :10053" becomes "[::]:10053" on macOS (IPv6 any),
-// and the DNS handler cannot send UDP responses back to IPv4 clients
-// (can't assign requested address) because macOS defaults IPV6_V6ONLY=1.
+// normalizeDNSAddrsInConfig rewrites DNS service addresses from the IPv6
+// wildcard ("") to 0.0.0.0 so the listener binds to IPv4 instead of IPv6
+// dual-stack. Without this, "addr: :10053" becomes "[::]:10053" (IPv6 any),
+// and miekg/dns's WriteToSessionUDP sets Src=[::] via IPV6_PKTINFO in the
+// sendmsg control message, which fails when the destination is an IPv4
+// address (127.0.0.1:XXXXX) — the kernel cannot route from [::] to IPv4.
+// Users who need 127.0.0.1 can specify it explicitly in their YAML config.
 func normalizeDNSAddrsInConfig(cfg *config.Config) {
 	for _, svc := range cfg.Services {
 		if svc == nil || svc.Handler == nil || svc.Handler.Type != "dns" {
@@ -175,8 +177,8 @@ func normalizeDNSAddrsInConfig(cfg *config.Config) {
 		if err != nil {
 			continue
 		}
-		if host == "" || host == "0.0.0.0" {
-			svc.Addr = net.JoinHostPort("127.0.0.1", port)
+		if host == "" {
+			svc.Addr = net.JoinHostPort("0.0.0.0", port)
 			logrus.Infof("DNS service %q: addr normalized to %s", svc.Name, svc.Addr)
 		}
 	}

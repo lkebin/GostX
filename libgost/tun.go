@@ -121,6 +121,7 @@ func startVPNSingTun(fd, mtu int, chainName, dnsServiceAddr string) error {
 	// does not affect the original.
 	dupFd, err := unix.Dup(fd)
 	if err != nil {
+		logrus.Errorf("StartTun: dup TUN fd: %v", err)
 		return fmt.Errorf("dup TUN fd: %w", err)
 	}
 
@@ -143,6 +144,7 @@ func startVPNSingTun(fd, mtu int, chainName, dnsServiceAddr string) error {
 	prefix, err := netip.ParsePrefix(tunVPNPrefix)
 	if err != nil {
 		unix.Close(dupFd)
+		logrus.Errorf("StartTun: parse TUN prefix %q: %v", tunVPNPrefix, err)
 		return fmt.Errorf("parse TUN prefix %q: %w", tunVPNPrefix, err)
 	}
 	tunOptions := singtun.Options{
@@ -155,6 +157,7 @@ func startVPNSingTun(fd, mtu int, chainName, dnsServiceAddr string) error {
 	device, err := singtun.New(tunOptions)
 	if err != nil {
 		unix.Close(dupFd)
+		logrus.Errorf("StartTun: create TUN device: %v", err)
 		return fmt.Errorf("create TUN device: %w", err)
 	}
 
@@ -174,12 +177,14 @@ func startVPNSingTun(fd, mtu int, chainName, dnsServiceAddr string) error {
 	if err != nil {
 		cancel()
 		device.Close()
+		logrus.Errorf("StartTun: create sing-tun stack (type=%s): %v", tunStackType, err)
 		return fmt.Errorf("create sing-tun stack: %w", err)
 	}
 
 	if err := stack.Start(); err != nil {
 		cancel()
 		device.Close()
+		logrus.Errorf("StartTun: start sing-tun stack (type=%s): %v", tunStackType, err)
 		return fmt.Errorf("start sing-tun stack: %w", err)
 	}
 	ifaceName, _ := device.Name()
