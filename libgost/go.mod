@@ -104,5 +104,4 @@ require (
 
 tool golang.org/x/mobile/cmd/gobind
 
-// replace github.com/go-gost/x => github.com/lkebin/go-gost-x v0.0.0-20260617054355-7409cb4ad81f
-replace github.com/go-gost/x => github.com/lkebin/go-gost-x v0.0.0-20260701034556-8a249b81219b
+replace github.com/go-gost/x => github.com/lkebin/go-gost-x v0.0.0-20260720080525-1377c0ac9191
