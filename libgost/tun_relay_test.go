@@ -18,7 +18,7 @@ func TestRelayCopiesDataBothDirections(t *testing.T) {
 
 	relayDone := make(chan struct{})
 	go func() {
-		relay(srcConn, dstConn)
+		relay(&trackableConn{conn: srcConn}, srcConn, dstConn)
 		close(relayDone)
 	}()
 
@@ -117,7 +117,7 @@ func TestRelayPacketConnCopiesDataBothDirections(t *testing.T) {
 
 	done := make(chan struct{})
 	go func() {
-		relayPacketConn(src, dstConn, M.Socksaddr{})
+		relayPacketConn(&trackableConn{conn: src}, src, dstConn, M.Socksaddr{})
 		close(done)
 	}()
 

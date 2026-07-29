@@ -223,6 +223,33 @@ class LogViewModelLogicTest {
         assertEquals("lines should be cleared after truncation", emptyList<String>(), vm.lines.value)
         vm.stopPolling()
     }
+
+    @Test fun `in-memory lines are capped to avoid unbounded growth`() = runTest(testScheduler) {
+        val vm = LogViewModel(
+            application = mock<Application>(),
+            logFile = logFile,
+            ioDispatcher = testDispatcher,
+        )
+        // Simulate a high-volume log file far exceeding the in-memory cap.
+        val total = LogViewModel.MAX_LINES * 3
+        val sb = StringBuilder()
+        repeat(total) { sb.appendLine("line #$it") }
+        logFile.writeText(sb.toString())
+
+        vm.loadInitial()
+        advanceUntilIdle()
+
+        assertTrue(
+            "in-memory lines must be capped, got ${vm.lines.value.size}",
+            vm.lines.value.size <= LogViewModel.MAX_LINES
+        )
+        // The cap keeps the most recent lines (the tail of the file).
+        assertTrue(
+            "most recent line should be retained, got: ${vm.lines.value.lastOrNull()}",
+            vm.lines.value.lastOrNull()?.contains("line #${total - 1}") == true
+        )
+        vm.stopPolling()
+    }
 }
 
 // Compile-time check: public polling and follow API

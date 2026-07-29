@@ -323,8 +323,7 @@ func (h *singTunHandler) NewConnectionEx(ctx context.Context, conn net.Conn, sou
 		}
 
 		dst := net.JoinHostPort(destination.Addr.String(), strconv.Itoa(int(destination.Port)))
-		n := atomic.AddInt64(&tcpConns, 1)
-		logrus.Debugf("[tcp#%d] dial %s", n, dst)
+		atomic.AddInt64(&tcpConns, 1)
 
 		var upstream net.Conn
 		var err error
@@ -337,13 +336,11 @@ func (h *singTunHandler) NewConnectionEx(ctx context.Context, conn net.Conn, sou
 		}
 		if err != nil {
 			atomic.AddInt64(&failedConns, 1)
-			logrus.Errorf("[tcp#%d] dial %s failed: %v", n, dst, err)
 			return
 		}
 		tc.setUpstream(upstream)
 
-		relay(conn, upstream)
-		logrus.Debugf("[tcp#%d] done %s", n, dst)
+		relay(tc, conn, upstream)
 	}()
 }
 
@@ -365,8 +362,7 @@ func (h *singTunHandler) NewPacketConnectionEx(ctx context.Context, conn N.Packe
 		}()
 
 		dst := net.JoinHostPort(destination.Addr.String(), strconv.Itoa(int(destination.Port)))
-		n := atomic.AddInt64(&udpConns, 1)
-		logrus.Debugf("[udp#%d] dial %s", n, dst)
+		atomic.AddInt64(&udpConns, 1)
 
 		var upstream net.Conn
 		var err error
@@ -379,12 +375,11 @@ func (h *singTunHandler) NewPacketConnectionEx(ctx context.Context, conn N.Packe
 		}
 		if err != nil {
 			atomic.AddInt64(&failedConns, 1)
-			logrus.Errorf("[udp#%d] dial %s failed: %v", n, dst, err)
 			return
 		}
 		tc.setUpstream(upstream)
 
-		relayPacketConn(conn, upstream, destination)
+		relayPacketConn(tc, conn, upstream, destination)
 	}()
 }
 
@@ -399,7 +394,15 @@ const udpUpstreamReadBufferSize = 65535
 // relayPacketConn pipes data bidirectionally between a sing-tun PacketConn
 // (one UDP session from the TUN device) and a plain net.Conn (upstream proxy).
 // Each Read/Write on the upstream corresponds to one datagram.
-func relayPacketConn(src N.PacketConn, dst net.Conn, remoteAddr M.Socksaddr) {
+// relayPacketConn pipes data bidirectionally between a sing-tun PacketConn
+// (one UDP session from the TUN device) and a plain net.Conn (upstream proxy).
+// Each Read/Write on the upstream corresponds to one datagram.
+//
+// As with relay(), either direction closing calls tc.Close() so the other
+// blocked read (e.g. an idle UDP session whose upstream QUIC read never
+// returns after sing-tun's 30s UDPTimeout) is unblocked and the relay
+// terminates, preventing upstream-connection and goroutine leaks.
+func relayPacketConn(tc *trackableConn, src N.PacketConn, dst net.Conn, remoteAddr M.Socksaddr) {
 	done := make(chan struct{}, 2)
 
 	// TUN → upstream proxy
@@ -417,6 +420,7 @@ func relayPacketConn(src N.PacketConn, dst net.Conn, remoteAddr M.Socksaddr) {
 			}
 		}
 		closeWrite(dst)
+		tc.Close()
 	}()
 
 	// upstream proxy → TUN
@@ -439,10 +443,12 @@ func relayPacketConn(src N.PacketConn, dst net.Conn, remoteAddr M.Socksaddr) {
 				break
 			}
 		}
+		tc.Close()
 	}()
 
 	<-done
 	<-done
+	tc.Close()
 }
 
 // tcpRelayBufferSize matches io.Copy's own default buffer size (32 KiB),
@@ -450,16 +456,24 @@ func relayPacketConn(src N.PacketConn, dst net.Conn, remoteAddr M.Socksaddr) {
 // buffer comes from.
 const tcpRelayBufferSize = 32 * 1024
 
-// relay pipes data bidirectionally between src and dst. When one direction
-// reaches EOF, CloseWrite is called on the other side so the remote peer
-// receives a proper FIN and the other goroutine unblocks.
-func relay(src, dst net.Conn) {
+// relay pipes data bidirectionally between src and dst. When either direction
+// reaches EOF/error it closes the whole tracked connection (via tc) so the
+// other, possibly-blocked read is unblocked and relay() always returns.
+//
+// This is essential: a silently-dead peer (common with UDP/QUIC upstreams such
+// as hysteria, which never deliver a FIN/RST) leaves one goroutine blocked on
+// a read forever. Without the forced tc.Close() here, relay() would never
+// return, defer tc.Close() would never run, and the upstream connection +
+// goroutines would leak until the VPN is restarted — the classic "degrades
+// over time, restart fixes" symptom.
+func relay(tc *trackableConn, src, dst net.Conn) {
 	done := make(chan struct{}, 2)
 	go func() {
 		buf := singbuf.Get(tcpRelayBufferSize)
 		defer singbuf.Put(buf)
 		io.CopyBuffer(dst, src, buf)
 		closeWrite(dst)
+		tc.Close()
 		done <- struct{}{}
 	}()
 	go func() {
@@ -467,10 +481,12 @@ func relay(src, dst net.Conn) {
 		defer singbuf.Put(buf)
 		io.CopyBuffer(src, dst, buf)
 		closeWrite(src)
+		tc.Close()
 		done <- struct{}{}
 	}()
 	<-done
 	<-done
+	tc.Close()
 }
 
 // closeWrite signals write-EOF on c if it supports half-close (e.g. TCP).

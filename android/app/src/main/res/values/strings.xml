@@ -130,6 +130,7 @@
     <string name="vpn_error_gost_start">gost start failed: %s</string>
     <string name="vpn_error_tun_start">VPN start failed: %s</string>
     <string name="vpn_error_post_start">VPN post-start error: %s</string>
+    <string name="vpn_error_stale_state">VPN routing appears broken. Please reinstall the app to clear stale system state.</string>
 
     <!-- VPN disclosure dialog -->
     <string name="vpn_disclosure_title">VPN Connection Notice</string>

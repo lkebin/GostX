@@ -132,6 +132,7 @@
     <string name="vpn_error_gost_start">gost 启动失败: %s</string>
     <string name="vpn_error_tun_start">VPN 启动失败: %s</string>
     <string name="vpn_error_post_start">VPN 启动后错误: %s</string>
+    <string name="vpn_error_stale_state">VPN 路由异常，请重新安装应用以清除系统残留状态</string>
 
     <!-- VPN disclosure dialog -->
     <string name="vpn_disclosure_title">VPN 连接说明</string>

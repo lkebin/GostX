@@ -97,9 +97,11 @@ struct SettingsView: View {
                 if id == ConfigRepository.shared.activeProfileId {
                     AppGroupConfig.writeYaml(yamlText)
                 }
+                isEditorDirty = false
             }
         case .files:
             fileVM.saveFileContent()
+            fileVM.isFileDirty = false
         case .logs:
             break
         }
@@ -245,7 +247,6 @@ struct YamlEditorView: View {
                     Label(NSLocalizedString("Save", comment: ""), systemImage: "square.and.arrow.down")
                 }
                 .buttonStyle(.borderless)
-                .disabled(!isDirty)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)

@@ -111,6 +111,18 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `loggingEnabled reacts to repository change`() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertEquals(false, viewModel.loggingEnabled.value)
+
+        repo.loggingEnabled = true
+        advanceUntilIdle()
+
+        assertEquals(true, viewModel.loggingEnabled.value)
+    }
+
+    @Test
     fun `homeState reflects renamed profile`() = runTest(dispatcher) {
         val secondId = repo.addProfile("Second")!!
         val viewModel = createViewModel()

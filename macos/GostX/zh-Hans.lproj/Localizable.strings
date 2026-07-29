@@ -1,0 +1,68 @@
+/* Menu & Navigation */
+"Settings…" = "设置…";
+"Manage Profiles…" = "管理配置…";
+"Profiles" = "配置";
+"Profile" = "配置";
+"Files" = "文件";
+"Logs" = "日志";
+"Quit" = "退出";
+
+/* Actions */
+"Start" = "启动";
+"Stop" = "停止";
+"Restart" = "重启";
+"Save" = "保存";
+"Cancel" = "取消";
+"OK" = "确定";
+"Discard" = "丢弃";
+"Delete" = "删除";
+"Delete..." = "删除…";
+"Create" = "创建";
+"Add" = "添加";
+"Edit" = "编辑";
+"Rename" = "重命名";
+"Rename..." = "重命名…";
+"Import" = "导入";
+"Replace" = "替换";
+"Export..." = "导出…";
+"Copy Path" = "复制路径";
+"Error" = "错误";
+
+/* Profiles */
+"Add Profile" = "添加配置";
+"New Profile" = "新建配置";
+"Rename Profile" = "重命名配置";
+"Profile name" = "配置名称";
+"No profiles" = "暂无配置";
+"Select a profile to edit" = "选择一个配置进行编辑";
+"Do you want to save the changes you made before closing?" = "关闭前是否保存修改？";
+"Do you want to save the changes you made before leaving?" = "离开前是否保存修改？";
+"Unsaved Changes" = "未保存的修改";
+
+/* Files */
+"Files" = "文件";
+"New File" = "新建文件";
+"Rename File" = "重命名文件";
+"Delete File" = "删除文件";
+"File name" = "文件名";
+"No files" = "暂无文件";
+"Select a file to view" = "选择一个文件查看";
+"Import failed: %@" = "导入失败：%@";
+"Invalid filename." = "无效文件名";
+"File Already Exists" = "文件已存在";
+"A file named \"" = "文件 \"";
+"File \"" = "文件 \"";
+"Do you want to save the changes you made to this file?" = "是否保存对此文件的修改？";
+"Are you sure you want to delete \"" = "确定要删除 \"";
+"App Group container not available." = "App Group 容器不可用";
+
+/* Logs */
+"Log Level" = "日志级别";
+"Enable Logging" = "启用日志";
+"Logging is off" = "日志已关闭";
+"No logs" = "暂无日志";
+"Clear log" = "清空日志";
+"Copy all" = "复制全部";
+"Pause auto-scroll" = "暂停自动滚动";
+"Resume auto-scroll" = "恢复自动滚动";
+"Restart VPN to apply" = "重启 VPN 后生效";

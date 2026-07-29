@@ -26,7 +26,7 @@ struct FileContentView: View {
                             Label(NSLocalizedString("Save", comment: ""), systemImage: "square.and.arrow.down")
                         }
                         .buttonStyle(.borderless)
-                        .disabled(!vm.isFileDirty)
+                        
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)

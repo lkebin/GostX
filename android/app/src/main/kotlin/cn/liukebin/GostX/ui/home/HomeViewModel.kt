@@ -46,8 +46,12 @@ class HomeViewModel(
     val vpnState = GlobalVpnState.state
         .stateIn(viewModelScope, SharingStarted.Eagerly, GlobalVpnState.state.value)
 
+    // Expose the repository's hot StateFlow directly. Previously this wrapped
+    // it in stateIn(Eagerly, initialValue = repo.loggingEnabled); the snapshot
+    // initial value and the extra stateIn/viewModelScope lifecycle layer added
+    // no value here and introduced a (hard-to-reproduce) recomposition edge
+    // where the log button failed to appear until the app was restarted.
     val loggingEnabled: StateFlow<Boolean> = repo.loggingEnabledFlow
-        .stateIn(viewModelScope, SharingStarted.Eagerly, repo.loggingEnabled)
 
     private val _batteryOptimizationNeeded = MutableStateFlow(false)
     val batteryOptimizationNeeded: StateFlow<Boolean> = _batteryOptimizationNeeded

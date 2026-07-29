@@ -472,17 +472,27 @@ func ensureServiceNames(cfg *config.Config) {
 }
 
 // SetMemoryLimit configures the Go runtime GC for mobile background use.
-// enabled=true: aggressive GC (GOGC=20) + 50 MB soft heap limit.
-// 30 MB was too small; 100 MB is too large and keeps the heap unnecessarily
-// bloated on mobile. 50 MB balances full-system proxy workloads against
-// memory pressure. During doze mode all connections are closed (see
-// PauseTun/WakeTun), so the heap shrinks naturally at night.
+// enabled=true: 100 MB soft heap cap + GOGC=50 (per AGENTS.md).
+//
+// Previously this was 50 MB + GOGC=20. That setting is far too aggressive for
+// a hysteria/QUIC VPN: the constant packet/stream allocations from a full
+// proxy workload (especially the post-connect DNS flood) push the heap against
+// the 50 MB soft cap, and GOGC=20 forces near-continuous GC. The resulting
+// GC pauses stall the QUIC read/write loops, so an *established* tunnel goes
+// silent and dies with "timeout: no recent network activity" — i.e. the
+// proxy connection drops right after connect instead of staying alive.
+//
+// During doze mode all connections are closed (see PauseTun/WakeTun), so the
+// heap shrinks naturally at night; the 100 MB cap is not a problem there.
+// If 100 MB proves too high on a low-RAM device, prefer raising GOGC back
+// toward 50 over dropping the cap below ~75 MB, since the cap (not GOGC) is
+// what triggers the QUIC-stalling GC thrash under load.
 // enabled=false: restore defaults so normal service mode is unaffected.
 // Call with enabled=true when VPN starts, false when it stops.
 func SetMemoryLimit(enabled bool) {
-	const limit = 50 * 1024 * 1024
+	const limit = 100 * 1024 * 1024
 	if enabled {
-		runtimeDebug.SetGCPercent(20)
+		runtimeDebug.SetGCPercent(50)
 		runtimeDebug.SetMemoryLimit(limit)
 	} else {
 		runtimeDebug.SetGCPercent(100)
