@@ -20,6 +20,7 @@ import android.system.OsConstants
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
+import java.util.TimeZone
 import cn.liukebin.gostx.R
 import cn.liukebin.gostx.data.AppFilterMode
 import cn.liukebin.gostx.data.ConfigRepository
@@ -186,6 +187,11 @@ class GostVpnService : VpnService() {
             // startForeground already called synchronously in onStartCommand
 
             val yaml = configRepo.getActiveConfig()
+
+            // Go cannot read Android's timezone on its own (no $TZ, no
+            // /etc/localtime), so it would timestamp logs in UTC. Push the
+            // platform timezone first so Go and Kotlin log lines agree.
+            LibgostBridge.setTimezone(TimeZone.getDefault())
 
             val logLevel = configRepo.logLevel
             val logMaxBytes = configRepo.logMaxSizeKb.toLong() * 1024
@@ -661,6 +667,16 @@ internal object LibgostBridge {
 
     fun setLogLevel(level: String) {
         runCatching { invoke("setLogLevel", level) }
+    }
+
+    /**
+     * Pushes the platform timezone to Go, which otherwise defaults to UTC on
+     * Android. The raw offset is passed as a fallback for devices where Go
+     * cannot resolve the zone ID from the bundled tzdata.
+     */
+    fun setTimezone(tz: TimeZone) {
+        val offsetSeconds = tz.getOffset(System.currentTimeMillis()) / 1000
+        runCatching { invoke("setTimezone", tz.id, offsetSeconds.toLong()) }
     }
 
     fun pauseTun() = runCatching { invoke("pauseTun") }

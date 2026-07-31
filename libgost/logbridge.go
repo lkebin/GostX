@@ -5,19 +5,18 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
-	"unsafe"
 
 	corelogger "github.com/go-gost/core/logger"
-	"github.com/sirupsen/logrus"
+	xlogger "github.com/go-gost/x/logger"
 )
 
-// logCh buffers log messages from the logrus hook.
+// logCh buffers log messages produced by the shared logger (see log()).
 // Capacity 512 means we can hold ~512 messages before dropping.
 var logCh = make(chan string, 512)
 
@@ -47,47 +46,85 @@ func getLogLevel() string {
 	return "off"
 }
 
-// ── logrus hook ─────────────────────────────────────────────────────────────
+// ── shared logger ────────────────────────────────────────────────────────────
 
-// channelHook is a logrus hook that forwards log entries to logCh.
-// Attached to both the go-gost/x logger (via installLogrusHook) and the
-// standard logrus logger (once, via installStdHookOnce) so that libgost's own
-// logrus calls and go-gost/x internal logs reach the same channel.
-type channelHook struct{}
+// chanWriter adapts logCh to io.Writer. The logger is backed by log/slog,
+// which emits one complete record per Write, so each line is forwarded to the
+// app log channel as a separate message.
+type chanWriter struct{}
 
-func (h *channelHook) Levels() []logrus.Level { return logrus.AllLevels }
+func (chanWriter) Write(p []byte) (int, error) {
+	for _, line := range strings.Split(strings.TrimRight(string(p), "\n"), "\n") {
+		if line != "" {
+			enqueueLog("%s", line)
+		}
+	}
+	return len(p), nil
+}
 
-func (h *channelHook) Fire(entry *logrus.Entry) error {
-	var sb strings.Builder
-	sb.WriteByte('[')
-	level := entry.Level.String()
-	if len(level) >= 4 {
-		sb.WriteString(strings.ToUpper(level[:4]))
+// coreLevels maps libgost log level names to go-gost/core log levels.
+// "off" is deliberately absent — see installLogger.
+var coreLevels = map[string]corelogger.LogLevel{
+	"error": corelogger.ErrorLevel,
+	"warn":  corelogger.WarnLevel,
+	"info":  corelogger.InfoLevel,
+	"debug": corelogger.DebugLevel,
+	"trace": corelogger.TraceLevel,
+}
+
+// sharedLogger holds the single logger used by libgost, sing-tun and
+// go-gost/x. Stored atomically because installLogger may replace it while
+// service goroutines are logging.
+var sharedLogger atomic.Value
+
+func init() { installLogger() }
+
+// log returns the shared logger. Never nil.
+func log() corelogger.Logger {
+	if l, ok := sharedLogger.Load().(corelogger.Logger); ok && l != nil {
+		return l
+	}
+	return xlogger.Nop()
+}
+
+// installLogger (re)builds the shared logger for the current log level and
+// installs it as go-gost/x's default.
+//
+// It must be called after every loader.Load(), which replaces the default
+// logger, and after every SetLogLevel, because a go-gost/x logger's level is
+// fixed at construction time.
+func installLogger() {
+	lvl, on := coreLevels[getLogLevel()]
+	var out io.Writer = io.Discard
+	if on {
+		out = io.MultiWriter(os.Stderr, chanWriter{})
 	} else {
-		sb.WriteString(strings.ToUpper(level))
+		// "off" (or unknown): silence every sink.
+		lvl = corelogger.FatalLevel
 	}
-	sb.WriteString("] ")
-	sb.WriteString(entry.Message)
-	for k, v := range entry.Data {
-		sb.WriteString(fmt.Sprintf(" %s=%v", k, v))
-	}
-	enqueueLog("%s", sb.String())
-	return nil
+
+	l := xlogger.NewLogger(
+		xlogger.OutputOption(out),
+		xlogger.FormatOption(corelogger.TextFormat),
+		xlogger.LevelOption(lvl),
+	)
+	sharedLogger.Store(l)
+	corelogger.SetDefault(l)
 }
 
 // ── channel enqueue ──────────────────────────────────────────────────────────
 
-// enqueueLog formats, timestamps, and enqueues a log message into logCh.
-// Called only by channelHook.Fire() and tests. Do NOT call directly for
-// operational logs — use logrus so log-level filtering works.
+// enqueueLog formats and enqueues a log message into logCh. Called only by
+// chanWriter and tests. Do NOT call directly for operational logs — use log()
+// so log-level filtering works. Records carry their own slog timestamp, so no
+// prefix is added here.
 func enqueueLog(format string, args ...any) {
 	if !loggingEnabled.Load() {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
-	ts := time.Now().Format("15:04:05.000")
 	select {
-	case logCh <- ts + " " + msg:
+	case logCh <- msg:
 	default:
 		// buffer full – drop to avoid blocking the caller
 	}
@@ -209,14 +246,6 @@ var validLogLevels = map[string]bool{
 	"off": true, "error": true, "warn": true, "info": true, "debug": true, "trace": true,
 }
 
-var levelToLogrus = map[string]logrus.Level{
-	"error": logrus.ErrorLevel,
-	"warn":  logrus.WarnLevel,
-	"info":  logrus.InfoLevel,
-	"debug": logrus.DebugLevel,
-	"trace": logrus.TraceLevel,
-}
-
 // SetLogLevel sets the minimum log level. Valid: "off", "error", "warn",
 // "info", "debug", "trace". Call before starting the VPN.
 func SetLogLevel(level string) {
@@ -224,52 +253,50 @@ func SetLogLevel(level string) {
 		return
 	}
 	logLevelStr.Store(level)
-	if level == "off" {
-		loggingEnabled.Store(false)
-	} else {
-		loggingEnabled.Store(true)
-	}
-	applyLogrusLevel(logrus.StandardLogger(), level)
-}
-
-func applyLogrusLevel(l *logrus.Logger, level string) {
-	if lvl, ok := levelToLogrus[level]; ok {
-		l.SetLevel(lvl)
-	} else {
-		l.SetLevel(logrus.FatalLevel + 1) // "off": block everything
-	}
+	loggingEnabled.Store(level != "off")
+	installLogger()
 }
 
 // SetLoggingEnabled enables or disables log output.
 func SetLoggingEnabled(v bool) { loggingEnabled.Store(v) }
 
-// ── logrus hook installation ─────────────────────────────────────────────────
+// ── timezone ───────────────────────────────────────────────────────────────
 
-var installStdHookOnce sync.Once
+// SetTimezone sets the timezone used for log timestamps.
+//
+// Android does not set $TZ for app processes and has no /etc/localtime, so
+// Go's time.Local falls back to UTC (see time/zoneinfo_android.go, which
+// leaves "getprop persist.sys.timezone" as a TODO). Without this call, Go log
+// lines are offset from the Kotlin-side ones by the local UTC offset.
+//
+// name is an IANA zone ID such as "Asia/Shanghai"; Go resolves it from
+// Android's bundled tzdata. offsetSeconds is the current UTC offset and is
+// used only if that lookup fails, so the timestamps stay correct even on
+// devices where the zone database is unreadable.
+//
+// Safe to call on every VPN start: repeated calls with an unchanged timezone
+// are a no-op. time.Local is a process-wide variable, so rewriting it while
+// other goroutines format timestamps would be a data race.
+func SetTimezone(name string, offsetSeconds int) {
+	key := name + "|" + strconv.Itoa(offsetSeconds)
+	if prev, _ := appliedTZ.Load().(string); prev == key {
+		return
+	}
 
-// installLogrusHook attaches channelHook to the go-gost/x logger (fresh on
-// every loader.Load()) and to the standard logrus logger (once). Sets the
-// configured log level on both.
-func installLogrusHook() {
-	// go-gost/x logger — recreated each loader.Load(), so re-hook always.
-	if l := corelogger.Default(); l != nil {
-		if v := reflect.ValueOf(l); v.Kind() == reflect.Ptr && !v.IsNil() {
-			if f := v.Elem().FieldByName("logger"); f.IsValid() && f.Kind() == reflect.Ptr {
-				entry := *(**logrus.Entry)(unsafe.Pointer(f.UnsafeAddr()))
-				if entry != nil && entry.Logger != nil {
-					entry.Logger.AddHook(&channelHook{})
-					applyLogrusLevel(entry.Logger, getLogLevel())
-				}
-			}
+	loc := time.FixedZone(name, offsetSeconds)
+	if name != "" {
+		if l, err := time.LoadLocation(name); err == nil {
+			loc = l
 		}
 	}
 
-	// Standard logger — hook once, level on every Start.
-	installStdHookOnce.Do(func() {
-		logrus.StandardLogger().AddHook(&channelHook{})
-	})
-	applyLogrusLevel(logrus.StandardLogger(), getLogLevel())
+	appliedTZ.Store(key)
+	time.Local = loc
 }
+
+// appliedTZ records the last timezone applied by SetTimezone, so repeated
+// calls do not rewrite the time.Local global.
+var appliedTZ atomic.Value
 
 // ── test helpers ─────────────────────────────────────────────────────────────
 

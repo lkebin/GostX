@@ -20,7 +20,6 @@ import (
 	serviceparser "github.com/go-gost/x/config/parsing/service"
 	xdialer "github.com/go-gost/x/dialer"
 	"github.com/go-gost/x/registry"
-	"github.com/sirupsen/logrus"
 
 	_ "github.com/go-gost/x/connector/direct"
 	_ "github.com/go-gost/x/connector/http"
@@ -137,9 +136,9 @@ func Start(yamlConfig string) (err error) {
 	if err := loader.Load(&loadCfg); err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
-	// loader.Load() calls corelogger.SetDefault() with a *logrusLogger.
-	// Attach our hook now so gost internal logs also appear in the app UI.
-	installLogrusHook()
+	// loader.Load() installs a fresh default logger via corelogger.SetDefault().
+	// Re-install ours now so gost internal logs also appear in the app UI.
+	installLogger()
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("panic in service startup: %v", r)
@@ -156,7 +155,7 @@ func Start(yamlConfig string) (err error) {
 	cancelFn = cancel
 	services = svcs
 	running = true
-	logrus.Infof("gost started: services=%d chains=%d hops=%d bypasses=%d",
+	log().Infof("gost started: services=%d chains=%d hops=%d bypasses=%d",
 		len(cfg.Services), len(cfg.Chains), len(cfg.Hops), len(cfg.Bypasses))
 	return nil
 }
@@ -179,7 +178,7 @@ func normalizeDNSAddrsInConfig(cfg *config.Config) {
 		}
 		if host == "" {
 			svc.Addr = net.JoinHostPort("0.0.0.0", port)
-			logrus.Infof("DNS service %q: addr normalized to %s", svc.Name, svc.Addr)
+			log().Infof("DNS service %q: addr normalized to %s", svc.Name, svc.Addr)
 		}
 	}
 }
@@ -221,13 +220,13 @@ func StartGost(yamlConfig string, systemDNS string) (err error) {
 			buf := make([]byte, 4096)
 			n := runtime.Stack(buf, false)
 			err = fmt.Errorf("panic in StartGost: %v\n%s", r, buf[:n])
-			logrus.Errorf("StartGost: panic recovered: %v\n%s", r, buf[:n])
+			log().Errorf("StartGost: panic recovered: %v\n%s", r, buf[:n])
 		}
 	}()
 
 	cfg := &config.Config{}
 	if err := yaml.Unmarshal([]byte(yamlConfig), cfg); err != nil {
-		logrus.Errorf("StartGost: invalid YAML config: %v", err)
+		log().Errorf("StartGost: invalid YAML config: %v", err)
 		return fmt.Errorf("invalid YAML config: %w", err)
 	}
 
@@ -238,7 +237,7 @@ func StartGost(yamlConfig string, systemDNS string) (err error) {
 
 	chainName, filtered := extractTungoService(cfg)
 	if chainName == "" {
-		logrus.Error("StartGost: config must contain a tungo service for VPN mode")
+		log().Error("StartGost: config must contain a tungo service for VPN mode")
 		return fmt.Errorf("config must contain a tungo service for VPN mode")
 	}
 
@@ -251,11 +250,11 @@ func StartGost(yamlConfig string, systemDNS string) (err error) {
 
 	b, err := yaml.Marshal(filtered)
 	if err != nil {
-		logrus.Errorf("StartGost: marshal filtered config: %v", err)
+		log().Errorf("StartGost: marshal filtered config: %v", err)
 		return err
 	}
 	if err := Start(string(b)); err != nil {
-		logrus.Errorf("StartGost: start failed: %v", err)
+		log().Errorf("StartGost: start failed: %v", err)
 		return err
 	}
 	return nil
@@ -455,7 +454,7 @@ func launchServices(ctx context.Context, svcs []service.Service) {
 			defer serveWg.Done()
 			defer func() {
 				if r := recover(); r != nil {
-					logrus.Errorf("panic in service goroutine: %v", r)
+					log().Errorf("panic in service goroutine: %v", r)
 				}
 			}()
 			_ = s.Serve()
@@ -515,13 +514,13 @@ func SetSocketProtector(p SocketProtector) {
 			sp := socketProtector
 			mu.Unlock()
 			if sp != nil && !sp.Protect(int64(fd)) {
-				logrus.Warnf("VpnService.protect() failed for fd %d", fd)
+				log().Warnf("VpnService.protect() failed for fd %d", fd)
 			}
 		})
-		logrus.Info("VPN socket protector registered")
+		log().Info("VPN socket protector registered")
 	} else {
 		xdialer.SetGlobalSocketControl(nil)
-		logrus.Info("VPN socket protector cleared")
+		log().Info("VPN socket protector cleared")
 	}
 }
 
@@ -554,7 +553,7 @@ func resolveSystemDNSInConfig(cfg *config.Config, servers []string) {
 	if len(servers) == 0 {
 		return
 	}
-	logrus.Infof("system DNS servers: %v", servers)
+	log().Infof("system DNS servers: %v", servers)
 	idx := 0
 	for _, svc := range cfg.Services {
 		if svc == nil || svc.Handler == nil || svc.Handler.Type != "dns" || svc.Forwarder == nil {
@@ -571,7 +570,7 @@ func resolveSystemDNSInConfig(cfg *config.Config, servers []string) {
 			} else {
 				node.Addr = "udp://" + ip + ":53"
 			}
-			logrus.Infof("DNS forwarder %q: system → %s", node.Name, node.Addr)
+			log().Infof("DNS forwarder %q: system → %s", node.Name, node.Addr)
 		}
 	}
 }
