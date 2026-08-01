@@ -111,6 +111,13 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         // Read logging preferences from shared UserDefaults
         let level = AppGroupConfig.loggingEnabled ? AppGroupConfig.logLevel : "off"
         let logFile = containerURL.appendingPathComponent("gost.log").path
+
+        // Push the platform timezone so Go timestamps match the system clock.
+        // Android does the same (setTimezone(TimeZone.getDefault())); harmless
+        // but safe inside the NetworkExtension sandbox.
+        let tz = TimeZone.current
+        LibgostSetTimezone(tz.identifier, tz.secondsFromGMT())
+
         LibgostSetLogMaxSize(2 * 1024 * 1024)
         LibgostSetLogFile(logFile, nil)
         LibgostSetLogLevel(level)
