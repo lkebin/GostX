@@ -105,7 +105,7 @@ func (f *fakePacketConn) Close() error {
 	return nil
 }
 
-func (f *fakePacketConn) LocalAddr() net.Addr               { return &net.UDPAddr{} }
+func (f *fakePacketConn) LocalAddr() net.Addr                { return &net.UDPAddr{} }
 func (f *fakePacketConn) SetDeadline(t time.Time) error      { return nil }
 func (f *fakePacketConn) SetReadDeadline(t time.Time) error  { return nil }
 func (f *fakePacketConn) SetWriteDeadline(t time.Time) error { return nil }

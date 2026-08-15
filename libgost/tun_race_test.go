@@ -9,11 +9,11 @@ import (
 
 type fakeConn struct{}
 
-func (f *fakeConn) Close() error                       { return nil }
-func (f *fakeConn) Read(b []byte) (n int, err error)   { return 0, io.EOF }
-func (f *fakeConn) Write(b []byte) (n int, err error)  { return len(b), nil }
-func (f *fakeConn) LocalAddr() net.Addr                { return &net.TCPAddr{} }
-func (f *fakeConn) RemoteAddr() net.Addr               { return &net.TCPAddr{} }
+func (f *fakeConn) Close() error                      { return nil }
+func (f *fakeConn) Read(b []byte) (n int, err error)  { return 0, io.EOF }
+func (f *fakeConn) Write(b []byte) (n int, err error) { return len(b), nil }
+func (f *fakeConn) LocalAddr() net.Addr               { return &net.TCPAddr{} }
+func (f *fakeConn) RemoteAddr() net.Addr              { return &net.TCPAddr{} }
 
 func TestTrackableConnCloseRace(t *testing.T) {
 	for i := 0; i < 1000; i++ {

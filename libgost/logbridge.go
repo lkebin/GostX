@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -134,7 +135,7 @@ func enqueueLog(format string, args ...any) {
 
 var logDrainOnce sync.Once
 var logDrainErr error
-var logDrainRunning atomic.Bool      // true while drainLogFile is running
+var logDrainRunning atomic.Bool       // true while drainLogFile is running
 var logDrainCancel context.CancelFunc // non-nil while drain goroutine is running; for test cleanup
 
 // SetLogFile writes log messages to the given file path.
@@ -145,6 +146,15 @@ func SetLogFile(path string) error {
 		if err != nil {
 			logDrainErr = err
 			return
+		}
+		// Capture fatal crash output (uncaught panics, fatal errors such as a
+		// concurrent-map access) to the log file. The NetworkExtension's
+		// stderr is discarded by the OS, so without this the cause of a crash
+		// is completely invisible. SetCrashOutput takes effect for the whole
+		// process and survives even goroutines that have no recover().
+		if err := debug.SetCrashOutput(f, debug.CrashOptions{}); err != nil {
+			// best-effort; fall back to default (discarded) crash output
+			_ = err
 		}
 		ctx, cancel := context.WithCancel(context.Background())
 		logDrainCancel = cancel
