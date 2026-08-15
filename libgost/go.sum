@@ -42,6 +42,8 @@ github.com/go-gost/gosocks5 v0.5.0 h1:YE37l1MJwde8diIQdynStqogMotG5enoTdborhA5yi
 github.com/go-gost/gosocks5 v0.5.0/go.mod h1:1G6I7HP7VFVxveGkoK8mnprnJqSqJjdcASKsdUn4Pp4=
 github.com/go-gost/plugin v0.5.0 h1:zK3Ezcv+z6bz6aUhaFZcZiJc42w44ohybzrj5tnWzcM=
 github.com/go-gost/plugin v0.5.0/go.mod h1:oN23l+yGDCIP9G3KnDl/I/0zVGOobZUDCB2Z5yYYXts=
+github.com/go-gost/quic-dissector v0.1.0 h1:zOaw2XjKxMf6vVC1z4BHDKGHbCs4zrYU1Rxaz5d0TQU=
+github.com/go-gost/quic-dissector v0.1.0/go.mod h1:ar+I40Izq9ZT2k/aNnLFGEMvdeSOBLLKxhF/i3FSnQQ=
 github.com/go-gost/relay v0.7.0 h1:J8e3Sba6DtBJQotXY5j5EaZNWwtv6Z9CoCFQsnrHNcE=
 github.com/go-gost/relay v0.7.0/go.mod h1:Dku0f5sfjOClrZFiDmQUrYYJ4uof7rnkCUBfsl0PSAI=
 github.com/go-gost/tls-dissector v0.3.1 h1:gvOteWog5pjY/HCpc8l+gngmSi8Q6zl5rRrfK8gwRKA=
@@ -95,6 +97,8 @@ github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
 github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
+github.com/lkebin/go-gost-x v0.0.0-20260815140125-905d29ebbbc4 h1:DQJogG/Mu1xBNQU6QHxWn9gUEp9SPeFLBkIGZ/MyfLw=
+github.com/lkebin/go-gost-x v0.0.0-20260815140125-905d29ebbbc4/go.mod h1:ls992kwq4vzheGcVJgst1+/MfQjB8huU83rftYpDWYc=
 github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 h1:6E+4a0GO5zZEnZ81pIr0yLvtUWk2if982qA3F3QD6H4=
 github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0/go.mod h1:zJYVVT2jmtg6P3p1VtQj7WsuWi/y4VnjVBn7F8KPB3I=
 github.com/magiconair/properties v1.8.7 h1:IeQXZAiQcpL9mgcAe1Nu6cX9LLw6ExEHKjN0VQdvPDY=

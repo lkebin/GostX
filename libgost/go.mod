@@ -6,7 +6,6 @@ require (
 	github.com/go-gost/core v0.6.0
 	github.com/go-gost/tls-dissector v0.3.1
 	github.com/go-gost/x v0.4.2
-	github.com/miekg/dns v1.1.61
 	github.com/sagernet/sing v0.6.0-beta.2
 	github.com/sagernet/sing-tun v0.6.1
 	golang.org/x/sys v0.47.0
@@ -30,6 +29,7 @@ require (
 	github.com/go-gost/gosocks4 v0.1.0 // indirect
 	github.com/go-gost/gosocks5 v0.5.0 // indirect
 	github.com/go-gost/plugin v0.5.0 // indirect
+	github.com/go-gost/quic-dissector v0.1.0 // indirect
 	github.com/go-gost/relay v0.7.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
@@ -50,6 +50,7 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mdlayher/netlink v1.7.2 // indirect
 	github.com/mdlayher/socket v0.4.1 // indirect
+	github.com/miekg/dns v1.1.61 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
@@ -118,4 +119,4 @@ require (
 
 tool golang.org/x/mobile/cmd/gobind
 
-replace github.com/go-gost/x => /Users/kbliu/Workspace/src/gost-x
+replace github.com/go-gost/x => github.com/lkebin/go-gost-x v0.0.0-20260815140125-905d29ebbbc4

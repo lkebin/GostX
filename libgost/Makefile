@@ -57,6 +57,10 @@ macos-xcframework:
 	  -o Libgost.xcframework \
 	  .
 
+bump-gostx:
+	go mod edit -replace github.com/go-gost/x=github.com/lkebin/go-gost-x@gostx
+	go mod tidy
+
 clean:
 	rm -f libgost.aar libgost_debug.aar libgost-sources.jar debug-symbols.zip
 	rm -rf Libgost.xcframework
