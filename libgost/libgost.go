@@ -1,14 +1,12 @@
 package libgost
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
 	"math"
 	"net"
 	"os"
-	"path/filepath"
 	"runtime"
 	runtimeDebug "runtime/debug"
 	"strings"
@@ -141,7 +139,6 @@ func Start(yamlConfig string) (err error) {
 	// loader.Load() installs a fresh default logger via corelogger.SetDefault().
 	// Re-install ours now so gost internal logs also appear in the app UI.
 	installLogger()
-	diagBypassFiles(cfg)
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("panic in service startup: %v", r)
@@ -161,52 +158,6 @@ func Start(yamlConfig string) (err error) {
 	log().Infof("gost started: services=%d chains=%d hops=%d bypasses=%d",
 		len(cfg.Services), len(cfg.Chains), len(cfg.Hops), len(cfg.Bypasses))
 	return nil
-}
-
-// diagBypassFiles logs how each file-backed bypass resolved on this platform.
-// The gost process CWD differs between macOS and Android, so a relative
-// `file.path` can silently fail to load on one platform (leaving the bypass
-// with only its inline matchers) while working on the other. This pins that
-// down by logging the configured path, its resolved absolute path, and the
-// number of patterns actually readable from it.
-func diagBypassFiles(cfg *config.Config) {
-	if cfg == nil {
-		return
-	}
-	for _, bp := range cfg.Bypasses {
-		if bp == nil || bp.File == nil || bp.File.Path == "" {
-			continue
-		}
-		path := bp.File.Path
-		info, err := os.Stat(path)
-		if err != nil {
-			log().Warnf("[diag] bypass %q file %q: %v", bp.Name, path, err)
-			continue
-		}
-		lines, err := countFileLines(path)
-		if err != nil {
-			log().Warnf("[diag] bypass %q file %q: count lines: %v", bp.Name, path, err)
-			continue
-		}
-		abs, _ := filepath.Abs(path)
-		log().Infof("[diag] bypass %q file loaded: path=%q abs=%q bytes=%d lines=%d",
-			bp.Name, path, abs, info.Size(), lines)
-	}
-}
-
-// countFileLines counts the non-scanner-error lines in a text file.
-func countFileLines(path string) (int, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return 0, err
-	}
-	defer f.Close()
-	sc := bufio.NewScanner(f)
-	n := 0
-	for sc.Scan() {
-		n++
-	}
-	return n, sc.Err()
 }
 
 // normalizeDNSAddrsInConfig rewrites DNS service addresses from the IPv6
