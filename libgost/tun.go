@@ -166,7 +166,6 @@ func startVPNSingTun(fd, mtu int, chainName, dnsServiceAddr string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	handler := &singTunHandler{
 		router:         router,
-		chainer:        chainer,
 		dnsServiceAddr: dnsServiceAddr,
 	}
 	stack, err := singtun.NewStack(tunStackType, singtun.StackOptions{
@@ -248,8 +247,7 @@ func StopTun() error {
 // through a gost chain Router.
 type singTunHandler struct {
 	router         *xchain.Router
-	chainer        gostchain.Chainer // used to pre-decide proxy vs direct for the dial target
-	dnsServiceAddr string            // loopback address of the Gost DNS service, e.g. "127.0.0.1:5353"
+	dnsServiceAddr string // loopback address of the Gost DNS service, e.g. "127.0.0.1:5353"
 	activeConns    atomic.Int64
 
 	trackMu sync.Mutex
@@ -310,23 +308,6 @@ func (h *singTunHandler) dialTarget(destination M.Socksaddr) (addr, host string)
 	}
 	addr = net.JoinHostPort(destination.Addr.String(), port)
 	return addr, host
-}
-
-// dialTargetForRoute returns the address to dial. When a domain was recovered
-// (fakeip / DNS reverse / sniff) and the destination routes through the proxy,
-// the domain is dialed so the proxy re-resolves it server-side — the raw
-// destination IP may be a stale cache entry or a poisoned answer. Direct
-// (bypassed) destinations keep the real IP: they are domestic and already
-// carry a correct IP, and dialing by domain would force client-side DNS.
-func (h *singTunHandler) dialTargetForRoute(ctx context.Context, network, addr, host string) string {
-	if host == "" || h.chainer == nil {
-		return addr
-	}
-	route := h.chainer.Route(ctx, network, addr, gostchain.WithHostRouteOption(host))
-	if route != nil && len(route.Nodes()) > 0 {
-		return host
-	}
-	return addr
 }
 
 // PrepareConnection is a pre-flight hook called before each new session.
@@ -403,14 +384,6 @@ func (h *singTunHandler) NewConnectionEx(ctx context.Context, conn net.Conn, sou
 					log().Debugf("[tcp-route] sniff: %v -> SNI %q", destination, d)
 				}
 			}
-			// Dial by the recovered domain when the destination routes through
-			// the proxy (see dialTargetForRoute). The destination may be a
-			// stale/poisoned real IP even though we know the correct domain —
-			// dialing that raw IP through the proxy times out.
-			if newAddr := h.dialTargetForRoute(ctx, "tcp", addr, host); newAddr != addr {
-				addr = newAddr
-				log().Debugf("[tcp-route] dial-by-domain: %v -> %q (proxy re-resolves)", destination, addr)
-			}
 			// Route via the Router, which applies the upstream chain bypass
 			// internally on BOTH addr (the actual dial target: the hostname for
 			// proxy domains, the real IP for direct) and host (the recovered or
@@ -467,11 +440,6 @@ func (h *singTunHandler) NewPacketConnectionEx(ctx context.Context, conn N.Packe
 			upstream, err = net.Dial("udp", h.dnsServiceAddr)
 		} else {
 			addr, host := h.dialTarget(destination)
-			// Same dial-by-domain rule as TCP (see dialTargetForRoute).
-			if newAddr := h.dialTargetForRoute(ctx, "udp", addr, host); newAddr != addr {
-				addr = newAddr
-				log().Debugf("[udp-route] dial-by-domain: %v -> %q (proxy re-resolves)", destination, addr)
-			}
 			// Same as TCP: the Router applies the chain bypass on addr and host.
 			upstream, err = h.router.DialWithHost(ctx, "udp", addr, host)
 		}

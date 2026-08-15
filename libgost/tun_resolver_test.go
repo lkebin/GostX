@@ -102,30 +102,3 @@ func TestDialTargetRecoveredHost(t *testing.T) {
 		t.Fatalf("fakeip hit: addr %q should equal host %q (both the domain)", addr, host)
 	}
 }
-
-// TestDialTargetForRoute verifies the dial-by-domain decision: a recovered
-// domain that routes through the proxy makes the dial target the domain (so
-// the proxy re-resolves it — the raw IP may be stale/poisoned), while a
-// direct (bypassed) destination keeps the real IP (no client-side DNS).
-func TestDialTargetForRoute(t *testing.T) {
-	chainer := &mockChainer{proxyDomains: map[string]bool{"proxy.com": true}}
-	h := &singTunHandler{chainer: chainer}
-	ctx := context.Background()
-
-	// Proxied domain with a (stale/poisoned) real IP -> dial by domain.
-	if got := h.dialTargetForRoute(ctx, "tcp", "157.240.7.20:443", "proxy.com:443"); got != "proxy.com:443" {
-		t.Fatalf("proxy domain: dial target %q, want domain %q", got, "proxy.com:443")
-	}
-	// Direct domain -> keep the real IP.
-	if got := h.dialTargetForRoute(ctx, "tcp", "220.181.111.232:80", "direct.com:80"); got != "220.181.111.232:80" {
-		t.Fatalf("direct domain: dial target %q, want real IP", got)
-	}
-	// No recovered domain -> keep addr.
-	if got := h.dialTargetForRoute(ctx, "tcp", "220.181.111.232:80", ""); got != "220.181.111.232:80" {
-		t.Fatalf("no domain: dial target %q, want real IP", got)
-	}
-	// Nil chainer -> keep addr (no route decision available).
-	if got := (&singTunHandler{}).dialTargetForRoute(ctx, "tcp", "1.2.3.4:80", "x.com:80"); got != "1.2.3.4:80" {
-		t.Fatalf("nil chainer: dial target %q, want real IP", got)
-	}
-}
