@@ -235,6 +235,14 @@ func StopTun() error {
 	}
 	pauseMu.Unlock()
 
+	// Release the handler's chain router before dropping it. The VPN chain is
+	// attached only to the extracted tungo service, so no service closer
+	// reaches it; without this the node transports (and any tunnel resources
+	// they hold, e.g. dialer/wg's WireGuard device) would survive until the
+	// next StartGost's loader.Load unregisters the old chain.
+	if h := tunHandler; h != nil {
+		h.close()
+	}
 	tunHandler = nil
 	resetConnCounters()
 	drainStaleLogs()
@@ -270,6 +278,19 @@ func (h *singTunHandler) untrack(tc *trackableConn) {
 			h.tracked = h.tracked[:len(h.tracked)-1]
 			return
 		}
+	}
+}
+
+// close releases the handler's runtime resources: tracked sessions, then the
+// chain router (Router.Close -> Chain.Close -> hop -> node transport, i.e. the
+// WireGuard device held by dialer/wg).
+func (h *singTunHandler) close() {
+	if h == nil {
+		return
+	}
+	h.closeTracked()
+	if h.router != nil {
+		h.router.Close()
 	}
 }
 
