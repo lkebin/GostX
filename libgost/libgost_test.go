@@ -15,6 +15,7 @@ import (
 	"time"
 
 	coreservice "github.com/go-gost/core/service"
+	"github.com/go-gost/x/resolver"
 )
 
 const testYAML = `
@@ -133,6 +134,30 @@ services:
       metadata:
         mode: udp`
 
+const testVPNFakeIPYAML = `
+chains:
+  - name: default
+    hops:
+      - nodes:
+          - connector:
+              type: direct
+services:
+  - name: _test_tungo
+    handler:
+      type: tungo
+      chain: default
+  - name: test-dns-fakeip
+    addr: 127.0.0.1:0
+    handler:
+      type: dns
+    forwarder:
+      nodes:
+        - addr: fakeip://?inet4=198.18.0.0/15&inet6=fc00::/18
+    listener:
+      type: dns
+      metadata:
+        mode: udp`
+
 type fakeService struct {
 	addr          net.Addr
 	serveStarted  chan struct{}
@@ -181,6 +206,7 @@ func resetTestState(t *testing.T) {
 	running = false
 	stopping = false
 	cancelFn = nil
+	fakeIPState = nil
 	vpnChainName = ""
 	vpnDNSServiceAddr = ""
 	mu.Unlock()
@@ -425,6 +451,68 @@ func TestGetVPNDNSAddrWithService(t *testing.T) {
 
 	if got := GetVPNDNSAddr(); got != vpnDNSVirtualAddr {
 		t.Fatalf("GetVPNDNSAddr() = %q, want %q", got, vpnDNSVirtualAddr)
+	}
+}
+
+func TestStartGostFakeIPPersistenceLifecycle(t *testing.T) {
+	resetTestState(t)
+	t.Chdir(t.TempDir())
+	resolver.SetFakeIPStore(nil)
+	t.Cleanup(func() { resolver.SetFakeIPStore(nil) })
+
+	if err := StartGost(testVPNFakeIPYAML, ""); err != nil {
+		t.Fatalf("StartGost() failed: %v", err)
+	}
+	waitForRunning(t)
+	store, ok := resolver.GetFakeIPStore().(resolver.FakeIPAllocator)
+	if !ok {
+		t.Fatalf("expected preloaded fakeip allocator, got %T", resolver.GetFakeIPStore())
+	}
+	oldAddr, err := store.Create("example.com", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := StopGost(); err != nil {
+		t.Fatalf("StopGost() failed: %v", err)
+	}
+	if resolver.GetFakeIPStore() != nil {
+		t.Fatal("StopGost should clear fakeip store")
+	}
+	if _, err := os.Stat(fakeIPStateFile); err != nil {
+		t.Fatalf("StopGost did not save fakeip state: %v", err)
+	}
+
+	if err := StartGost(testVPNFakeIPYAML, ""); err != nil {
+		t.Fatalf("StartGost() restore failed: %v", err)
+	}
+	defer func() {
+		if err := StopGost(); err != nil {
+			t.Errorf("final StopGost() failed: %v", err)
+		}
+	}()
+	waitForRunning(t)
+	if domain, ok := resolver.FakeIPLookup(oldAddr); !ok || domain != "example.com" {
+		t.Fatalf("restored FakeIPLookup(%s) = (%q, %v)", oldAddr, domain, ok)
+	}
+}
+
+func TestStartGostFakeIPPersistenceLoadFailure(t *testing.T) {
+	resetTestState(t)
+	t.Chdir(t.TempDir())
+	resolver.SetFakeIPStore(nil)
+	t.Cleanup(func() { resolver.SetFakeIPStore(nil) })
+	if err := os.WriteFile(fakeIPStateFile, []byte("not json"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := StartGost(testVPNFakeIPYAML, ""); err == nil {
+		t.Fatal("StartGost should reject malformed fakeip state")
+	}
+	if IsRunning() {
+		t.Fatal("StartGost must not start services after fakeip load failure")
+	}
+	if resolver.GetFakeIPStore() != nil {
+		t.Fatal("failed fakeip load must not leave a global store")
 	}
 }
 

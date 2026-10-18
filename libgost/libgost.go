@@ -66,12 +66,13 @@ import (
 )
 
 var (
-	mu       sync.Mutex
-	running  bool
-	stopping bool
-	services []service.Service
-	cancelFn context.CancelFunc
-	serveWg  sync.WaitGroup
+	mu          sync.Mutex
+	running     bool
+	stopping    bool
+	services    []service.Service
+	cancelFn    context.CancelFunc
+	serveWg     sync.WaitGroup
+	fakeIPState *fakeIPPersistence
 
 	// vpnChainName is the gost chain name extracted from the tungo service in
 	// the user's config. StartTun uses this to route gVisor TCP/UDP sessions
@@ -215,12 +216,22 @@ func detectVPNDNSService(cfg *config.Config) string {
 // When non-empty, any forwarder node with addr: "system" is replaced with an
 // address derived from the next server in the list.
 func StartGost(yamlConfig string, systemDNS string) (err error) {
+	var fakeState *fakeIPPersistence
+	started := false
 	defer func() {
 		if r := recover(); r != nil {
 			buf := make([]byte, 4096)
 			n := runtime.Stack(buf, false)
 			err = fmt.Errorf("panic in StartGost: %v\n%s", r, buf[:n])
 			log().Errorf("StartGost: panic recovered: %v\n%s", r, buf[:n])
+		}
+		if !started && fakeState != nil {
+			_ = fakeState.close()
+			mu.Lock()
+			if fakeIPState == fakeState {
+				fakeIPState = nil
+			}
+			mu.Unlock()
 		}
 	}()
 
@@ -242,10 +253,16 @@ func StartGost(yamlConfig string, systemDNS string) (err error) {
 	}
 
 	dnsServiceAddr := detectVPNDNSService(cfg)
+	fakeState, err = prepareFakeIPPersistence(cfg)
+	if err != nil {
+		log().Errorf("StartGost: prepare fakeip persistence: %v", err)
+		return err
+	}
 
 	mu.Lock()
 	vpnChainName = chainName
 	vpnDNSServiceAddr = dnsServiceAddr
+	fakeIPState = fakeState
 	mu.Unlock()
 
 	b, err := yaml.Marshal(filtered)
@@ -257,6 +274,7 @@ func StartGost(yamlConfig string, systemDNS string) (err error) {
 		log().Errorf("StartGost: start failed: %v", err)
 		return err
 	}
+	started = true
 	return nil
 }
 
@@ -300,6 +318,8 @@ func StopGost() error {
 	services = nil
 	cancel := cancelFn
 	cancelFn = nil
+	fakeState := fakeIPState
+	fakeIPState = nil
 	mu.Unlock()
 
 	cancel() // guaranteed non-nil: cancelFn is always set before running=true
@@ -326,11 +346,19 @@ func StopGost() error {
 	case <-time.After(5 * time.Second):
 	}
 
+	var persistErr error
+	if fakeState != nil {
+		persistErr = fakeState.save()
+		if err := fakeState.close(); persistErr == nil {
+			persistErr = err
+		}
+	}
+
 	mu.Lock()
 	stopping = false
 	stateCond.Broadcast()
 	mu.Unlock()
-	return nil
+	return persistErr
 }
 
 // IsRunning returns true if gost is currently running.
