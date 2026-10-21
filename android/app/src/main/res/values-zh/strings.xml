@@ -95,7 +95,7 @@
 
     <!-- App filter screen -->
     <string name="app_filter_title">分应用代理</string>
-    <string name="app_filter_search_hint">搜索应用名…</string>
+    <string name="app_filter_search_hint">搜索应用名或包名…</string>
     <string name="app_filter_action_done">完成</string>
     <string name="app_filter_whitelist_empty_hint">白名单模式至少选择一个应用</string>
     <string name="app_filter_show_all">显示全部应用</string>

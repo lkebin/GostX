@@ -93,7 +93,7 @@
 
     <!-- App filter screen -->
     <string name="app_filter_title">Per-app proxy</string>
-    <string name="app_filter_search_hint">Search apps…</string>
+    <string name="app_filter_search_hint">Search name or package…</string>
     <string name="app_filter_action_done">Done</string>
     <string name="app_filter_whitelist_empty_hint">Select at least one app for whitelist mode</string>
     <string name="app_filter_show_all">Show all apps</string>

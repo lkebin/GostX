@@ -43,7 +43,9 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cn.liukebin.gostx.R
@@ -94,6 +96,10 @@ fun AppFilterScreen(
     )
 ) {
     val uiState by vm.uiState.collectAsState()
+
+    // ROMs may pop a "read installed apps" prompt on the first package query.
+    // Refresh on resume so the list fills in right after it is granted.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.refresh() }
 
     Scaffold(
         topBar = {
