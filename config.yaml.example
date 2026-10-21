@@ -20,3 +20,64 @@ chains:
             dialer:
               type: tcp
 
+
+# --- Split tunnel through WireGuard -----------------------------------------
+#
+# Targets covered by the whitelisted bypass go through the WireGuard peer;
+# everything else bypasses the chain and is dialed directly (the app protects
+# its own sockets, so direct traffic does not loop back into the TUN).
+#
+# bypasses:
+#   - name: wg-ips
+#     whitelist: true
+#     matchers:
+#       - 10.8.0.0/16
+#       - 192.168.9.13
+# chains:
+#   - name: vpn-chain-wg
+#     hops:
+#       - name: wg-hop
+#         bypass: wg-ips
+#         nodes:
+#           - name: wg-node
+#             dialer:
+#               type: wg
+#               metadata:
+#                 privateKey: "<client private key, base64>"
+#                 peerPublicKey: "<server public key, base64>"
+#                 endpoint: wg.example.com:51820
+#                 localIPs: 10.7.0.2/32
+#                 # allowedIPs defaults to 0.0.0.0/0; keep it that way and let
+#                 # the bypass decide what enters the tunnel.
+#                 mtu: 1420
+#                 keepalive: 25s
+#             connector:
+#               type: wg
+# services:
+#   - name: vpn
+#     handler:
+#       type: tungo
+#       chain: vpn-chain-wg
+
+# --- Pull specific destinations into the tunnel (macOS/iOS) ----------------
+#
+# The tunnel's default route is not enough for a destination that shares a
+# subnet with the network you are currently on: the OS routes it on-link (out
+# the physical interface) and it never reaches gost. List those destinations in
+# the tungo handler's metadata so the tunnel carries an explicit route for them.
+#
+# Keep this list in sync with the wg node's bypass whitelist (the bypass decides
+# which node carries the flow once it is inside the tunnel).
+#
+# services:
+#   - name: vpn
+#     handler:
+#       type: tungo
+#       chain: upstream
+#       metadata:
+#         routes: 192.168.2.22/32      # single host (recommended: smallest blast radius)
+#         # routes: 192.168.2.0/24     # or a whole subnet — while the VPN is up the
+#         #                            # local devices on that subnet become unreachable
+#
+# Android already routes 0.0.0.0/0 into the tunnel, so this key is only used by
+# the macOS/iOS packet tunnel provider. IPv6 entries are currently ignored.

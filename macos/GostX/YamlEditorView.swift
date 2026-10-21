@@ -114,8 +114,15 @@ struct YamlTextView: NSViewRepresentable {
         textView.textStorage?.delegate = context.coordinator
 
         // Initial content
+        context.coordinator.needsBindingSync = false
         textView.string = text
         YamlTextView.applyHighlighting(text, to: textView.textStorage!)
+        // From here on every text change originates from user editing, so it must
+        // be propagated to the binding. Relying on updateNSView to enable this
+        // fails when the editor is created with text already equal to the
+        // binding value (e.g. reopening the editor after a save), which silently
+        // drops all subsequent keystrokes.
+        context.coordinator.needsBindingSync = true
 
         return scrollView
     }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"net/netip"
 	"os"
 	"runtime"
 	runtimeDebug "runtime/debug"
@@ -31,6 +32,7 @@ import (
 	_ "github.com/go-gost/x/connector/socks/v5"
 	_ "github.com/go-gost/x/connector/ss"
 	_ "github.com/go-gost/x/connector/tcp"
+	_ "github.com/go-gost/x/connector/wg"
 	_ "github.com/go-gost/x/dialer/grpc"
 	_ "github.com/go-gost/x/dialer/http2"
 	_ "github.com/go-gost/x/dialer/http2/h2"
@@ -44,6 +46,7 @@ import (
 	_ "github.com/go-gost/x/dialer/tcp"
 	_ "github.com/go-gost/x/dialer/tls"
 	_ "github.com/go-gost/x/dialer/udp"
+	_ "github.com/go-gost/x/dialer/wg"
 	_ "github.com/go-gost/x/dialer/ws"
 	_ "github.com/go-gost/x/handler/dns"
 	_ "github.com/go-gost/x/handler/forward/local"
@@ -66,12 +69,13 @@ import (
 )
 
 var (
-	mu       sync.Mutex
-	running  bool
-	stopping bool
-	services []service.Service
-	cancelFn context.CancelFunc
-	serveWg  sync.WaitGroup
+	mu          sync.Mutex
+	running     bool
+	stopping    bool
+	services    []service.Service
+	cancelFn    context.CancelFunc
+	serveWg     sync.WaitGroup
+	fakeIPState *fakeIPPersistence
 
 	// vpnChainName is the gost chain name extracted from the tungo service in
 	// the user's config. StartTun uses this to route gVisor TCP/UDP sessions
@@ -215,12 +219,22 @@ func detectVPNDNSService(cfg *config.Config) string {
 // When non-empty, any forwarder node with addr: "system" is replaced with an
 // address derived from the next server in the list.
 func StartGost(yamlConfig string, systemDNS string) (err error) {
+	var fakeState *fakeIPPersistence
+	started := false
 	defer func() {
 		if r := recover(); r != nil {
 			buf := make([]byte, 4096)
 			n := runtime.Stack(buf, false)
 			err = fmt.Errorf("panic in StartGost: %v\n%s", r, buf[:n])
 			log().Errorf("StartGost: panic recovered: %v\n%s", r, buf[:n])
+		}
+		if !started && fakeState != nil {
+			_ = fakeState.close()
+			mu.Lock()
+			if fakeIPState == fakeState {
+				fakeIPState = nil
+			}
+			mu.Unlock()
 		}
 	}()
 
@@ -242,10 +256,16 @@ func StartGost(yamlConfig string, systemDNS string) (err error) {
 	}
 
 	dnsServiceAddr := detectVPNDNSService(cfg)
+	fakeState, err = prepareFakeIPPersistence(cfg)
+	if err != nil {
+		log().Errorf("StartGost: prepare fakeip persistence: %v", err)
+		return err
+	}
 
 	mu.Lock()
 	vpnChainName = chainName
 	vpnDNSServiceAddr = dnsServiceAddr
+	fakeIPState = fakeState
 	mu.Unlock()
 
 	b, err := yaml.Marshal(filtered)
@@ -257,6 +277,7 @@ func StartGost(yamlConfig string, systemDNS string) (err error) {
 		log().Errorf("StartGost: start failed: %v", err)
 		return err
 	}
+	started = true
 	return nil
 }
 
@@ -283,6 +304,89 @@ func extractTungoService(cfg *config.Config) (chainName string, filtered *config
 	return chainName, filtered
 }
 
+// VPNRoutes returns the comma-separated destination prefixes that the VPN
+// tunnel must explicitly include, taken from the extracted tungo service's
+// handler metadata:
+//
+//	services:
+//	  - name: vpn
+//	    handler:
+//	      type: tungo
+//	      chain: upstream
+//	      metadata:
+//	        routes: 192.168.2.22/32, 172.16.5.0/24
+//
+// The macOS/iOS packet tunnel provider adds them to NEPacketTunnelNetworkSettings
+// before starting gost, because a destination that shares a subnet with the local
+// network would otherwise be routed on-link (out the physical interface) instead
+// of into the tunnel. A bare address is treated as a single host; invalid entries
+// are dropped (and logged) so a typo cannot break the whole tunnel. Returns an
+// empty string when there is no tungo service or no routes.
+func VPNRoutes(yamlConfig string) string {
+	cfg := &config.Config{}
+	if err := yaml.Unmarshal([]byte(yamlConfig), cfg); err != nil {
+		return ""
+	}
+
+	for _, svc := range cfg.Services {
+		if svc == nil || svc.Handler == nil || svc.Handler.Type != "tungo" {
+			continue
+		}
+		return normalizeVPNRoutes(svc.Handler.Metadata)
+	}
+	return ""
+}
+
+// normalizeVPNRoutes reads the route list from the handler metadata (accepting a
+// comma/space separated string or a list) and returns the validated prefixes.
+func normalizeVPNRoutes(md map[string]any) string {
+	if md == nil {
+		return ""
+	}
+
+	var raw []string
+	for _, key := range []string{"routes", "route", "vpn.routes"} {
+		v, ok := md[key]
+		if !ok {
+			continue
+		}
+		switch t := v.(type) {
+		case string:
+			raw = append(raw, strings.FieldsFunc(t, func(r rune) bool {
+				return r == ',' || r == ' ' || r == '\t' || r == '\n'
+			})...)
+		case []string:
+			raw = append(raw, t...)
+		case []any:
+			for _, item := range t {
+				if s, ok := item.(string); ok {
+					raw = append(raw, s)
+				}
+			}
+		default:
+			log().Warnf("VPNRoutes: unsupported %s value %T, ignoring", key, v)
+		}
+	}
+
+	prefixes := make([]string, 0, len(raw))
+	for _, s := range raw {
+		s = strings.TrimSpace(s)
+		if s == "" {
+			continue
+		}
+		if p, err := netip.ParsePrefix(s); err == nil {
+			prefixes = append(prefixes, p.String())
+			continue
+		}
+		if a, err := netip.ParseAddr(s); err == nil {
+			prefixes = append(prefixes, netip.PrefixFrom(a, a.BitLen()).String())
+			continue
+		}
+		log().Warnf("VPNRoutes: invalid route %q, ignoring", s)
+	}
+	return strings.Join(prefixes, ",")
+}
+
 // Stop stops all running gost services.
 func StopGost() error {
 	mu.Lock()
@@ -300,6 +404,8 @@ func StopGost() error {
 	services = nil
 	cancel := cancelFn
 	cancelFn = nil
+	fakeState := fakeIPState
+	fakeIPState = nil
 	mu.Unlock()
 
 	cancel() // guaranteed non-nil: cancelFn is always set before running=true
@@ -326,11 +432,19 @@ func StopGost() error {
 	case <-time.After(5 * time.Second):
 	}
 
+	var persistErr error
+	if fakeState != nil {
+		persistErr = fakeState.save()
+		if err := fakeState.close(); persistErr == nil {
+			persistErr = err
+		}
+	}
+
 	mu.Lock()
 	stopping = false
 	stateCond.Broadcast()
 	mu.Unlock()
-	return nil
+	return persistErr
 }
 
 // IsRunning returns true if gost is currently running.

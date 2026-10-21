@@ -71,10 +71,6 @@ DNS queries to `10.0.0.3:53` (the virtual DNS address) are intercepted by the tr
 - VPN lifecycle must call `LibgostBridge.setMemoryLimit(true)` on start (caps heap at 100MB, GOGC=50) and `false` on stop to restore defaults.
 - `Stop()` has a 5-second timeout on `serveWg.Wait()` to guarantee it always returns.
 
-### Superpowers
-
-- DO NOT help me submit code in git
-
 ## Multilingual (i18n)
 
 - Default strings in `android/app/src/main/res/values/strings.xml` must be **English** — concise, matching the existing style (e.g. "Running", "No logs", "Log level")
