@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"net/netip"
 	"os"
 	"runtime"
 	runtimeDebug "runtime/debug"
@@ -301,6 +302,89 @@ func extractTungoService(cfg *config.Config) (chainName string, filtered *config
 	}
 
 	return chainName, filtered
+}
+
+// VPNRoutes returns the comma-separated destination prefixes that the VPN
+// tunnel must explicitly include, taken from the extracted tungo service's
+// handler metadata:
+//
+//	services:
+//	  - name: vpn
+//	    handler:
+//	      type: tungo
+//	      chain: upstream
+//	      metadata:
+//	        routes: 192.168.2.22/32, 172.16.5.0/24
+//
+// The macOS/iOS packet tunnel provider adds them to NEPacketTunnelNetworkSettings
+// before starting gost, because a destination that shares a subnet with the local
+// network would otherwise be routed on-link (out the physical interface) instead
+// of into the tunnel. A bare address is treated as a single host; invalid entries
+// are dropped (and logged) so a typo cannot break the whole tunnel. Returns an
+// empty string when there is no tungo service or no routes.
+func VPNRoutes(yamlConfig string) string {
+	cfg := &config.Config{}
+	if err := yaml.Unmarshal([]byte(yamlConfig), cfg); err != nil {
+		return ""
+	}
+
+	for _, svc := range cfg.Services {
+		if svc == nil || svc.Handler == nil || svc.Handler.Type != "tungo" {
+			continue
+		}
+		return normalizeVPNRoutes(svc.Handler.Metadata)
+	}
+	return ""
+}
+
+// normalizeVPNRoutes reads the route list from the handler metadata (accepting a
+// comma/space separated string or a list) and returns the validated prefixes.
+func normalizeVPNRoutes(md map[string]any) string {
+	if md == nil {
+		return ""
+	}
+
+	var raw []string
+	for _, key := range []string{"routes", "route", "vpn.routes"} {
+		v, ok := md[key]
+		if !ok {
+			continue
+		}
+		switch t := v.(type) {
+		case string:
+			raw = append(raw, strings.FieldsFunc(t, func(r rune) bool {
+				return r == ',' || r == ' ' || r == '\t' || r == '\n'
+			})...)
+		case []string:
+			raw = append(raw, t...)
+		case []any:
+			for _, item := range t {
+				if s, ok := item.(string); ok {
+					raw = append(raw, s)
+				}
+			}
+		default:
+			log().Warnf("VPNRoutes: unsupported %s value %T, ignoring", key, v)
+		}
+	}
+
+	prefixes := make([]string, 0, len(raw))
+	for _, s := range raw {
+		s = strings.TrimSpace(s)
+		if s == "" {
+			continue
+		}
+		if p, err := netip.ParsePrefix(s); err == nil {
+			prefixes = append(prefixes, p.String())
+			continue
+		}
+		if a, err := netip.ParseAddr(s); err == nil {
+			prefixes = append(prefixes, netip.PrefixFrom(a, a.BitLen()).String())
+			continue
+		}
+		log().Warnf("VPNRoutes: invalid route %q, ignoring", s)
+	}
+	return strings.Join(prefixes, ",")
 }
 
 // Stop stops all running gost services.

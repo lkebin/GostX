@@ -46,7 +46,15 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         // Both 10.0.0.2 and 10.0.0.3 must be registered so the kernel
         // accepts packets the system stack rewrites (source→10.0.0.3).
         let ipv4 = NEIPv4Settings(addresses: ["10.0.0.2", "10.0.0.3"], subnetMasks: ["255.255.255.0", "255.255.255.0"])
-        ipv4.includedRoutes = [NEIPv4Route.default()]
+        // Routes the profile asks to pull into the tunnel (handler.metadata.routes).
+        // A destination that shares a subnet with the local network is routed
+        // on-link (out the physical interface), so it would never reach gost
+        // unless the tunnel also carries an explicit route for it.
+        let extraRoutes = Self.includedIPv4Routes(from: LibgostVPNRoutes(yaml))
+        if !extraRoutes.isEmpty {
+            os_log(.default, "[GostX] including %d extra route(s) in the tunnel", extraRoutes.count)
+        }
+        ipv4.includedRoutes = [NEIPv4Route.default()] + extraRoutes
         settings.ipv4Settings = ipv4
         settings.dnsSettings = NEDNSSettings(servers: ["10.0.0.3"])
 
@@ -123,5 +131,39 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         LibgostSetLogLevel(level)
         os_log(.default, "[GostX] logging: enabled=%{public}@ level=%{public}@",
                AppGroupConfig.loggingEnabled ? "yes" : "no", level)
+    }
+
+    // MARK: - Route list
+
+    /// Parses the comma-separated list returned by LibgostVPNRoutes
+    /// (e.g. "192.168.2.22/32,172.16.5.0/24") into tunnel routes.
+    /// IPv6 entries are skipped: the tunnel does not configure IPv6 settings yet.
+    private static func includedIPv4Routes(from csv: String) -> [NEIPv4Route] {
+        var routes: [NEIPv4Route] = []
+        for rawEntry in csv.split(separator: ",") {
+            let entry = rawEntry.trimmingCharacters(in: .whitespaces)
+            if entry.isEmpty { continue }
+
+            let parts = entry.split(separator: "/")
+            guard let address = parts.first, address.contains(".") else {
+                os_log(.default, "[GostX] skipping non-IPv4 route %{public}@", entry)
+                continue
+            }
+            guard let bits = parts.count > 1 ? Int(parts[1]) : 32, (0...32).contains(bits) else {
+                os_log(.error, "[GostX] invalid route %{public}@", entry)
+                continue
+            }
+
+            routes.append(NEIPv4Route(destinationAddress: String(address), subnetMask: ipv4Mask(bits)))
+        }
+        return routes
+    }
+
+    /// Dotted-quad netmask for a prefix length.
+    private static func ipv4Mask(_ bits: Int) -> String {
+        let value: UInt32 = bits == 0 ? 0 : ~UInt32(0) << UInt32(32 - bits)
+        return [24, 16, 8, 0]
+            .map { String((value >> UInt32($0)) & 0xFF) }
+            .joined(separator: ".")
     }
 }

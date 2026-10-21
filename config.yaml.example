@@ -58,3 +58,26 @@ chains:
 #     handler:
 #       type: tungo
 #       chain: vpn-chain-wg
+
+# --- Pull specific destinations into the tunnel (macOS/iOS) ----------------
+#
+# The tunnel's default route is not enough for a destination that shares a
+# subnet with the network you are currently on: the OS routes it on-link (out
+# the physical interface) and it never reaches gost. List those destinations in
+# the tungo handler's metadata so the tunnel carries an explicit route for them.
+#
+# Keep this list in sync with the wg node's bypass whitelist (the bypass decides
+# which node carries the flow once it is inside the tunnel).
+#
+# services:
+#   - name: vpn
+#     handler:
+#       type: tungo
+#       chain: upstream
+#       metadata:
+#         routes: 192.168.2.22/32      # single host (recommended: smallest blast radius)
+#         # routes: 192.168.2.0/24     # or a whole subnet — while the VPN is up the
+#         #                            # local devices on that subnet become unreachable
+#
+# Android already routes 0.0.0.0/0 into the tunnel, so this key is only used by
+# the macOS/iOS packet tunnel provider. IPv6 entries are currently ignored.
