@@ -76,6 +76,22 @@ class AppFilterViewModelTest {
         assertTrue(state.filtered.isEmpty())
     }
 
+    @Test fun `filtered matches package name`() {
+        val state = AppFilterUiState(apps = fakeApps, query = "com.c", showAll = true)
+        assertEquals(listOf(InstalledApp("com.c", "Zcustom", false)), state.filtered)
+    }
+
+    @Test fun `filtered matches partial package name`() {
+        val state = AppFilterUiState(apps = fakeApps, query = "com.b", showAll = true)
+        assertTrue(state.filtered.any { it.packageName == "com.b" })
+    }
+
+    @Test fun `filtered matches package name case-insensitively`() {
+        val apps = listOf(InstalledApp("com.Example.App", "Whatever", true))
+        val state = AppFilterUiState(apps = apps, query = "com.example", showAll = true)
+        assertEquals(1, state.filtered.size)
+    }
+
     @Test fun `canSave is true in blacklist mode with empty selection`() {
         val state = AppFilterUiState(isWhitelistMode = false, selected = emptySet())
         assertTrue(state.canSave)
@@ -154,6 +170,43 @@ class AppFilterViewModelTest {
         assertTrue(vm.uiState.value.showAll)
         vm.toggleShowAll()
         assertFalse(vm.uiState.value.showAll)
+    }
+
+    @Test fun `refresh retries while the app list comes back empty`() = runTest(dispatcher) {
+        var calls = 0
+        val vm = AppFilterViewModel(repo) {
+            calls++
+            if (calls == 1) emptyList() else fakeApps
+        }
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.isLoading)
+        assertEquals(fakeApps, vm.uiState.value.apps)
+    }
+
+    @Test fun `refresh reloads the list once the permission is granted`() = runTest(dispatcher) {
+        var granted = false
+        val vm = AppFilterViewModel(repo) { if (granted) fakeApps else emptyList() }
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.apps.isEmpty())
+
+        granted = true
+        vm.refresh()
+        advanceUntilIdle()
+
+        assertEquals(fakeApps, vm.uiState.value.apps)
+    }
+
+    @Test fun `refresh keeps the current selection`() = runTest(dispatcher) {
+        var granted = false
+        val vm = AppFilterViewModel(repo) { if (granted) fakeApps else emptyList() }
+        advanceUntilIdle()
+        vm.toggleApp("com.a")
+
+        granted = true
+        vm.refresh()
+        advanceUntilIdle()
+
+        assertEquals(setOf("com.a"), vm.uiState.value.selected)
     }
 
     @Test fun `loading failure clears spinner and returns empty list`() = runTest(dispatcher) {
