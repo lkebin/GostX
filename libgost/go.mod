@@ -122,4 +122,4 @@ require (
 
 tool golang.org/x/mobile/cmd/gobind
 
-replace github.com/go-gost/x => github.com/lkebin/go-gost-x v0.0.0-20261021025151-74d087118838
+replace github.com/go-gost/x => github.com/lkebin/go-gost-x v0.0.0-20261027025814-3e6bfe0eae5b
