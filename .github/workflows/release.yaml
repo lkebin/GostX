@@ -29,6 +29,10 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # The action's default packages include the retired `tools` package,
+          # which now fails sdkmanager as "Failed to find package 'tools'".
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
 
       - name: Setup NDK
         uses: nttld/setup-ndk@v1
