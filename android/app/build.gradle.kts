@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "cn.liukebin.gostx"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "cn.liukebin.gostx"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = (System.currentTimeMillis() / 60000).toInt()
         versionName = runCatching {
             Runtime.getRuntime().exec(arrayOf("git", "describe", "--tags", "--exact-match"), null, rootDir)
