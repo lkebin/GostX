@@ -1,11 +1,15 @@
 on:
   push:
     tags:
-      - '*'
+      - 'v*'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # When the secret is absent the Google Play upload step is skipped,
+      # so tag builds keep working on forks without Play credentials.
+      PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,6 +50,18 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Upload to Google Play
+        if: env.PLAY_SERVICE_ACCOUNT_JSON != ''
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ env.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: cn.liukebin.gostx
+          releaseFiles: android/app/build/outputs/bundle/release/*.aab
+          track: production
+          # draft: the bundle lands on the production track as a draft release;
+          # nothing is submitted for review until published manually in Play Console.
+          status: draft
 
       - name: Release
         uses: softprops/action-gh-release@v2
