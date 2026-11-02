@@ -62,7 +62,7 @@ jobs:
           serviceAccountJsonPlainText: ${{ env.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: cn.liukebin.gostx
           releaseFiles: android/app/build/outputs/bundle/release/*.aab
-          track: production
+          tracks: production
           # draft: the bundle lands on the production track as a draft release;
           # nothing is submitted for review until published manually in Play Console.
           status: draft
