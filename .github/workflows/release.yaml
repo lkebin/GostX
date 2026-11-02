@@ -66,6 +66,7 @@ jobs:
           # draft: the bundle lands on the production track as a draft release;
           # nothing is submitted for review until published manually in Play Console.
           status: draft
+          whatsNewDirectory: distribution/whatsnew
 
       - name: Release
         uses: softprops/action-gh-release@v2

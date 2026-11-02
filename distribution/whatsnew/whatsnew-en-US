@@ -1,0 +1,5 @@
+WireGuard split-tunnel profiles
+FakeIP state now survives VPN restarts
+Fix app filter list staying empty after granting permission
+App filter search now also matches package names
+Target Android 16
