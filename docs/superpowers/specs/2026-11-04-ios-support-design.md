@@ -51,18 +51,22 @@ iOS 与 macOS 均为 Swift + Xcode + 同一份 Go 库，属于 sing-box-for-appl
 ```
 apple/
   GostX.xcodeproj/
-  Shared/                                # 4 个 target 共享
-    Arguments.swift                      # defaultGostYAML、UserDefaults key
-    ConfigRepository.swift
-    AppGroupConfig.swift
-    AppLogger.swift
-    FileRepository.swift
-    FileManageViewModel.swift
-    LogViewModel.swift
-    VpnManager.swift
-    Clipboard.swift                      # 新增：跨平台剪贴板
-    GostDefaults.swift                   # 新增：按平台选择默认 YAML
-    Tunnel/PacketTunnelProvider.swift    # 两个扩展 target 共享
+  Shared/                                # 平台无关代码，按 target 需要分组
+    Common/                              # app 与扩程都需要
+      AppGroupConfig.swift
+    App/                                 # 仅两个 app target 需要
+      Arguments.swift                    # defaultGostYAML、UserDefaults key
+      ConfigRepository.swift
+      AppLogger.swift
+      FileRepository.swift
+      FileManageViewModel.swift
+      LogViewModel.swift
+      VpnManager.swift
+      Clipboard.swift                    # 新增：跨平台剪贴板
+      GostDefaults.swift                 # 新增：按平台选择默认 YAML
+      ProfileNameValidator.swift         # 新增：profile 名校验
+    Tunnel/                              # 仅两个扩展 target 需要
+      PacketTunnelProvider.swift
   macOS/                                 # macOS 壳与专属 UI
     main.swift
     AppDelegate.swift
@@ -109,7 +113,11 @@ apple/
 
 - 两个 app target 显式设置 `PRODUCT_MODULE_NAME = GostX`；两个扩展 target 设置 `PRODUCT_MODULE_NAME = GostXTunnel`。
   原因：target 名含连字符时默认模块名会变成 `GostX_macOS`，破坏 `@testable import GostX` 与扩展 Info.plist 里的 `$(PRODUCT_MODULE_NAME).PacketTunnelProvider`。
-- `apple/Shared/`、`apple/Tunnel/` 以 synchronized folder 形式加入 target membership，后续新增文件无需修改 `project.pbxproj`。
+- `apple/Shared/Common/`、`apple/Shared/App/`、`apple/Shared/Tunnel/`、`apple/iOS/`、`apple/Tests/` 以 synchronized folder 形式加入 target membership，后续新增文件无需修改 `project.pbxproj`。各 target 的成员关系：
+  - `GostX-macOS` / `GostX-iOS` → `Shared/Common` + `Shared/App` + 各自的平台目录
+  - `GostXTunnel-macOS` / `GostXTunnel-iOS` → `Shared/Common` + `Shared/Tunnel`
+  - 两个测试 target → `Tests`
+  拆分 `Common` / `App` / `Tunnel` 的原因：扩展不能编译 `Shared/App`（含 AppKit/UIKit UI 依赖），而 `AppGroupConfig` 两端都要用。
 - scheme：`GostX-macOS`、`GostX-iOS`，各自包含对应扩展 target；测试 target 挂到对应 scheme 的 Test 动作。
 
 ## 6. 构建链与产物
@@ -247,7 +255,9 @@ iOS 无进程内代理模式，因此启动与保存时要求：
 
 ### 9.1 迁入 `apple/Shared/`（内容原样，逻辑不变）
 
-`Arguments.swift`、`ConfigRepository.swift`、`AppGroupConfig.swift`、`AppLogger.swift`、`FileRepository.swift`、`VpnManager.swift`、`Tunnel/PacketTunnelProvider.swift`。
+- `Shared/Common/`：`AppGroupConfig.swift`
+- `Shared/App/`：`Arguments.swift`、`ConfigRepository.swift`、`AppLogger.swift`、`FileRepository.swift`、`FileManageViewModel.swift`、`LogViewModel.swift`、`VpnManager.swift`
+- `Shared/Tunnel/`：`PacketTunnelProvider.swift`
 
 ### 9.2 需要小幅修改的共享文件
 
