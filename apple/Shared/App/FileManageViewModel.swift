@@ -123,9 +123,14 @@ class FileManageViewModel: ObservableObject {
         }
     }
 
+    /// Absolute path of a file in the shared work directory; empty when the
+    /// App Group container is unavailable.
+    func filePath(_ name: String) -> String {
+        repo?.filePath(name) ?? ""
+    }
+
     func copyPath(_ name: String) {
         guard let repo else { return }
-        let path = repo.filePath(name)
-        Clipboard.copy(path)
+        Clipboard.copy(repo.filePath(name))
     }
 }
