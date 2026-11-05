@@ -8,6 +8,12 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     override func startTunnel(options: [String: NSObject]?) async throws {
         os_log(.default, "[GostX] startTunnel called")
 
+        #if os(iOS)
+        // Network extensions are capped at roughly 50 MB of resident memory on
+        // iOS, so keep the Go heap well below the Android value.
+        LibgostSetMemoryLimitBytes(30 * 1024 * 1024)
+        #endif
+
         // 1. 设置工作目录和日志
         setWorkDirAndLog()
         os_log(.default, "[GostX] workDir and log set, containerURL=%@", AppGroupConfig.containerURL?.path ?? "nil")
@@ -17,6 +23,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         os_log(.default, "[GostX] yaml read, length=%d", yaml?.count ?? 0)
         guard let yaml = yaml, !yaml.isEmpty else {
             os_log(.error, "[GostX] no YAML config")
+            recordError("No YAML config in App Group")
             cancelTunnelWithError(NSError(
                 domain: "GostXTunnel",
                 code: 1,
@@ -31,6 +38,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         let ok = LibgostStartGost(yaml, "", &err)
         os_log(.default, "[GostX] StartGost returned ok=%d err=%{public}@", ok, err?.localizedDescription ?? "nil")
         if !ok, let err {
+            recordError(err.localizedDescription)
             cancelTunnelWithError(NSError(
                 domain: "GostXTunnel.startGost",
                 code: 2,
@@ -63,6 +71,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             os_log(.default, "[GostX] network settings applied")
         } catch {
             os_log(.error, "[GostX] setTunnelNetworkSettings failed: %@", error.localizedDescription)
+            recordError(error.localizedDescription)
             LibgostStopGost(nil)
             cancelTunnelWithError(NSError(
                 domain: "GostXTunnel.setNetworkSettings",
@@ -76,6 +85,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         let tunFd = LibgostGetTunnelFileDescriptor()
         os_log(.default, "[GostX] tunFd=%d", tunFd)
         guard tunFd != -1 else {
+            recordError("Cannot locate the tunnel file descriptor")
             LibgostStopGost(nil)
             cancelTunnelWithError(NSError(
                 domain: "GostXTunnel",
@@ -89,6 +99,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         os_log(.default, "[GostX] starting TUN stack...")
         if !LibgostStartTun(Int(tunFd), 1500, &err), let err {
             os_log(.error, "[GostX] StartTun failed: %@", err.localizedDescription)
+            recordError(err.localizedDescription)
             LibgostStopGost(nil)
             cancelTunnelWithError(NSError(
                 domain: "GostXTunnel.startTun",
@@ -104,6 +115,15 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         os_log(.default, "[GostX] stopTunnel, reason=%d", reason.rawValue)
         LibgostStopTun(nil)
         LibgostStopGost(nil)
+    }
+
+    /// The app cannot read errors from NEVPNConnection, so failures are written
+    /// into the App Group and shown once the status drops to disconnected.
+    private func recordError(_ message: String) {
+        guard let url = AppGroupConfig.containerURL?.appendingPathComponent("tunnel_error.txt") else {
+            return
+        }
+        try? message.write(to: url, atomically: true, encoding: .utf8)
     }
 
     private func setWorkDirAndLog() {

@@ -1,5 +1,6 @@
 // macos/GostX/VpnManager.swift
 import Foundation
+import Libgost
 import NetworkExtension
 import os
 
@@ -52,6 +53,27 @@ class VpnManager: ObservableObject {
             os_log(.error, "[GostX] VpnManager.start: manager is nil")
             return
         }
+
+        // The extension only reads the App Group, so the active config must be
+        // written before the tunnel starts; otherwise it runs the previous one.
+        let yaml = ConfigRepository.shared.activeConfig
+        guard yaml.contains("tungo") else {
+            throw NSError(
+                domain: "GostX",
+                code: 10,
+                userInfo: [NSLocalizedDescriptionKey: NSLocalizedString(
+                    "This config has no tungo service and can't be used on iOS.", comment: "")]
+            )
+        }
+        let validation = LibgostValidateConfig(yaml)
+        guard validation.isEmpty else {
+            throw NSError(
+                domain: "GostX",
+                code: 11,
+                userInfo: [NSLocalizedDescriptionKey: validation]
+            )
+        }
+        AppGroupConfig.writeYaml(yaml)
         os_log(.default, "[GostX] VpnManager.start: calling startVPNTunnel, status=%d", m.connection.status.rawValue)
         try m.connection.startVPNTunnel()
         os_log(.default, "[GostX] VpnManager.start: startVPNTunnel returned, status=%d", m.connection.status.rawValue)
