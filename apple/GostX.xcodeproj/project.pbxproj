@@ -5,9 +5,11 @@
 	};
 	objectVersion = 70;
 	objects = {
+
 /* Begin PBXBuildFile section */
 		110C2C030865F24C8C297E45 /* LogOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F0072E6B1705600E6B4FA5B /* LogOptionsView.swift */; };
 		112569258691CDCE54D5D03B /* LogContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19495E70527B5668EC230C85 /* LogContentView.swift */; };
+		42486788A69A4DEF953C6178 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B479906BAD964628B29BA6C7 /* Localizable.strings */; };
 		430349443004D3A000FD9EE9 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 430349433004D3A000FD9EE9 /* NetworkExtension.framework */; };
 		4303494C3004D3A000FD9EE9 /* GostXTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 430349423004D3A000FD9EE9 /* GostXTunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		43F7013E300838C000E70769 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
@@ -15,6 +17,10 @@
 		539C284B9A34F4EEB926B517 /* FileListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1099D8C22BC993593DE940 /* FileListView.swift */; };
 		661952039FA5490CAD5BBB39 /* YamlEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CA10536E0954A81A09F6F24 /* YamlEditorView.swift */; };
 		80502C1365AFE6E9D0EBCE67 /* ProfileListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D241A5E3ABD1C9E90BA745A /* ProfileListView.swift */; };
+		A1000000000000000000000C /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
+		A1000000000000000000000D /* GostXTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B20000000000000000000002 /* GostXTunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B20000000000000000000009 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
+		B2000000000000000000000A /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 430349433004D3A000FD9EE9 /* NetworkExtension.framework */; };
 		B532A66A285B528900159BAC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = B532A669285B528900159BAC /* main.swift */; };
 		B532A66E285B528D00159BAC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B532A66D285B528D00159BAC /* Assets.xcassets */; };
 		B532A671285B528D00159BAC /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B532A670285B528D00159BAC /* Preview Assets.xcassets */; };
@@ -26,13 +32,9 @@
 		B5B0E07A285C63080035A6F2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B0E079285C63080035A6F2 /* SettingsView.swift */; };
 		B5C1CF1429DD6E7C008AA934 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = B5C1CF1629DD6E7C008AA934 /* Localizable.stringsdict */; };
 		BA165896763DA2BA6B8AE650 /* FileContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041916CF79F25CAF1E21B685 /* FileContentView.swift */; };
-		42486788A69A4DEF953C6178 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B479906BAD964628B29BA6C7 /* Localizable.strings */; };
 		C40000000000000000000002 /* SharedConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C40000000000000000000001 /* SharedConfigTests.swift */; };
-		A1000000000000000000000C /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
-		A1000000000000000000000D /* GostXTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B20000000000000000000002 /* GostXTunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		B20000000000000000000009 /* Libgost.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4303495C3004D78100FD9EE9 /* Libgost.xcframework */; };
-		B2000000000000000000000A /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 430349433004D3A000FD9EE9 /* NetworkExtension.framework */; };
 /* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		4303494A3004D3A000FD9EE9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -40,6 +42,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 430349413004D3A000FD9EE9;
 			remoteInfo = GostXTunnel;
+		};
+		A1000000000000000000000B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B532A65E285B528900159BAC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B20000000000000000000001;
+			remoteInfo = "GostXTunnel-iOS";
 		};
 		B532A678285B528D00159BAC /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -55,13 +64,6 @@
 			remoteGlobalIDString = B532A665285B528900159BAC;
 			remoteInfo = GostX;
 		};
-		A1000000000000000000000B /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = B532A65E285B528900159BAC /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = B20000000000000000000001;
-			remoteInfo = "GostXTunnel-iOS";
-		};
 		C30000000000000000000009 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = B532A65E285B528900159BAC /* Project object */;
@@ -70,6 +72,7 @@
 			remoteInfo = "GostX-iOS";
 		};
 /* End PBXContainerItemProxy section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		4303494D3004D3A000FD9EE9 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -94,8 +97,10 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		041916CF79F25CAF1E21B685 /* FileContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FileContentView.swift; sourceTree = "<group>"; };
+		17BC639E87554905AE4B960A /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		19495E70527B5668EC230C85 /* LogContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LogContentView.swift; sourceTree = "<group>"; };
 		1CA10536E0954A81A09F6F24 /* YamlEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YamlEditorView.swift; sourceTree = "<group>"; };
 		1D241A5E3ABD1C9E90BA745A /* ProfileListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileListView.swift; sourceTree = "<group>"; };
@@ -103,7 +108,10 @@
 		430349423004D3A000FD9EE9 /* GostXTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GostXTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		430349433004D3A000FD9EE9 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
 		4303495C3004D78100FD9EE9 /* Libgost.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Libgost.xcframework; path = Frameworks/Libgost.xcframework; sourceTree = "<group>"; };
+		A10000000000000000000002 /* GostX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GostX.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A7E7640AA30C4BE5BDC675E1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = DevelopmentTeam.xcconfig; sourceTree = "<group>"; };
+		B20000000000000000000002 /* GostXTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GostXTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B532A666285B528900159BAC /* GostX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GostX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B532A669285B528900159BAC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		B532A66D285B528D00159BAC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -118,32 +126,30 @@
 		B5B0E073285B62B80035A6F2 /* MacExtrasConfigurator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacExtrasConfigurator.swift; sourceTree = "<group>"; };
 		B5B0E079285C63080035A6F2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		B5C1CF1529DD6E7C008AA934 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
-		A7E7640AA30C4BE5BDC675E1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
-		17BC639E87554905AE4B960A /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		B5C1CF1729DD6E90008AA934 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.stringsdict"; sourceTree = "<group>"; };
-		CC1099D8C22BC993593DE940 /* FileListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FileListView.swift; sourceTree = "<group>"; };
-		C40000000000000000000001 /* SharedConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedConfigTests.swift; sourceTree = "<group>"; };
-		A10000000000000000000002 /* GostX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GostX.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B20000000000000000000002 /* GostXTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GostXTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C30000000000000000000002 /* GostX-iOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "GostX-iOSTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C40000000000000000000001 /* SharedConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedConfigTests.swift; sourceTree = "<group>"; };
+		CC1099D8C22BC993593DE940 /* FileListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FileListView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
 		A10000000000000000000011 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				"GostX-iOS.entitlements",
 				Info.plist,
 			);
 			target = A10000000000000000000001 /* GostX-iOS */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A1000000000000000000000E /* Common */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Shared/Common; sourceTree = "<group>"; };
-		A1000000000000000000000F /* App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Shared/App; sourceTree = "<group>"; };
-		B2000000000000000000000B /* Tunnel */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Shared/Tunnel; sourceTree = "<group>"; };
+		A1000000000000000000000E /* Shared/Common */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Shared/Common; sourceTree = "<group>"; };
+		A1000000000000000000000F /* Shared/App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Shared/App; sourceTree = "<group>"; };
 		A10000000000000000000010 /* iOS */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A10000000000000000000011 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = iOS; sourceTree = "<group>"; };
-		C3000000000000000000000A /* Shared */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Tests/Shared; sourceTree = "<group>"; };
+		B2000000000000000000000B /* Shared/Tunnel */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Shared/Tunnel; sourceTree = "<group>"; };
+		C3000000000000000000000A /* Tests/Shared */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Tests/Shared; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		4303493F3004D3A000FD9EE9 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -151,6 +157,23 @@
 			files = (
 				43F7013E300838C000E70769 /* Libgost.xcframework in Frameworks */,
 				430349443004D3A000FD9EE9 /* NetworkExtension.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000000000000000000000C /* Libgost.xcframework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B20000000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B20000000000000000000009 /* Libgost.xcframework in Frameworks */,
+				B2000000000000000000000A /* NetworkExtension.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -176,23 +199,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A10000000000000000000004 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				A1000000000000000000000C /* Libgost.xcframework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B20000000000000000000004 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				B20000000000000000000009 /* Libgost.xcframework in Frameworks */,
-				B2000000000000000000000A /* NetworkExtension.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		C30000000000000000000004 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -201,6 +207,7 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
+
 /* Begin PBXGroup section */
 		AD12003F3005000100FD9EE9 /* Configuration */ = {
 			isa = PBXGroup;
@@ -214,14 +221,14 @@
 			isa = PBXGroup;
 			children = (
 				AD12003F3005000100FD9EE9 /* Configuration */,
-				B532A668285B528900159BAC /* GostX */,
-				B532A67A285B528D00159BAC /* GostXTests */,
-				B532A684285B528D00159BAC /* GostXUITests */,
-				A1000000000000000000000E /* Common */,
-				A1000000000000000000000F /* App */,
-				B2000000000000000000000B /* Tunnel */,
+				B532A668285B528900159BAC /* macOS */,
+				B532A67A285B528D00159BAC /* Tests/Shared */,
+				B532A684285B528D00159BAC /* Tests/GostXUITests */,
+				A1000000000000000000000E /* Shared/Common */,
+				A1000000000000000000000F /* Shared/App */,
+				B2000000000000000000000B /* Shared/Tunnel */,
 				A10000000000000000000010 /* iOS */,
-				C3000000000000000000000A /* Shared */,
+				C3000000000000000000000A /* Tests/Shared */,
 				B532A667285B528900159BAC /* Products */,
 				B5AF722B28634A6500BB5F98 /* Frameworks */,
 			);
@@ -241,7 +248,7 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		B532A668285B528900159BAC /* GostX */ = {
+		B532A668285B528900159BAC /* macOS */ = {
 			isa = PBXGroup;
 			children = (
 				B5C1CF1629DD6E7C008AA934 /* Localizable.stringsdict */,
@@ -271,7 +278,7 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
-		B532A67A285B528D00159BAC /* GostXTests */ = {
+		B532A67A285B528D00159BAC /* Tests/Shared */ = {
 			isa = PBXGroup;
 			children = (
 				B532A67B285B528D00159BAC /* GostXTests.swift */,
@@ -280,7 +287,7 @@
 			path = Tests/Shared;
 			sourceTree = "<group>";
 		};
-		B532A684285B528D00159BAC /* GostXUITests */ = {
+		B532A684285B528D00159BAC /* Tests/GostXUITests */ = {
 			isa = PBXGroup;
 			children = (
 				B532A685285B528D00159BAC /* GostXUITests.swift */,
@@ -299,10 +306,11 @@
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
+
 /* Begin PBXNativeTarget section */
-		430349413004D3A000FD9EE9 /* GostXTunnel */ = {
+		430349413004D3A000FD9EE9 /* GostXTunnel-macOS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 430349513004D3A000FD9EE9 /* Build configuration list for PBXNativeTarget "GostXTunnel" */;
+			buildConfigurationList = 430349513004D3A000FD9EE9 /* Build configuration list for PBXNativeTarget "GostXTunnel-macOS" */;
 			buildPhases = (
 				4303493E3004D3A000FD9EE9 /* Sources */,
 				4303493F3004D3A000FD9EE9 /* Frameworks */,
@@ -313,17 +321,61 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				A1000000000000000000000E /* Common */,
-				B2000000000000000000000B /* Tunnel */,
+				A1000000000000000000000E /* Shared/Common */,
+				B2000000000000000000000B /* Shared/Tunnel */,
 			);
 			name = "GostXTunnel-macOS";
 			productName = GostXTunnel;
 			productReference = 430349423004D3A000FD9EE9 /* GostXTunnel.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		B532A665285B528900159BAC /* GostX */ = {
+		A10000000000000000000001 /* GostX-iOS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B532A68B285B528D00159BAC /* Build configuration list for PBXNativeTarget "GostX" */;
+			buildConfigurationList = A10000000000000000000007 /* Build configuration list for PBXNativeTarget "GostX-iOS" */;
+			buildPhases = (
+				A10000000000000000000003 /* Sources */,
+				A10000000000000000000004 /* Frameworks */,
+				A10000000000000000000005 /* Resources */,
+				A10000000000000000000006 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1000000000000000000000A /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A1000000000000000000000E /* Shared/Common */,
+				A1000000000000000000000F /* Shared/App */,
+				A10000000000000000000010 /* iOS */,
+			);
+			name = "GostX-iOS";
+			productName = GostX;
+			productReference = A10000000000000000000002 /* GostX.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B20000000000000000000001 /* GostXTunnel-iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B20000000000000000000006 /* Build configuration list for PBXNativeTarget "GostXTunnel-iOS" */;
+			buildPhases = (
+				B20000000000000000000003 /* Sources */,
+				B20000000000000000000004 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A1000000000000000000000E /* Shared/Common */,
+				B2000000000000000000000B /* Shared/Tunnel */,
+			);
+			name = "GostXTunnel-iOS";
+			productName = GostXTunnel;
+			productReference = B20000000000000000000002 /* GostXTunnel.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		B532A665285B528900159BAC /* GostX-macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B532A68B285B528D00159BAC /* Build configuration list for PBXNativeTarget "GostX-macOS" */;
 			buildPhases = (
 				B532A662285B528900159BAC /* Sources */,
 				B532A663285B528900159BAC /* Frameworks */,
@@ -336,8 +388,8 @@
 				4303494B3004D3A000FD9EE9 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				A1000000000000000000000E /* Common */,
-				A1000000000000000000000F /* App */,
+				A1000000000000000000000E /* Shared/Common */,
+				A1000000000000000000000F /* Shared/App */,
 			);
 			name = "GostX-macOS";
 			productName = GostX;
@@ -380,50 +432,6 @@
 			productReference = B532A681285B528D00159BAC /* GostXUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
-		A10000000000000000000001 /* GostX-iOS */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = A10000000000000000000007 /* Build configuration list for PBXNativeTarget "GostX-iOS" */;
-			buildPhases = (
-				A10000000000000000000003 /* Sources */,
-				A10000000000000000000004 /* Frameworks */,
-				A10000000000000000000005 /* Resources */,
-				A10000000000000000000006 /* Embed Foundation Extensions */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				A1000000000000000000000A /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				A1000000000000000000000E /* Common */,
-				A1000000000000000000000F /* App */,
-				A10000000000000000000010 /* iOS */,
-			);
-			name = "GostX-iOS";
-			productName = GostX;
-			productReference = A10000000000000000000002 /* GostX.app */;
-			productType = "com.apple.product-type.application";
-		};
-		B20000000000000000000001 /* GostXTunnel-iOS */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = B20000000000000000000006 /* Build configuration list for PBXNativeTarget "GostXTunnel-iOS" */;
-			buildPhases = (
-				B20000000000000000000003 /* Sources */,
-				B20000000000000000000004 /* Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				A1000000000000000000000E /* Common */,
-				B2000000000000000000000B /* Tunnel */,
-			);
-			name = "GostXTunnel-iOS";
-			productName = GostXTunnel;
-			productReference = B20000000000000000000002 /* GostXTunnel.appex */;
-			productType = "com.apple.product-type.app-extension";
-		};
 		C30000000000000000000001 /* GostX-iOSTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C30000000000000000000005 /* Build configuration list for PBXNativeTarget "GostX-iOSTests" */;
@@ -437,7 +445,7 @@
 				C30000000000000000000008 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				C3000000000000000000000A /* Shared */,
+				C3000000000000000000000A /* Tests/Shared */,
 			);
 			name = "GostX-iOSTests";
 			productName = "GostX-iOSTests";
@@ -445,6 +453,7 @@
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
+
 /* Begin PBXProject section */
 		B532A65E285B528900159BAC /* Project object */ = {
 			isa = PBXProject;
@@ -462,10 +471,6 @@
 					B20000000000000000000001 = {
 						CreatedOnToolsVersion = 27.0;
 					};
-					C30000000000000000000001 = {
-						CreatedOnToolsVersion = 27.0;
-						TestTargetID = A10000000000000000000001;
-					};
 					B532A665285B528900159BAC = {
 						CreatedOnToolsVersion = 13.4.1;
 					};
@@ -476,6 +481,10 @@
 					B532A680285B528D00159BAC = {
 						CreatedOnToolsVersion = 13.4.1;
 						TestTargetID = B532A665285B528900159BAC;
+					};
+					C30000000000000000000001 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = A10000000000000000000001;
 					};
 				};
 			};
@@ -503,8 +512,16 @@
 			);
 		};
 /* End PBXProject section */
+
 /* Begin PBXResourcesBuildPhase section */
 		430349403004D3A000FD9EE9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000005 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -536,16 +553,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A10000000000000000000005 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4303493E3004D3A000FD9EE9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-/* End PBXResourcesBuildPhase section */
-/* Begin PBXSourcesBuildPhase section */
-		4303493E3004D3A000FD9EE9 /* Sources */ = {
+		A10000000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B20000000000000000000003 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -587,20 +612,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A10000000000000000000003 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B20000000000000000000003 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		C30000000000000000000003 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -609,26 +620,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
 /* Begin PBXTargetDependency section */
 		4303494B3004D3A000FD9EE9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 430349413004D3A000FD9EE9 /* GostXTunnel */;
+			target = 430349413004D3A000FD9EE9 /* GostXTunnel-macOS */;
 			targetProxy = 4303494A3004D3A000FD9EE9 /* PBXContainerItemProxy */;
-		};
-		B532A679285B528D00159BAC /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = B532A665285B528900159BAC /* GostX */;
-			targetProxy = B532A678285B528D00159BAC /* PBXContainerItemProxy */;
-		};
-		B532A683285B528D00159BAC /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = B532A665285B528900159BAC /* GostX */;
-			targetProxy = B532A682285B528D00159BAC /* PBXContainerItemProxy */;
 		};
 		A1000000000000000000000A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = B20000000000000000000001 /* GostXTunnel-iOS */;
 			targetProxy = A1000000000000000000000B /* PBXContainerItemProxy */;
+		};
+		B532A679285B528D00159BAC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B532A665285B528900159BAC /* GostX-macOS */;
+			targetProxy = B532A678285B528D00159BAC /* PBXContainerItemProxy */;
+		};
+		B532A683285B528D00159BAC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B532A665285B528900159BAC /* GostX-macOS */;
+			targetProxy = B532A682285B528D00159BAC /* PBXContainerItemProxy */;
 		};
 		C30000000000000000000008 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -636,16 +648,8 @@
 			targetProxy = C30000000000000000000009 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
 /* Begin PBXVariantGroup section */
-		B5C1CF1629DD6E7C008AA934 /* Localizable.stringsdict */ = {
-			isa = PBXVariantGroup;
-			children = (
-				B5C1CF1529DD6E7C008AA934 /* en */,
-				B5C1CF1729DD6E90008AA934 /* zh-Hans */,
-			);
-			name = Localizable.stringsdict;
-			sourceTree = "<group>";
-		};
 		B479906BAD964628B29BA6C7 /* Localizable.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -655,7 +659,17 @@
 			name = Localizable.strings;
 			sourceTree = "<group>";
 		};
+		B5C1CF1629DD6E7C008AA934 /* Localizable.stringsdict */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B5C1CF1529DD6E7C008AA934 /* en */,
+				B5C1CF1729DD6E90008AA934 /* zh-Hans */,
+			);
+			name = Localizable.stringsdict;
+			sourceTree = "<group>";
+		};
 /* End PBXVariantGroup section */
+
 /* Begin XCBuildConfiguration section */
 		4303494E3004D3A000FD9EE9 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -733,6 +747,114 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		A10000000000000000000008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "iOS/GostX-iOS.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = iOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = "-lresolv";
+				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.gostx;
+				PRODUCT_MODULE_NAME = GostX;
+				PRODUCT_NAME = GostX;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A10000000000000000000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "iOS/GostX-iOS.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = iOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = "-lresolv";
+				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.gostx;
+				PRODUCT_MODULE_NAME = GostX;
+				PRODUCT_NAME = GostX;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		B20000000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Tunnel/iOS/GostXTunnel.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Tunnel/iOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = "-lresolv";
+				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.gostx.tunnel;
+				PRODUCT_MODULE_NAME = GostXTunnel;
+				PRODUCT_NAME = GostXTunnel;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B20000000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Tunnel/iOS/GostXTunnel.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Tunnel/iOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = "-lresolv";
+				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.gostx.tunnel;
+				PRODUCT_MODULE_NAME = GostXTunnel;
+				PRODUCT_NAME = GostXTunnel;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -837,6 +959,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				EXCLUDED_ARCHS = x86_64;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -845,7 +968,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				EXCLUDED_ARCHS = x86_64;
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -1004,114 +1126,6 @@
 			};
 			name = Release;
 		};
-		A10000000000000000000008 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "iOS/GostX-iOS.entitlements";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = iOS/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0.0;
-				OTHER_LDFLAGS = "-lresolv";
-				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.gostx;
-				PRODUCT_MODULE_NAME = GostX;
-				PRODUCT_NAME = GostX;
-				SDKROOT = iphoneos;
-				SUPPORTS_MACCATALYST = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		A10000000000000000000009 /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "iOS/GostX-iOS.entitlements";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = iOS/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0.0;
-				OTHER_LDFLAGS = "-lresolv";
-				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.gostx;
-				PRODUCT_MODULE_NAME = GostX;
-				PRODUCT_NAME = GostX;
-				SDKROOT = iphoneos;
-				SUPPORTS_MACCATALYST = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				SWIFT_COMPILATION_MODE = wholemodule;
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		B20000000000000000000007 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
-			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = "Tunnel/iOS/GostXTunnel.entitlements";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Tunnel/iOS/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.0.0;
-				OTHER_LDFLAGS = "-lresolv";
-				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.gostx.tunnel;
-				PRODUCT_MODULE_NAME = GostXTunnel;
-				PRODUCT_NAME = GostXTunnel;
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		B20000000000000000000008 /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
-			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = "Tunnel/iOS/GostXTunnel.entitlements";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Tunnel/iOS/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.0.0;
-				OTHER_LDFLAGS = "-lresolv";
-				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.gostx.tunnel;
-				PRODUCT_MODULE_NAME = GostXTunnel;
-				PRODUCT_NAME = GostXTunnel;
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				SWIFT_COMPILATION_MODE = wholemodule;
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
 		C30000000000000000000006 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = AD12003E3005000000FD9EE9 /* DevelopmentTeam.xcconfig */;
@@ -1122,7 +1136,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "cn.liukebin.gostx.iOSTests";
+				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.gostx.iOSTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
@@ -1141,7 +1155,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "cn.liukebin.gostx.iOSTests";
+				PRODUCT_BUNDLE_IDENTIFIER = cn.liukebin.gostx.iOSTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
@@ -1151,12 +1165,31 @@
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
+
 /* Begin XCConfigurationList section */
-		430349513004D3A000FD9EE9 /* Build configuration list for PBXNativeTarget "GostXTunnel" */ = {
+		430349513004D3A000FD9EE9 /* Build configuration list for PBXNativeTarget "GostXTunnel-macOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				4303494E3004D3A000FD9EE9 /* Debug */,
 				4303494F3004D3A000FD9EE9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A10000000000000000000007 /* Build configuration list for PBXNativeTarget "GostX-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10000000000000000000008 /* Debug */,
+				A10000000000000000000009 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B20000000000000000000006 /* Build configuration list for PBXNativeTarget "GostXTunnel-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B20000000000000000000007 /* Debug */,
+				B20000000000000000000008 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -1170,7 +1203,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B532A68B285B528D00159BAC /* Build configuration list for PBXNativeTarget "GostX" */ = {
+		B532A68B285B528D00159BAC /* Build configuration list for PBXNativeTarget "GostX-macOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B532A68C285B528D00159BAC /* Debug */,
@@ -1193,24 +1226,6 @@
 			buildConfigurations = (
 				B532A692285B528D00159BAC /* Debug */,
 				B532A693285B528D00159BAC /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		A10000000000000000000007 /* Build configuration list for PBXNativeTarget "GostX-iOS" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				A10000000000000000000008 /* Debug */,
-				A10000000000000000000009 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		B20000000000000000000006 /* Build configuration list for PBXNativeTarget "GostXTunnel-iOS" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				B20000000000000000000007 /* Debug */,
-				B20000000000000000000008 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
