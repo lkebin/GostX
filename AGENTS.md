@@ -11,8 +11,14 @@ make android         # builds libgost.aar via gomobile → Gradle assembleDebug
 # Android release build (AAB + APK)
 make android-release # builds libgost.aar → Gradle assembleRelease bundleRelease
 
+# Apple clients (macOS + iOS share apple/GostX.xcodeproj)
+make macos           # macOS app (Release, needs Apple signing)
+make ios             # iOS app for a device
+make ios-sim         # iOS app for the simulator (no signing)
+make ios-release     # iOS .ipa for TestFlight
+
 # Clean
-make clean           # cleans Go + Gradle
+make clean           # cleans Go + Gradle + Apple build products
 
 # Go tests
 cd libgost && go test .
@@ -24,11 +30,12 @@ cd android && ./gradlew test
 cd android && ./gradlew connectedAndroidTest
 ```
 
-Building Android requires `gomobile` and the Android NDK.
+Building Android requires `gomobile` and the Android NDK. Building the Apple
+clients requires `gomobile` plus Xcode (iOS 17.0 / macOS 14.0 deployment targets).
 
 ## Architecture
 
-**GostX** is an Android VPN proxy app built on [gost v3](https://github.com/go-gost/x). The core proxy engine is written in Go and compiled as an AAR (Android Archive) that the native UI calls into.
+**GostX** is a VPN proxy client for Android, macOS, and iOS built on [gost v3](https://github.com/go-gost/x). The core proxy engine is written in Go and compiled twice: as an AAR (Android Archive) for Android and as a multi-platform XCFramework for the Apple clients.
 
 ### Go layer (`libgost/`)
 
@@ -43,6 +50,15 @@ Building Android requires `gomobile` and the Android NDK.
 - **`GostVpnService`** (`service/GostVpnService.kt`) — Android `VpnService` subclass. Lifecycle: `startVpn()` → validate config → `LibgostBridge.startGost(yaml, systemDNS)` → establish TUN via `Builder.establish()` → `LibgostBridge.startTun(fd, mtu)` → register network callback for reconnect on network change. Internal `LibgostBridge` object calls the Go AAR via reflection.
 - **`ConfigRepository`** (`data/ConfigRepository.kt`) — Multi-profile YAML config persistence via `SharedPreferences`. Supports add/rename/delete/set-active profiles. App filter (blacklist/whitelist) for per-app VPN routing.
 - **Navigation**: `Screen` sealed class defines routes (Home → ConfigEdit, Logs, Settings → AppFilter). `MainActivity` wires them via NavHost.
+
+### Apple (`apple/`)
+
+- One Xcode project with four targets: `GostX-macOS`, `GostX-iOS`, `GostXTunnel-macOS`, `GostXTunnel-iOS`. Schemes carry the same names.
+- **`apple/Shared/`** is platform-neutral Swift shared through Xcode synchronized folders: `Common/` (app + extension: `AppGroupConfig`), `App/` (app targets only: repositories, view models, `VpnManager`), `Tunnel/` (`PacketTunnelProvider`). Adding a file to a shared folder needs no project edit.
+- **`apple/macOS/`** holds the macOS-only UI (menu bar, `NavigationSplitView` settings) and **`apple/iOS/`** the iOS UI (SwiftUI mirroring the Android layout). `apple/Tunnel/{macOS,iOS}/` holds each extension's Info.plist and entitlements.
+- The tunnel implementation is shared: `NEPacketTunnelProvider` is identical on both platforms, so only entitlements, bundle ids and Info.plist differ.
+- Apple and Android use the same bundle id (`cn.liukebin.gostx`) and App Group (`group.cn.liukebin.gostx`); the tunnel extension is `cn.liukebin.gostx.tunnel` on both Apple platforms.
+- The extension locates the utun socket by scanning file descriptors (`libgost.GetTunnelFileDescriptor`), then hands it to the gVisor stack (see `libgost/tun_stack_darwin.go`).
 
 ### Key dependencies (Go)
 
@@ -68,7 +84,7 @@ DNS queries to `10.0.0.3:53` (the virtual DNS address) are intercepted by the tr
 - The `tungo` handler type is **not** registered in gost's service registry — it's handled entirely inside this codebase. `ValidateConfig()` treats it as an internal type to avoid false "unknown handler" errors.
 - `google.golang.org/genproto` is replaced with a local stub (`go/fakepkg/`) because the monorepo zip is too large for restricted network environments.
 - Android's `libgost.aar` is built with `-z max-page-size=16384` for 16KB page alignment (Android 15 requirement).
-- VPN lifecycle must call `LibgostBridge.setMemoryLimit(true)` on start (caps heap at 100MB, GOGC=50) and `false` on stop to restore defaults.
+- VPN lifecycle must call `LibgostBridge.setMemoryLimit(true)` on start (caps heap at 100MB, GOGC=50) and `false` on stop to restore defaults. The iOS extension caps lower (30MB) through `LibgostSetMemoryLimitBytes`, because iOS network extensions are limited to roughly 50MB of resident memory.
 - `Stop()` has a 5-second timeout on `serveWg.Wait()` to guarantee it always returns.
 
 ## Multilingual (i18n)

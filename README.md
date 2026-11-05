@@ -19,4 +19,9 @@ A gost client for Android.
 ```bash
 make android          # Debug APK
 make android-release  # Release APK + AAB (requires keystore)
+
+make macos            # macOS app (requires Apple signing)
+make ios              # iOS app for a device
+make ios-sim          # iOS app for the simulator
+make ios-release      # iOS .ipa for TestFlight
 ```
