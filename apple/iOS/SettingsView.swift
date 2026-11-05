@@ -41,7 +41,7 @@ struct SettingsView: View {
             }
 
             Section {
-                Text("Version \(version)")
+                Text(String(format: NSLocalizedString("Version %@", comment: ""), version))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
