@@ -126,7 +126,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         let tz = TimeZone.current
         LibgostSetTimezone(tz.identifier, tz.secondsFromGMT())
 
-        LibgostSetLogMaxSize(2 * 1024 * 1024)
+        LibgostSetLogMaxSize(AppGroupConfig.logMaxSizeKB * 1024)
         LibgostSetLogFile(logFile, nil)
         LibgostSetLogLevel(level)
         os_log(.default, "[GostX] logging: enabled=%{public}@ level=%{public}@",

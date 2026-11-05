@@ -47,4 +47,16 @@ struct AppGroupConfig {
     }
 
     static let logLevelOptions = ["error", "warn", "info", "debug", "trace"]
+
+    /// Options offered by the iOS settings screen; matches the Android list.
+    static let logMaxSizeOptions = [512, 1024, 2048, 5120]
+
+    /// Log file size cap in KB. 2048 keeps the macOS behaviour unchanged.
+    static var logMaxSizeKB: Int {
+        get {
+            let value = sharedDefaults?.integer(forKey: "log_max_size_kb") ?? 0
+            return value > 0 ? value : 2048
+        }
+        set { sharedDefaults?.set(newValue, forKey: "log_max_size_kb") }
+    }
 }

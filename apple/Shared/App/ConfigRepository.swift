@@ -8,7 +8,7 @@ struct Profile: Identifiable, Codable {
     var name: String
     private var config: String
 
-    init(id: String = UUID().uuidString, name: String, config: String = defaultGostYAML) {
+    init(id: String = UUID().uuidString, name: String, config: String = GostDefaults.yaml) {
         self.id = id
         self.name = name
         self.config = config
@@ -56,7 +56,7 @@ class ConfigRepository: ObservableObject {
 
     private func ensureDefaultProfile() {
         guard profiles.isEmpty else { return }
-        let defaultProfile = Profile(name: "Default", config: defaultGostYAML)
+        let defaultProfile = Profile(name: "Default", config: GostDefaults.yaml)
         profiles = [defaultProfile]
         activeProfileId = defaultProfile.id
         save()
@@ -96,7 +96,7 @@ class ConfigRepository: ObservableObject {
     // MARK: - Config
 
     func getConfig(_ profileId: String) -> String {
-        profiles.first(where: { $0.id == profileId })?.yamlConfig ?? defaultGostYAML
+        profiles.first(where: { $0.id == profileId })?.yamlConfig ?? GostDefaults.yaml
     }
 
     func saveConfig(_ profileId: String, yaml: String) {
@@ -120,7 +120,7 @@ class ConfigRepository: ObservableObject {
     var activeConfig: String {
         guard let id = activeProfileId,
               let profile = profiles.first(where: { $0.id == id })
-        else { return defaultGostYAML }
+        else { return GostDefaults.yaml }
         return profile.yamlConfig
     }
 

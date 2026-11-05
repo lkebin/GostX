@@ -38,8 +38,7 @@ class LogViewModel: ObservableObject {
 
     func copyAll() {
         let text = lines.joined(separator: "\n")
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(text, forType: .string)
+        Clipboard.copy(text)
     }
 
     func clearLog() {

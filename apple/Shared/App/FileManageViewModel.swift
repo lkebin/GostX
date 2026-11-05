@@ -1,6 +1,5 @@
 // macos/GostX/FileManageViewModel.swift
 import SwiftUI
-import AppKit
 
 @MainActor
 class FileManageViewModel: ObservableObject {
@@ -127,7 +126,6 @@ class FileManageViewModel: ObservableObject {
     func copyPath(_ name: String) {
         guard let repo else { return }
         let path = repo.filePath(name)
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(path, forType: .string)
+        Clipboard.copy(path)
     }
 }

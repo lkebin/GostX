@@ -15,8 +15,10 @@ import os
 enum AppLogger {
     private static let queue = DispatchQueue(label: "cn.liukebin.gostx.applogger")
     private static var logFileURL: URL?
-    private static let maxLogBytes = 2 * 1024 * 1024       // 2 MB
-    private static let rotateKeepBytes = 1024 * 1024       // keep last 1 MB after rotation
+    /// Cap comes from App Group settings (default 2 MB); after rotation the
+    /// file keeps the last half of it.
+    private static var maxLogBytes: off_t { off_t(AppGroupConfig.logMaxSizeKB) * 1024 }
+    private static var rotateKeepBytes: off_t { maxLogBytes / 2 }
 
     static func configure(containerURL: URL) {
         logFileURL = containerURL.appendingPathComponent("gost.log")
@@ -49,7 +51,7 @@ enum AppLogger {
 
                 guard written == buf.count else { return }
                 if sizeBefore + off_t(written) > maxLogBytes {
-                    rotate(path: path)
+                    rotate(path: path, keepBytes: rotateKeepBytes)
                 }
             }
         }
@@ -57,14 +59,14 @@ enum AppLogger {
 
     /// Truncates the file keeping only the last `rotateKeepBytes` bytes.
     /// Uses POSIX APIs — no Foundation FileHandle, no NSException risk.
-    private static func rotate(path: String) {
+    private static func rotate(path: String, keepBytes: off_t) {
         let rfd = open(path, O_RDONLY)
         guard rfd >= 0 else { return }
         let fileSize = lseek(rfd, 0, SEEK_END)
-        guard fileSize > rotateKeepBytes else { close(rfd); return }
+        guard fileSize > keepBytes else { close(rfd); return }
 
-        let readSize = rotateKeepBytes
-        lseek(rfd, fileSize - off_t(readSize), SEEK_SET)
+        let readSize = Int(keepBytes)
+        lseek(rfd, fileSize - keepBytes, SEEK_SET)
 
         var buf = [UInt8](repeating: 0, count: readSize)
         let n = read(rfd, &buf, readSize)
