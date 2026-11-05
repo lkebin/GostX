@@ -26,6 +26,7 @@ struct ConfigEditView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // YamlTextView disables smart punctuation, which TextEditor cannot.
             if lacksTungo {
                 Text("This config has no tungo service and won't work on iOS.")
                     .font(.footnote)
@@ -34,11 +35,7 @@ struct ConfigEditView: View {
                     .padding(.horizontal)
                     .padding(.vertical, 8)
             }
-            TextEditor(text: $yaml)
-                .font(.system(.footnote, design: .monospaced))
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.never)
-                .padding(.horizontal, 12)
+            YamlTextView(text: $yaml)
         }
         .navigationTitle(profileName)
         .navigationBarTitleDisplayMode(.inline)
