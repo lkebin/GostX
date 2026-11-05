@@ -11,7 +11,7 @@ struct GostXApp: App {
                     // Hosted unit tests launch the app; they have no Network
                     // Extension permission and do not need one.
                     if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
-                        await vpn.setup()
+                        try? await vpn.setup()
                     }
                 }
         }

@@ -73,6 +73,8 @@ struct HomeView: View {
         } message: {
             Text(errorMessage ?? "")
         }
+        .onAppear { surfaceVPNSetupError() }
+        .onChange(of: vpn.lastError) { _, _ in surfaceVPNSetupError() }
         .onChange(of: vpn.status) { _, newValue in
             if newValue == .disconnected || newValue == .invalid {
                 consumeTunnelError()
@@ -105,6 +107,14 @@ struct HomeView: View {
             .accessibilityLabel("Edit profile")
         }
         .contentShape(Rectangle())
+    }
+
+    /// setup() runs from the app's `.task`, so its failure may land before or
+    /// after this view appears.
+    private func surfaceVPNSetupError() {
+        guard let error = vpn.lastError else { return }
+        vpn.lastError = nil
+        errorMessage = error
     }
 
     private func toggleVPN() {

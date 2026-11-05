@@ -53,7 +53,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         Task {
-            await VpnManager.shared.setup()
+            try? await VpnManager.shared.setup()
         }
 
         // Auto-start based on saved state

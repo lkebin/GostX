@@ -11,6 +11,10 @@ class VpnManager: ObservableObject {
 
     @Published var status: NEVPNStatus = .invalid
 
+    /// Last configuration/start failure, surfaced by the UI so NEVPNErrorDomain
+    /// codes are not swallowed.
+    @Published var lastError: String?
+
     private let tunnelBundleId = "cn.liukebin.gostx.tunnel"
     private var manager: NETunnelProviderManager?
     private var statusObserver: NSObjectProtocol?
@@ -20,35 +24,71 @@ class VpnManager: ObservableObject {
     // MARK: - Setup
 
     /// 首次调用时加载已存在的 VPN 配置，或创建新的。
-    /// 必须在应用启动时调用一次。
-    func setup() async {
+    /// 必须在应用启动时调用一次；失败原因会写入 `lastError` 供界面展示。
+    func setup() async throws {
         // 已有 manager 则跳过
         if manager != nil { return }
 
-        let managers = (try? await NETunnelProviderManager.loadAllFromPreferences()) ?? []
-        if let existing = managers.first(where: {
-            ($0.protocolConfiguration as? NETunnelProviderProtocol)?
-                .providerBundleIdentifier == tunnelBundleId
-        }) {
-            manager = existing
-            status = existing.connection.status
-        } else {
-            let m = NETunnelProviderManager()
-            let proto = NETunnelProviderProtocol()
-            proto.providerBundleIdentifier = tunnelBundleId
-            proto.serverAddress = "GostX"
-            m.protocolConfiguration = proto
-            m.isEnabled = true
-            m.localizedDescription = "GostX VPN"
-            try? await m.saveToPreferences()
-            manager = m
+        do {
+            let managers = try await NETunnelProviderManager.loadAllFromPreferences()
+            if let existing = managers.first(where: {
+                ($0.protocolConfiguration as? NETunnelProviderProtocol)?
+                    .providerBundleIdentifier == tunnelBundleId
+            }) {
+                manager = existing
+                status = existing.connection.status
+            } else {
+                let m = NETunnelProviderManager()
+                let proto = NETunnelProviderProtocol()
+                proto.providerBundleIdentifier = tunnelBundleId
+                proto.serverAddress = "GostX"
+                m.protocolConfiguration = proto
+                m.isEnabled = true
+                m.localizedDescription = "GostX VPN"
+                try await m.saveToPreferences()
+                // Reading back verifies that the system accepted and persisted
+                // the configuration; without it startVPNTunnel() can fail with
+                // NEVPNErrorConfigurationInvalid even though saving "worked".
+                try await m.loadFromPreferences()
+                manager = m
+            }
+            observeStatus()
+            lastError = nil
+        } catch {
+            let description = Self.describe(error)
+            os_log(.error, "[GostX] VpnManager.setup failed: %{public}@", description)
+            lastError = description
+            throw error
         }
-        observeStatus()
+    }
+
+    /// NEVPNError codes are opaque in the default localizedDescription, so add
+    /// the numeric code and a hint for the ones users actually hit.
+    static func describe(_ error: Error) -> String {
+        let ns = error as NSError
+        guard ns.domain == NEVPNErrorDomain else { return ns.localizedDescription }
+        let hint: String
+        switch NEVPNError.Code(rawValue: ns.code) {
+        case .configurationInvalid:
+            hint = NSLocalizedString("The VPN configuration was rejected. Check that the app ID has the Network Extension capability and that the tunnel extension is signed with the same team.", comment: "")
+        case .configurationDisabled:
+            hint = NSLocalizedString("VPN configurations are disabled on this device. Enable them under Settings > General > VPN & Device Management.", comment: "")
+        case .connectionFailed:
+            hint = NSLocalizedString("The system could not start the VPN connection.", comment: "")
+        case .configurationStale:
+            hint = NSLocalizedString("The saved VPN configuration is stale. Delete the GostX VPN profile and try again.", comment: "")
+        default:
+            hint = ns.localizedDescription
+        }
+        return "\(hint) (NEVPNErrorDomain \(ns.code))"
     }
 
     // MARK: - Control
 
     func start() async throws {
+        if manager == nil {
+            try await setup()
+        }
         guard let m = manager else {
             os_log(.error, "[GostX] VpnManager.start: manager is nil")
             return
