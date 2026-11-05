@@ -1,9 +1,24 @@
 .PHONY: all android android-release macos macos-release ios ios-sim ios-release clean \
-	apple-lib build-libgost-aar build-libgost-xcframework
+	apple-lib build-libgost-aar build-libgost-xcframework icon icon-check
 
 all: android
 
 FORCE:
+
+# Version stamp shared with Android: Android derives versionCode from epoch
+# minutes and versionName from an exact git tag (falling back to the branch
+# name, which App Store Connect would reject, so iOS falls back to 1.0.0).
+APPLE_MARKETING_VERSION = $(shell git describe --tags --exact-match 2>/dev/null | sed 's/^v//' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$$' || echo 1.0.0)
+APPLE_BUILD_NUMBER = $(shell echo $$(($$(date +%s) / 60)))
+
+# Regenerate the per-platform ring icon from icon/ring.svg (Android
+# VectorDrawable + Apple asset catalogs). Run after editing the source SVG.
+icon:
+	python3 tools/gen-icons.py
+
+# Fails when a generated icon no longer matches icon/ring.svg.
+icon-check:
+	python3 tools/gen-icons.py --check
 
 build-libgost-aar: FORCE
 	cd libgost && $(MAKE) libgost.aar
@@ -65,7 +80,9 @@ macos-release: apple/Frameworks/Libgost.xcframework
 ios: apple/Frameworks/Libgost.xcframework
 	cd apple && xcodebuild -project GostX.xcodeproj -scheme GostX-iOS \
 		-configuration Debug -destination 'generic/platform=iOS' \
-		-derivedDataPath build -allowProvisioningUpdates build
+		-derivedDataPath build -allowProvisioningUpdates build \
+		MARKETING_VERSION=$(APPLE_MARKETING_VERSION) \
+		CURRENT_PROJECT_VERSION=$(APPLE_BUILD_NUMBER)
 
 ios-sim: apple/Frameworks/Libgost.xcframework
 	cd apple && xcodebuild -project GostX.xcodeproj -scheme GostX-iOS \
@@ -79,7 +96,9 @@ ios-release: apple/Frameworks/Libgost.xcframework
 			-scheme GostX-iOS \
 			-configuration Release \
 			-archivePath build/GostX-iOS.xcarchive \
-			-destination 'generic/platform=iOS' && \
+			-destination 'generic/platform=iOS' \
+			MARKETING_VERSION=$(APPLE_MARKETING_VERSION) \
+			CURRENT_PROJECT_VERSION=$(APPLE_BUILD_NUMBER) && \
 		xcodebuild -exportArchive \
 			-archivePath build/GostX-iOS.xcarchive \
 			-exportOptionsPlist Configuration/ExportOptions-appstore.plist \
