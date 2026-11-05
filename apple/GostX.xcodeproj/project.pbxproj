@@ -315,8 +315,6 @@
 			fileSystemSynchronizedGroups = (
 				A1000000000000000000000E /* Common */,
 				B2000000000000000000000B /* Tunnel */,
-				A10000000000000000000010 /* iOS */,
-				C3000000000000000000000A /* Shared */,
 			);
 			name = "GostXTunnel-macOS";
 			productName = GostXTunnel;
