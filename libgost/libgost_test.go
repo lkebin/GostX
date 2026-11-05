@@ -588,6 +588,33 @@ func TestSetMemoryLimit(t *testing.T) {
 	}
 }
 
+func TestSetMemoryLimitBytes(t *testing.T) {
+	defer runtimeDebug.SetGCPercent(100)
+	defer runtimeDebug.SetMemoryLimit(math.MaxInt64)
+
+	SetMemoryLimitBytes(30 * 1024 * 1024)
+	prev := runtimeDebug.SetGCPercent(50)
+	runtimeDebug.SetGCPercent(prev)
+	if prev != 50 {
+		t.Errorf("SetMemoryLimitBytes(30MB): GOGC = %d, want 50", prev)
+	}
+
+	// bytes <= 0 means "no limit": GOGC returns to 100.
+	SetMemoryLimitBytes(0)
+	prev = runtimeDebug.SetGCPercent(100)
+	runtimeDebug.SetGCPercent(prev)
+	if prev != 100 {
+		t.Errorf("SetMemoryLimitBytes(0): GOGC = %d, want 100", prev)
+	}
+
+	// A non-positive value must also clear the runtime memory limit.
+	SetMemoryLimitBytes(30 * 1024 * 1024)
+	SetMemoryLimitBytes(-1)
+	if got := runtimeDebug.SetMemoryLimit(math.MaxInt64); got != math.MaxInt64 {
+		t.Errorf("SetMemoryLimitBytes(-1): memory limit = %d, want MaxInt64", got)
+	}
+}
+
 func TestSetLogFile(t *testing.T) {
 	resetLogDrainForTest()
 	t.Cleanup(resetLogDrainForTest)

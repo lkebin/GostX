@@ -606,14 +606,29 @@ func ensureServiceNames(cfg *config.Config) {
 // enabled=false: restore defaults so normal service mode is unaffected.
 // Call with enabled=true when VPN starts, false when it stops.
 func SetMemoryLimit(enabled bool) {
-	const limit = 100 * 1024 * 1024
 	if enabled {
-		runtimeDebug.SetGCPercent(50)
-		runtimeDebug.SetMemoryLimit(limit)
-	} else {
+		SetMemoryLimitBytes(100 * 1024 * 1024)
+		return
+	}
+	SetMemoryLimitBytes(0)
+}
+
+// SetMemoryLimitBytes sets the Go runtime soft memory limit in bytes and is the
+// platform-configurable variant of SetMemoryLimit. iOS network extensions are
+// limited to roughly 50 MB of resident memory, so the iOS tunnel provider caps
+// the heap well below the Android value.
+//
+// bytes <= 0 means "no limit": GOGC returns to 100 and MemoryLimit to MaxInt64.
+// A positive value sets the soft heap cap and GOGC=50 (see SetMemoryLimit for
+// why 50 rather than a lower value).
+func SetMemoryLimitBytes(bytes int64) {
+	if bytes <= 0 {
 		runtimeDebug.SetGCPercent(100)
 		runtimeDebug.SetMemoryLimit(math.MaxInt64)
+		return
 	}
+	runtimeDebug.SetGCPercent(50)
+	runtimeDebug.SetMemoryLimit(bytes)
 }
 
 // SetSocketProtector sets the VpnService.protect() callback. When set, every
