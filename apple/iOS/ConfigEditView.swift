@@ -42,6 +42,11 @@ struct ConfigEditView: View {
         }
         .navigationTitle(profileName)
         .navigationBarTitleDisplayMode(.inline)
+        // The custom back button intercepts unsaved edits; hiding the system
+        // button also disables the interactive pop gesture that would discard
+        // them silently.
+        .navigationBarBackButtonHidden(true)
+        .interactiveDismissDisabled(isDirty)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
