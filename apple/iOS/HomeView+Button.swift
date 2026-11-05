@@ -31,8 +31,12 @@ struct ConnectButton: View {
                 if status.isTransitioning {
                     ProgressView().tint(foreground)
                 } else {
-                    Image(systemName: "power")
-                        .font(.system(size: 30, weight: .semibold))
+                    // Same ring glyph as the Android FAB and the macOS menu bar
+                    // icon, generated from icon/ring.svg by `make icon`.
+                    Image("ConnectRing")
+                        .renderingMode(.template)
+                        .resizable()
+                        .frame(width: 33, height: 33)
                         .foregroundStyle(foreground)
                 }
             }

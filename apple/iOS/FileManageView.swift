@@ -48,7 +48,7 @@ struct FileManageView: View {
                 Button {
                     showImporter = true
                 } label: {
-                    Image(systemName: "square.and.arrow.down")
+                    Image(systemName: "plus")
                 }
                 .accessibilityLabel("Import file")
             }

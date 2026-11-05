@@ -22,7 +22,7 @@ struct SettingsView: View {
                     Button {
                         showLevelDialog = true
                     } label: {
-                        row("Log Level", logLevel.capitalized)
+                        row("Log Level", levelName(logLevel))
                     }
                     Button {
                         showSizeDialog = true
@@ -51,9 +51,11 @@ struct SettingsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog("Log Level", isPresented: $showLevelDialog, titleVisibility: .visible) {
             ForEach(AppGroupConfig.logLevelOptions, id: \.self) { level in
-                Button(level.capitalized) {
+                Button {
                     logLevel = level
                     AppGroupConfig.logLevel = level
+                } label: {
+                    Text(verbatim: levelName(level))
                 }
             }
             Button("Cancel", role: .cancel) {}
@@ -69,11 +71,25 @@ struct SettingsView: View {
         }
     }
 
-    private func row(_ title: String, _ value: String) -> some View {
+    /// Localised name for a `AppGroupConfig.logLevelOptions` value.
+    private func levelName(_ level: String) -> String {
+        switch level {
+        case "error": return NSLocalizedString("Error", comment: "Log level")
+        case "warn": return NSLocalizedString("Warning", comment: "Log level")
+        case "info": return NSLocalizedString("Info", comment: "Log level")
+        case "debug": return NSLocalizedString("Debug", comment: "Log level")
+        case "trace": return NSLocalizedString("Trace", comment: "Log level")
+        default: return level.capitalized
+        }
+    }
+
+    /// `title` is a localisation key; `value` is already localised data, so it
+    /// must be rendered verbatim instead of being looked up again.
+    private func row(_ title: LocalizedStringKey, _ value: String) -> some View {
         HStack {
             Text(title).foregroundStyle(.primary)
             Spacer()
-            Text(value).foregroundStyle(.secondary)
+            Text(verbatim: value).foregroundStyle(.secondary)
             Image(systemName: "chevron.right")
                 .font(.footnote)
                 .foregroundStyle(.tertiary)

@@ -18,7 +18,8 @@ struct ConfigEditView: View {
     private var isDirty: Bool { yaml != savedYaml }
 
     private var profileName: String {
-        repo.profiles.first(where: { $0.id == profileId })?.name ?? "Profile"
+        repo.profiles.first(where: { $0.id == profileId })?.name
+            ?? NSLocalizedString("Profile", comment: "Fallback profile name")
     }
 
     /// iOS can only run configs with a tungo service; warn while editing.

@@ -33,6 +33,7 @@
 		BA165896763DA2BA6B8AE650 /* FileContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041916CF79F25CAF1E21B685 /* FileContentView.swift */; };
 		C40000000000000000000002 /* SharedConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C40000000000000000000001 /* SharedConfigTests.swift */; };
 		C50000000000000000000002 /* YamlHighlightingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C50000000000000000000001 /* YamlHighlightingTests.swift */; };
+		A60000000000000000000002 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60000000000000000000001 /* AppIntents.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -128,8 +129,9 @@
 		B5C1CF1729DD6E90008AA934 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.stringsdict"; sourceTree = "<group>"; };
 		C30000000000000000000002 /* GostX-iOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "GostX-iOSTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C40000000000000000000001 /* SharedConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedConfigTests.swift; sourceTree = "<group>"; };
-		CC1099D8C22BC993593DE940 /* FileListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FileListView.swift; sourceTree = "<group>"; };
 		C50000000000000000000001 /* YamlHighlightingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YamlHighlightingTests.swift; sourceTree = "<group>"; };
+		CC1099D8C22BC993593DE940 /* FileListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FileListView.swift; sourceTree = "<group>"; };
+		A60000000000000000000001 /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -165,6 +167,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1000000000000000000000C /* Libgost.xcframework in Frameworks */,
+				A60000000000000000000002 /* AppIntents.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -301,6 +304,7 @@
 			children = (
 				4303495C3004D78100FD9EE9 /* Libgost.xcframework */,
 				430349433004D3A000FD9EE9 /* NetworkExtension.framework */,
+				A60000000000000000000001 /* AppIntents.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
