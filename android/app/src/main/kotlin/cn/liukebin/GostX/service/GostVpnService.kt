@@ -43,29 +43,20 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-
-// A network change only justifies rebuilding the tunnel once the new network is
-// actually usable (NET_CAPABILITY_VALIDATED). Rebuilding as soon as a network is
-// merely "available" brings the tunnel up against a network that cannot carry
-// traffic yet (no DHCP lease, no upstream, captive portal): the VPN reports
-// connected while every dial fails with "no route to host".
-internal fun shouldRestartVpnOnUsableNetwork(
-    status: VpnStatus,
-    isVpnNetwork: Boolean,
-    isUsableNetwork: Boolean,
-    restartInProgress: Boolean
-): Boolean = status == VpnStatus.CONNECTED && !isVpnNetwork && isUsableNetwork && !restartInProgress
-
 // Reject a new ACTION_START when the VPN is already connected or connecting.
 // Prevents overlapping startVpn() coroutines from a double-tap on the start button.
 internal fun shouldAcceptStartAction(status: VpnStatus): Boolean =
     status != VpnStatus.CONNECTED && status != VpnStatus.CONNECTING
 
-// After stopVpn(updatePersistentState=false) the state is CONNECTING. If a
-// concurrent manual stop changed it to anything else, the network restart
-// must abort — otherwise it would resurrect the VPN after the user stopped it.
-internal fun shouldProceedWithRestart(status: VpnStatus): Boolean =
-    status == VpnStatus.CONNECTING
+// Network capabilities that identify the tunnel's transport, for logging only.
+// The tunnel itself never depends on which physical network is in use.
+internal fun transportName(capabilities: NetworkCapabilities): String = when {
+    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "wifi"
+    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "cellular"
+    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> "ethernet"
+    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN) -> "vpn"
+    else -> "other"
+}
 
 internal enum class HealthAction { RESTART, GIVE_UP }
 
@@ -149,16 +140,9 @@ class GostVpnService : VpnService() {
         null
     }
     private lateinit var configRepo: ConfigRepository
-    private val reconnectInProgress = AtomicBoolean(false)
     private val startInProgress = AtomicBoolean(false)
     private var healthCheckJob: Job? = null
     private val healthRetry = HealthRetryBudget()
-    // Timestamp (ms) of the last successful VPN connect. Suppresses network-change
-    // restarts for RECONNECT_COOLDOWN_MS after each connect because Android re-reports
-    // all existing non-VPN networks whenever VPN routing changes, which would otherwise
-    // trigger an infinite restart loop.
-    @Volatile private var lastVpnConnectTime = 0L
-    private val RECONNECT_COOLDOWN_MS = 30_000L
 
     override fun onCreate() {
         super.onCreate()
@@ -344,7 +328,6 @@ class GostVpnService : VpnService() {
                 val status = LibgostBridge.getStatus()
                 val addr = parseFirstAddress(status)
                 GlobalVpnState.setConnected(addr)
-                lastVpnConnectTime = System.currentTimeMillis()
                 promoteToForeground(addr)  // update notification with actual listen address
                 log("[start] VPN connected, addr: $addr")
                 registerNetworkCallback()
@@ -403,7 +386,7 @@ class GostVpnService : VpnService() {
             log("[stop] VPN stopped")
         } else {
             GlobalVpnState.setConnecting()
-            log("VPN restarting after network change")
+            log("VPN restarting…")
         }
     }
 
@@ -482,42 +465,25 @@ class GostVpnService : VpnService() {
             .edit().putBoolean("last_vpn_running", running).apply()
     }
 
+    /**
+     * Logs underlying network changes. Nothing else: the TUN fd is local and every
+     * upstream socket is protect()ed, so gost follows the OS default network on its
+     * own and a network switch needs no tunnel rebuild. A tunnel that is genuinely
+     * broken is caught by the health check instead.
+     */
     private fun registerNetworkCallback() {
         unregisterNetworkCallback()
         val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val cb = object : ConnectivityManager.NetworkCallback() {
-            // Only a validated network can carry the rebuilt tunnel's traffic, so
-            // validation — not plain availability — is what triggers a rebuild.
-            override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
-                val isVpnNetwork = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
-                val isUsableNetwork =
-                    capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-                // Ignore changes fired within the cooldown window after the VPN
-                // connects. Android re-notifies all non-VPN networks whenever VPN
-                // routing changes; without this guard each notification would
-                // trigger a restart, creating an infinite loop.
-                val cooldownExpired =
-                    (System.currentTimeMillis() - lastVpnConnectTime) > RECONNECT_COOLDOWN_MS
-                if (cooldownExpired && shouldRestartVpnOnUsableNetwork(
-                        status = GlobalVpnState.state.value.status,
-                        isVpnNetwork = isVpnNetwork,
-                        isUsableNetwork = isUsableNetwork,
-                        restartInProgress = reconnectInProgress.get()
-                    ) && reconnectInProgress.compareAndSet(false, true)) {
-                    log("[net] network became usable, restarting VPN")
-                    scope.launch {
-                        try {
-                            stopVpn(updatePersistentState = false)
-                            if (!shouldProceedWithRestart(GlobalVpnState.state.value.status)) {
-                                log("Aborting restart: state changed to ${GlobalVpnState.state.value.status}")
-                                return@launch
-                            }
-                            startVpn()
-                        } finally {
-                            reconnectInProgress.set(false)
-                        }
-                    }
-                }
+            override fun onAvailable(network: Network) {
+                val caps = cm.getNetworkCapabilities(network) ?: return
+                if (caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) return
+                val validated = caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+                log("[net] ${transportName(caps)} available (validated=$validated)")
+            }
+
+            override fun onLost(network: Network) {
+                log("[net] network $network lost")
             }
         }
         cm.registerNetworkCallback(
@@ -541,9 +507,9 @@ class GostVpnService : VpnService() {
 
     /**
      * Launches a coroutine that waits for the VPN to stabilise, then probes
-     * connectivity through it. When no traffic flows (typically because the
-     * tunnel was rebuilt while the phone was switching networks), the VPN is
-     * restarted with a growing backoff.
+     * connectivity through it. When no traffic flows (the tunnel itself is
+     * broken, not just the underlying network), the VPN is restarted with a
+     * growing backoff.
      *
      * The retry budget belongs to the current dead episode and is cleared by
      * every healthy probe, so a failure hours after the last one still gets a
