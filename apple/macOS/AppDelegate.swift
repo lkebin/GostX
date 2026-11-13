@@ -157,7 +157,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         var err: NSError?
-        if !LibgostStartGost(yaml, "", &err), let err {
+        if !LibgostStartGost(yaml, &err), let err {
             logger.error("gost start failed: \(err.localizedDescription)")
             AppLogger.log(.error, "gost start failed: \(err.localizedDescription)")
             self.menu?.toOffState()

@@ -127,7 +127,7 @@ func TestStartGostFakeIPPersistencePoolMismatchLeavesNoStore(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := StartGost(testVPNFakeIPYAML, ""); err == nil {
+	if err := StartGost(testVPNFakeIPYAML); err == nil {
 		t.Fatal("StartGost should reject a state file with a different address pool")
 	}
 	if IsRunning() {
@@ -194,7 +194,7 @@ func TestStopGostSaveFailureStillCleansUp(t *testing.T) {
 	resolver.SetFakeIPStore(nil)
 	t.Cleanup(func() { resolver.SetFakeIPStore(nil) })
 
-	if err := StartGost(testVPNFakeIPYAML, ""); err != nil {
+	if err := StartGost(testVPNFakeIPYAML); err != nil {
 		t.Fatalf("StartGost() failed: %v", err)
 	}
 	if err := os.Mkdir(fakeIPStateFile, 0700); err != nil {
@@ -223,7 +223,7 @@ func TestStopGostSaveFailureStillCleansUp(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := StartGost(testVPNFakeIPYAML, ""); err != nil {
+	if err := StartGost(testVPNFakeIPYAML); err != nil {
 		t.Fatalf("subsequent StartGost() failed: %v", err)
 	}
 	if !IsRunning() || resolver.GetFakeIPStore() == nil {

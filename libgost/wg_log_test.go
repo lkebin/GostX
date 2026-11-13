@@ -58,7 +58,7 @@ func TestWGDialerLogsReachAppLogFile(t *testing.T) {
 	SetLoggingEnabled(true)
 	t.Cleanup(func() { SetLogLevel("off") })
 
-	if err := StartGost(testWGLogProfileYAML, ""); err != nil {
+	if err := StartGost(testWGLogProfileYAML); err != nil {
 		t.Fatalf("StartGost: %v", err)
 	}
 	defer StopGost()

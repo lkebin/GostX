@@ -317,9 +317,8 @@ class GostVpnService : VpnService() {
             registerSocketProtector()
 
             try {
-                val systemDNS = collectSystemDNS()
                 log("[start] loading config and starting gost...")
-                LibgostBridge.startGost(yaml, systemDNS)
+                LibgostBridge.startGost(yaml)
                 log("[start] gost ready")
             } catch (e: Exception) {
                 log("gost start failed: ${e.message}")
@@ -431,19 +430,6 @@ class GostVpnService : VpnService() {
             }
         })
         log("[start] socket protector registered")
-    }
-
-    /**
-     * Reads system DNS servers from the current network. Returns a
-     * comma-separated string (e.g. "192.168.1.1") or "" if unavailable.
-     */
-    private fun collectSystemDNS(): String {
-        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        return cm.getLinkProperties(cm.activeNetwork)?.dnsServers
-            ?.mapNotNull { it.hostAddress }
-            ?.takeIf { it.isNotEmpty() }
-            ?.joinToString(",")
-            ?: ""
     }
 
     private fun log(msg: String) = LogRepository.append(msg)
@@ -665,8 +651,8 @@ internal object LibgostBridge {
         }
     }
 
-    fun startGost(yaml: String, systemDNS: String) {
-        invoke("startGost", yaml, systemDNS)
+    fun startGost(yaml: String) {
+        invoke("startGost", yaml)
     }
 
     fun startTun(fd: Long, mtu: Long) {

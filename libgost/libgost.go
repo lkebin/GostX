@@ -215,10 +215,7 @@ func detectVPNDNSService(cfg *config.Config) string {
 // registry, and starts service listeners (DNS, proxy, etc.). For VPN mode the
 // config must also contain a tungo service — its chain name is stored so
 // StartTun can route gVisor traffic through it later.
-// systemDNS is a comma-separated list of system DNS server IPs (e.g. "192.168.1.1,8.8.8.8").
-// When non-empty, any forwarder node with addr: "system" is replaced with an
-// address derived from the next server in the list.
-func StartGost(yamlConfig string, systemDNS string) (err error) {
+func StartGost(yamlConfig string) (err error) {
 	var fakeState *fakeIPPersistence
 	started := false
 	defer func() {
@@ -242,11 +239,6 @@ func StartGost(yamlConfig string, systemDNS string) (err error) {
 	if err := yaml.Unmarshal([]byte(yamlConfig), cfg); err != nil {
 		log().Errorf("StartGost: invalid YAML config: %v", err)
 		return fmt.Errorf("invalid YAML config: %w", err)
-	}
-
-	if systemDNS != "" {
-		servers := parseSystemDNS(systemDNS)
-		resolveSystemDNSInConfig(cfg, servers)
 	}
 
 	chainName, filtered := extractTungoService(cfg)
@@ -662,47 +654,4 @@ func SetSocketProtector(p SocketProtector) {
 // the app's external files directory.
 func SetWorkDir(path string) error {
 	return os.Chdir(path)
-}
-
-// parseSystemDNS splits a comma-separated list of DNS server IPs into a slice,
-// trimming whitespace and discarding empty entries.
-func parseSystemDNS(s string) []string {
-	parts := strings.Split(s, ",")
-	result := make([]string, 0, len(parts))
-	for _, p := range parts {
-		if p = strings.TrimSpace(p); p != "" {
-			result = append(result, p)
-		}
-	}
-	return result
-}
-
-// resolveSystemDNSInConfig replaces "system" placeholders in DNS forwarder
-// node addresses with actual system DNS server IPs. Each "system" gets the
-// next server from the list, cycling if there are more placeholders than servers.
-// If servers is empty or nil, the config is left unchanged.
-func resolveSystemDNSInConfig(cfg *config.Config, servers []string) {
-	if len(servers) == 0 {
-		return
-	}
-	log().Infof("system DNS servers: %v", servers)
-	idx := 0
-	for _, svc := range cfg.Services {
-		if svc == nil || svc.Handler == nil || svc.Handler.Type != "dns" || svc.Forwarder == nil {
-			continue
-		}
-		for _, node := range svc.Forwarder.Nodes {
-			if node == nil || node.Addr != "system" {
-				continue
-			}
-			ip := servers[idx%len(servers)]
-			idx++
-			if strings.Contains(ip, ":") {
-				node.Addr = "udp://[" + ip + "]:53"
-			} else {
-				node.Addr = "udp://" + ip + ":53"
-			}
-			log().Infof("DNS forwarder %q: system → %s", node.Name, node.Addr)
-		}
-	}
 }

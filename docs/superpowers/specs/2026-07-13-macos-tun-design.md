@@ -94,7 +94,7 @@ func GetTunnelFileDescriptor() int32 {
 |------|------|
 | `StartTun(fd int, mtu int) error` | 已支持 Unix fd + sing-tun，不区分平台 |
 | `StopTun() error` | 同上 |
-| `StartGost(yaml, systemDNS string) error` | systemDNS 传空字符串即可 |
+| `StartGost(yaml string) error` | 解析 YAML 并启动 gost 服务 |
 | `StopGost() error` | 同上 |
 | `relay()` / `relayPacketConn()` / `singTunHandler` | 全部不变 |
 

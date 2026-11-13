@@ -48,7 +48,7 @@ func TestValidateConfig_WGProfile(t *testing.T) {
 
 func TestStartGost_WGProfile(t *testing.T) {
 	resetTestState(t)
-	if err := StartGost(testVPNWGProfileYAML, ""); err != nil {
+	if err := StartGost(testVPNWGProfileYAML); err != nil {
 		t.Fatalf("StartGost() failed: %v", err)
 	}
 	defer StopGost()

@@ -430,7 +430,7 @@ func TestNormalizeDNSAddr(t *testing.T) {
 
 func TestGetVPNDNSAddrNoService(t *testing.T) {
 	resetTestState(t)
-	if err := StartGost(testVPNSocks5YAML, ""); err != nil {
+	if err := StartGost(testVPNSocks5YAML); err != nil {
 		t.Fatalf("StartGost() failed: %v", err)
 	}
 	defer StopGost()
@@ -443,7 +443,7 @@ func TestGetVPNDNSAddrNoService(t *testing.T) {
 
 func TestGetVPNDNSAddrWithService(t *testing.T) {
 	resetTestState(t)
-	if err := StartGost(testVPNDNSYAML, ""); err != nil {
+	if err := StartGost(testVPNDNSYAML); err != nil {
 		t.Fatalf("StartGost() failed: %v", err)
 	}
 	defer StopGost()
@@ -460,7 +460,7 @@ func TestStartGostFakeIPPersistenceLifecycle(t *testing.T) {
 	resolver.SetFakeIPStore(nil)
 	t.Cleanup(func() { resolver.SetFakeIPStore(nil) })
 
-	if err := StartGost(testVPNFakeIPYAML, ""); err != nil {
+	if err := StartGost(testVPNFakeIPYAML); err != nil {
 		t.Fatalf("StartGost() failed: %v", err)
 	}
 	waitForRunning(t)
@@ -482,7 +482,7 @@ func TestStartGostFakeIPPersistenceLifecycle(t *testing.T) {
 		t.Fatalf("StopGost did not save fakeip state: %v", err)
 	}
 
-	if err := StartGost(testVPNFakeIPYAML, ""); err != nil {
+	if err := StartGost(testVPNFakeIPYAML); err != nil {
 		t.Fatalf("StartGost() restore failed: %v", err)
 	}
 	defer func() {
@@ -505,7 +505,7 @@ func TestStartGostFakeIPPersistenceLoadFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := StartGost(testVPNFakeIPYAML, ""); err == nil {
+	if err := StartGost(testVPNFakeIPYAML); err == nil {
 		t.Fatal("StartGost should reject malformed fakeip state")
 	}
 	if IsRunning() {
@@ -518,7 +518,7 @@ func TestStartGostFakeIPPersistenceLoadFailure(t *testing.T) {
 
 func TestGetVPNDNSAddrNormalisesHost(t *testing.T) {
 	resetTestState(t)
-	if err := StartGost(testVPNDNSYAMLNoHost, ""); err != nil {
+	if err := StartGost(testVPNDNSYAMLNoHost); err != nil {
 		t.Fatalf("StartGost() failed: %v", err)
 	}
 	defer StopGost()

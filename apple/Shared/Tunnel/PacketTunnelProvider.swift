@@ -35,7 +35,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         // 3. 启动 gost 服务
         os_log(.default, "[GostX] starting gost...")
         var err: NSError?
-        let ok = LibgostStartGost(yaml, "", &err)
+        let ok = LibgostStartGost(yaml, &err)
         os_log(.default, "[GostX] StartGost returned ok=%d err=%{public}@", ok, err?.localizedDescription ?? "nil")
         if !ok, let err {
             recordError(err.localizedDescription)
