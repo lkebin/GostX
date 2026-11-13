@@ -44,11 +44,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 
-internal fun shouldRestartVpnOnNetworkAvailable(
+// A network change only justifies rebuilding the tunnel once the new network is
+// actually usable (NET_CAPABILITY_VALIDATED). Rebuilding as soon as a network is
+// merely "available" brings the tunnel up against a network that cannot carry
+// traffic yet (no DHCP lease, no upstream, captive portal): the VPN reports
+// connected while every dial fails with "no route to host".
+internal fun shouldRestartVpnOnUsableNetwork(
     status: VpnStatus,
     isVpnNetwork: Boolean,
+    isUsableNetwork: Boolean,
     restartInProgress: Boolean
-): Boolean = status == VpnStatus.CONNECTED && !isVpnNetwork && !restartInProgress
+): Boolean = status == VpnStatus.CONNECTED && !isVpnNetwork && isUsableNetwork && !restartInProgress
 
 // Reject a new ACTION_START when the VPN is already connected or connecting.
 // Prevents overlapping startVpn() coroutines from a double-tap on the start button.
@@ -60,6 +66,44 @@ internal fun shouldAcceptStartAction(status: VpnStatus): Boolean =
 // must abort — otherwise it would resurrect the VPN after the user stopped it.
 internal fun shouldProceedWithRestart(status: VpnStatus): Boolean =
     status == VpnStatus.CONNECTING
+
+internal enum class HealthAction { RESTART, GIVE_UP }
+
+internal const val MAX_HEALTH_RESTARTS = 2
+internal val HEALTH_RESTART_DELAYS_MS = longArrayOf(3_000L, 8_000L)
+
+/**
+ * Restart budget for one "dead VPN" episode.
+ *
+ * A failed connectivity probe grants a restart; once [maxRestarts] restarts
+ * have been spent the VPN is reported to the user instead of being restarted
+ * forever. [reset] must be called on every healthy probe so the budget always
+ * describes the current episode: a budget that outlives its episode degrades
+ * into "give up on the first failure, forever" — that is what stopped the VPN
+ * by itself on 2026-11-13 while the phone was switching networks.
+ */
+internal class HealthRetryBudget(private val maxRestarts: Int = MAX_HEALTH_RESTARTS) {
+    private var restarts = 0
+
+    val restartsUsed: Int get() = restarts
+
+    fun reset() {
+        restarts = 0
+    }
+
+    fun onProbeFailed(): HealthAction = if (restarts < maxRestarts) {
+        restarts++
+        HealthAction.RESTART
+    } else {
+        HealthAction.GIVE_UP
+    }
+
+    /** Backoff to wait before restarting after the restart just granted. */
+    val restartDelayMs: Long
+        get() = HEALTH_RESTART_DELAYS_MS[
+            (restarts - 1).coerceIn(0, HEALTH_RESTART_DELAYS_MS.lastIndex)
+        ]
+}
 
 class GostVpnService : VpnService() {
 
@@ -108,11 +152,11 @@ class GostVpnService : VpnService() {
     private val reconnectInProgress = AtomicBoolean(false)
     private val startInProgress = AtomicBoolean(false)
     private var healthCheckJob: Job? = null
-    private var healthCheckRetried = false
-    // Timestamp (ms) of the last successful VPN connect. Suppresses onAvailable
-    // restarts for RECONNECT_COOLDOWN_MS after each connect because Android fires
-    // onAvailable for all existing non-VPN networks whenever VPN routing changes,
-    // which would otherwise trigger an infinite restart loop.
+    private val healthRetry = HealthRetryBudget()
+    // Timestamp (ms) of the last successful VPN connect. Suppresses network-change
+    // restarts for RECONNECT_COOLDOWN_MS after each connect because Android re-reports
+    // all existing non-VPN networks whenever VPN routing changes, which would otherwise
+    // trigger an infinite restart loop.
     @Volatile private var lastVpnConnectTime = 0L
     private val RECONNECT_COOLDOWN_MS = 30_000L
 
@@ -325,7 +369,7 @@ class GostVpnService : VpnService() {
     private fun stopVpn(updatePersistentState: Boolean = true) {
         if (updatePersistentState) {
             GlobalVpnState.setStopping()
-            healthCheckRetried = false
+            healthRetry.reset()
         }
         healthCheckJob?.cancel()
         healthCheckJob = null
@@ -456,20 +500,25 @@ class GostVpnService : VpnService() {
         unregisterNetworkCallback()
         val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val cb = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                val isVpnNetwork = cm.getNetworkCapabilities(network)
-                    ?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
-                // Ignore network-available callbacks fired within the cooldown window
-                // after VPN connects. Android re-notifies all non-VPN networks whenever
-                // VPN routing changes; without this guard each notification would trigger
-                // a restart, creating an infinite loop.
+            // Only a validated network can carry the rebuilt tunnel's traffic, so
+            // validation — not plain availability — is what triggers a rebuild.
+            override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
+                val isVpnNetwork = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
+                val isUsableNetwork =
+                    capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+                // Ignore changes fired within the cooldown window after the VPN
+                // connects. Android re-notifies all non-VPN networks whenever VPN
+                // routing changes; without this guard each notification would
+                // trigger a restart, creating an infinite loop.
                 val cooldownExpired =
                     (System.currentTimeMillis() - lastVpnConnectTime) > RECONNECT_COOLDOWN_MS
-                if (cooldownExpired && shouldRestartVpnOnNetworkAvailable(
+                if (cooldownExpired && shouldRestartVpnOnUsableNetwork(
                         status = GlobalVpnState.state.value.status,
                         isVpnNetwork = isVpnNetwork,
+                        isUsableNetwork = isUsableNetwork,
                         restartInProgress = reconnectInProgress.get()
                     ) && reconnectInProgress.compareAndSet(false, true)) {
+                    log("[net] network became usable, restarting VPN")
                     scope.launch {
                         try {
                             stopVpn(updatePersistentState = false)
@@ -506,10 +555,14 @@ class GostVpnService : VpnService() {
 
     /**
      * Launches a coroutine that waits for the VPN to stabilise, then probes
-     * connectivity through it. If no traffic flows (e.g. because a prior crash
-     * left Android's VPN routing in a stale state where protect() silently
-     * fails), the VPN is automatically restarted once. If it still fails, an
-     * error is shown recommending the user reinstall the app.
+     * connectivity through it. When no traffic flows (typically because the
+     * tunnel was rebuilt while the phone was switching networks), the VPN is
+     * restarted with a growing backoff.
+     *
+     * The retry budget belongs to the current dead episode and is cleared by
+     * every healthy probe, so a failure hours after the last one still gets a
+     * full set of restarts. Only a VPN that stays dead through the whole budget
+     * is reported to the user.
      */
     private fun startHealthCheck() {
         healthCheckJob?.cancel()
@@ -518,24 +571,24 @@ class GostVpnService : VpnService() {
             if (!isActive) return@launch
             if (GlobalVpnState.state.value.status != VpnStatus.CONNECTED) return@launch
 
-            val ok = performConnectivityProbe()
-            if (ok) {
+            if (performConnectivityProbe()) {
                 log("[health] VPN connectivity OK")
+                healthRetry.reset()
                 return@launch
             }
 
-            if (healthCheckRetried) {
-                log("[health] VPN still dead after restart — stale state suspected")
-                GlobalVpnState.setError(getString(R.string.vpn_error_stale_state))
+            if (healthRetry.onProbeFailed() == HealthAction.GIVE_UP) {
+                log("[health] still dead after ${healthRetry.restartsUsed} restart(s), giving up")
+                GlobalVpnState.setError(getString(R.string.vpn_error_no_traffic))
                 stopVpn()
                 return@launch
             }
 
-            log("[health] VPN appears dead, restarting…")
-            healthCheckRetried = true
+            log("[health] VPN appears dead, restarting… (attempt ${healthRetry.restartsUsed} of $MAX_HEALTH_RESTARTS)")
+            val backoffMs = healthRetry.restartDelayMs
             healthCheckJob = null // prevent stopVpn from cancelling us
             stopVpn(updatePersistentState = false)
-            delay(3_000L)
+            delay(backoffMs)
             if (!isActive) return@launch
             if (GlobalVpnState.state.value.status == VpnStatus.CONNECTING) {
                 startVpn()
