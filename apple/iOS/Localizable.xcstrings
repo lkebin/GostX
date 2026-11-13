@@ -630,6 +630,86 @@
           }
         }
       }
+    },
+    "The GostX VPN configuration was removed or is invalid. Create it again from the app." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GostX 的 VPN 配置已被移除或无效，请在 App 中重新创建。"
+          }
+        }
+      }
+    },
+    "The network changed and the tunnel could not recover." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网络发生变化，隧道无法恢复。"
+          }
+        }
+      }
+    },
+    "The system could not keep the tunnel connection alive." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统无法保持隧道连接。"
+          }
+        }
+      }
+    },
+    "The tunnel stopped because no network was available." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网络不可用，隧道已停止。"
+          }
+        }
+      }
+    },
+    "The tunnel was stopped after being idle." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隧道因空闲超时已停止。"
+          }
+        }
+      }
+    },
+    "The tunnel was stopped by the system (it failed or ran out of memory)." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隧道被系统终止（发生故障或内存不足）。"
+          }
+        }
+      }
+    },
+    "The tunnel was stopped by the system (reason %d)." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隧道被系统终止（原因码 %d）。"
+          }
+        }
+      }
+    },
+    "VPN was turned off in Settings." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VPN 已在系统设置中被关闭。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -63,7 +63,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        self.stop()
+        // Work scheduled asynchronously from a terminating app is simply dropped,
+        // and both steps matter here: the tunnel must stop *and* its on-demand
+        // rule must be cleared — otherwise the system reconnects the VPN the
+        // moment the app quits.
+        if vpnMode {
+            VpnManager.stopBlocking()
+        } else {
+            self.stop()
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -82,7 +90,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func stop() {
         AppLogger.log(.info, "Stopping...")
         if vpnMode {
-            MainActor.assumeIsolated { VpnManager.shared.stop() }
+            Task { @MainActor in await VpnManager.shared.stop() }
         } else {
             LibgostStopGost(nil)
         }

@@ -15,7 +15,11 @@ class VpnManager: ObservableObject {
     /// codes are not swallowed.
     @Published var lastError: String?
 
-    private let tunnelBundleId = "cn.liukebin.gostx.tunnel"
+    /// Why the tunnel went down the last time it stopped on its own (system kill,
+    /// network lost, config removed). Nil when the user stopped it.
+    @Published var lastStopReason: String?
+
+    static let tunnelBundleId = "cn.liukebin.gostx.tunnel"
     private var manager: NETunnelProviderManager?
     private var statusObserver: NSObjectProtocol?
 
@@ -33,14 +37,14 @@ class VpnManager: ObservableObject {
             let managers = try await NETunnelProviderManager.loadAllFromPreferences()
             if let existing = managers.first(where: {
                 ($0.protocolConfiguration as? NETunnelProviderProtocol)?
-                    .providerBundleIdentifier == tunnelBundleId
+                    .providerBundleIdentifier == Self.tunnelBundleId
             }) {
                 manager = existing
                 status = existing.connection.status
             } else {
                 let m = NETunnelProviderManager()
                 let proto = NETunnelProviderProtocol()
-                proto.providerBundleIdentifier = tunnelBundleId
+                proto.providerBundleIdentifier = Self.tunnelBundleId
                 proto.serverAddress = "GostX"
                 m.protocolConfiguration = proto
                 m.isEnabled = true
@@ -114,12 +118,21 @@ class VpnManager: ObservableObject {
             )
         }
         AppGroupConfig.writeYaml(yaml)
+        os_log(.default, "[GostX] VpnManager.start: enabling on-demand")
+        // Connect On Demand lets the system bring the tunnel back after it is
+        // terminated (iOS kills network extensions around 50 MB of resident
+        // memory) or after a network change, instead of leaving the user
+        // silently disconnected with nothing to retry.
+        await Self.setOnDemand(true)
         os_log(.default, "[GostX] VpnManager.start: calling startVPNTunnel, status=%d", m.connection.status.rawValue)
         try m.connection.startVPNTunnel()
         os_log(.default, "[GostX] VpnManager.start: startVPNTunnel returned, status=%d", m.connection.status.rawValue)
     }
 
-    func stop() {
+    /// Disables on-demand *before* stopping: while the rule is still enabled the
+    /// system reconnects the tunnel as soon as it notices the connection dropped.
+    func stop() async {
+        await Self.setOnDemand(false)
         manager?.connection.stopVPNTunnel()
     }
 
@@ -130,7 +143,7 @@ class VpnManager: ObservableObject {
         // Already stopped — nothing to do.
         if conn.status == .disconnected || conn.status == .invalid { return }
 
-        stop()
+        await stop()
 
         // Poll for disconnection with a timeout so we never hang.
         for _ in 0..<50 {  // 5 seconds max
@@ -149,8 +162,68 @@ class VpnManager: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             guard let self, let m = self.manager else { return }
-            self.status = m.connection.status
+            let newStatus = m.connection.status
+            self.status = newStatus
+            if newStatus == .disconnected {
+                self.surfaceStopReason()
+            } else if newStatus == .connected {
+                // A stop reason recorded before the reconnect is stale now.
+                TunnelStopReason.clear()
+            }
         }
+    }
+
+    /// With on-demand enabled the system usually reconnects within a second, so
+    /// wait before reporting: a reason that resolves itself is noise.
+    private func surfaceStopReason() {
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            guard let self, self.manager?.connection.status == .disconnected else { return }
+            guard let reason = TunnelStopReason.takeMessage() else { return }
+            os_log(.error, "[GostX] tunnel stopped: %{public}@", reason)
+            AppLogger.log(.error, "[VPN] tunnel stopped: \(reason)")
+            self.lastStopReason = reason
+        }
+    }
+
+    // MARK: - On-demand
+
+    /// Loads the manager matching our extension. Bypasses the cached `manager`
+    /// so it also works from a detached task while the app is quitting.
+    nonisolated static func loadManager() async -> NETunnelProviderManager? {
+        let managers = try? await NETunnelProviderManager.loadAllFromPreferences()
+        return managers?.first {
+            ($0.protocolConfiguration as? NETunnelProviderProtocol)?
+                .providerBundleIdentifier == tunnelBundleId
+        }
+    }
+
+    /// Toggles the "Connect On Demand" rule used for automatic reconnection.
+    nonisolated static func setOnDemand(_ enabled: Bool) async {
+        guard let m = await loadManager(), m.isOnDemandEnabled != enabled else { return }
+        m.isOnDemandEnabled = enabled
+        m.onDemandRules = enabled ? [NEOnDemandRuleConnect()] : []
+        do {
+            try await m.saveToPreferences()
+            os_log(.default, "[GostX] on-demand %{public}@", enabled ? "enabled" : "disabled")
+        } catch {
+            os_log(.error, "[GostX] on-demand save failed: %{public}@", error.localizedDescription)
+        }
+    }
+
+    /// Synchronous stop used while the app terminates, where an async Task would
+    /// be cancelled by process exit. Blocks at most `timeout` seconds.
+    nonisolated static func stopBlocking(timeout: TimeInterval = 2) {
+        let done = DispatchSemaphore(value: 0)
+        Task.detached {
+            await setOnDemand(false)
+            if let m = await loadManager() {
+                m.connection.stopVPNTunnel()
+            }
+            done.signal()
+        }
+        _ = done.wait(timeout: .now() + timeout)
+        os_log(.default, "[GostX] VpnManager.stopBlocking finished")
     }
 
     deinit {

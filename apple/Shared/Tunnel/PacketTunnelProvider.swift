@@ -113,6 +113,10 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
 
     override func stopTunnel(with reason: NEProviderStopReason) async {
         os_log(.default, "[GostX] stopTunnel, reason=%d", reason.rawValue)
+        // NEVPNConnection cannot carry this back to the app, so write it into the
+        // App Group — otherwise a system-initiated stop is indistinguishable from
+        // the user stopping the tunnel.
+        TunnelStopReason.record(reason)
         LibgostStopTun(nil)
         LibgostStopGost(nil)
     }

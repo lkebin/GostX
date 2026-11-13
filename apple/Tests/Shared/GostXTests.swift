@@ -6,6 +6,11 @@
 //
 
 import XCTest
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 @testable import GostX
 
 class GostXTests: XCTestCase {
@@ -56,7 +61,17 @@ class LogViewModelTests: XCTestCase {
         vm = nil
     }
 
-    func testLoadsLinesFromFile() {
+    // loadInitialTail() reads the file on a detached task, so the lines arrive
+    // asynchronously; a synchronous assertion here races and sees an empty list.
+    private func waitForInitialLoad(timeout: TimeInterval = 2) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while vm.lines.isEmpty, Date() < deadline {
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+    }
+
+    func testLoadsLinesFromFile() async {
+        await waitForInitialLoad()
         XCTAssertEqual(vm.lines.count, 3)
         XCTAssertEqual(vm.lines[0], "line one")
         XCTAssertEqual(vm.lines[1], "line two")
@@ -75,9 +90,16 @@ class LogViewModelTests: XCTestCase {
         XCTAssertEqual(content, "")
     }
 
-    func testCopyAll() {
+    func testCopyAll() async {
+        await waitForInitialLoad()
         vm.copyAll()
+        // Clipboard is platform-specific: NSPasteboard on macOS, UIPasteboard on
+        // iOS. This file is shared by both test targets.
+        #if os(macOS)
         let pb = NSPasteboard.general.string(forType: .string)
+        #else
+        let pb = UIPasteboard.general.string
+        #endif
         XCTAssertTrue(pb?.contains("line one") ?? false)
         XCTAssertTrue(pb?.contains("line three") ?? false)
     }

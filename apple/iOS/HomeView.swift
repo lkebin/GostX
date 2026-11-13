@@ -80,6 +80,11 @@ struct HomeView: View {
                 consumeTunnelError()
             }
         }
+        .onChange(of: vpn.lastStopReason) { _, newValue in
+            guard let newValue else { return }
+            vpn.lastStopReason = nil
+            errorMessage = newValue
+        }
     }
 
     private func profileRow(_ profile: Profile) -> some View {
@@ -120,7 +125,7 @@ struct HomeView: View {
     private func toggleVPN() {
         guard !vpn.status.isTransitioning else { return }
         if vpn.status.isConnected {
-            vpn.stop()
+            Task { await vpn.stop() }
             return
         }
         Task {

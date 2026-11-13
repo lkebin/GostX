@@ -9,14 +9,14 @@ enum VpnIntentBridge {
         try await VpnManager.shared.start()
     }
 
-    static func disconnect() {
-        VpnManager.shared.stop()
+    static func disconnect() async {
+        await VpnManager.shared.stop()
     }
 
     static func toggle() async throws {
         let vpn = VpnManager.shared
         if vpn.status.isConnected {
-            vpn.stop()
+            await vpn.stop()
         } else {
             try await vpn.start()
         }
