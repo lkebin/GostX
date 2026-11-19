@@ -20,3 +20,6 @@ android/app/libs/libgost*.aar
 .pi-subagents/
 apple/Frameworks/
 apple/build/
+
+# Local superpowers artifacts
+docs/superpowers/

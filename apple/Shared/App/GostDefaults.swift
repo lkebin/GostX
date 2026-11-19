@@ -30,8 +30,8 @@ enum GostDefaults {
                 addr: example.com
                 connector:
                   type: ss
-                  metadata:
-                    method: chacha20-ietf-poly1305
+                  auth:
+                    username: chacha20-ietf-poly1305
                     password: password
                 dialer:
                   type: tcp

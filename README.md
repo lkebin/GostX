@@ -1,6 +1,6 @@
 # GostX
 
-A gost client for Android.
+A gost client for Android, macOS and iOS.
 
 <a href="https://play.google.com/store/apps/details?id=cn.liukebin.gostx">
   <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" width="180" />
@@ -13,6 +13,11 @@ A gost client for Android.
 - **YAML configuration** — Define services, chains, hops, and bypasses in a single config file
 - **System DNS** — Resolve domains through the proxy tunnel or use system DNS directly
 - **Multi-profile** — Manage separate configurations with profile rename, delete, and quick switching
+
+## Documentation
+
+See the [documentation index](docs/README.md) for guides on TUN mode,
+Fake IP, WireGuard and Hysteria.
 
 ## Build
 
